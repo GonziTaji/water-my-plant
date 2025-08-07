@@ -7,9 +7,14 @@ struct Plant {
   int health;
 };
 
-void irrigate(struct Plant *p) { p->water += 10; };
+struct UIButton {
+  Rectangle bounds;
+  const char *label;
+};
 
-void addNutrients(struct Plant *p) { p->nutrients += 10; };
+void irrigatePlant(struct Plant *p) { p->water += 30; }
+
+void feedPlant(struct Plant *p) { p->nutrients += 20; }
 
 void printPlant(struct Plant *p) {
   printf("My plant:\n");
@@ -18,37 +23,115 @@ void printPlant(struct Plant *p) {
   printf("- health %d\n", p->health);
 }
 
+bool isMouseOverButton(struct UIButton *b) {
+  return CheckCollisionPointRec(GetMousePosition(), b->bounds);
+}
+
+void DrawStat(char *label, int statValue, int posX, int posY) {
+  char buffer[64];
+  snprintf(buffer, sizeof(buffer), "%s: %d", label, statValue);
+
+  DrawText(buffer, posX, posY, 20, BLACK);
+}
+
 int main(void) {
   SetTargetFPS(144);
-  InitWindow(800, 600, "plantita");
 
-  struct Plant plant = {.water = 100, .nutrients = 100, .health = 100};
+  Vector2 screenSize = {800, 600};
+  InitWindow(screenSize.x, screenSize.y, "My little plant");
 
-  float timer = 0.0f;
+  struct Plant plant = {.water = 100, .nutrients = 100, .health = 80};
 
-  const float plantTick = 1.0f; // 1 second
+  float timeSinceLasTick = 0.0f;
+
+  const float ticksPerSecond = 1.0 / 2.0;
+  const float plantTickTime = 1.0 / ticksPerSecond;
+
   int loops = 0;
   int maxLoops = 0;
 
-  // Game loop
-  while (maxLoops == 0 || loops < maxLoops || WindowShouldClose()) {
-    float deltaTime = GetFrameTime();
-    timer += deltaTime;
+  Vector2 uiButtonSize = {100, 40};
 
-    // printf("Timer: %f - Delta: %f\n", timer, deltaTime);
+  struct UIButton irrigateButton = {{0, 0, uiButtonSize.x, uiButtonSize.y},
+                                    "Water"};
+  struct UIButton feedButton = {
+      {uiButtonSize.x + 2, 0, uiButtonSize.x, uiButtonSize.y}, "Feed"};
+
+  struct UIButton uiButtons[] = {irrigateButton, feedButton};
+  // this works even if labels are different because the UIButton has a char*
+  // (pointer to the string) and not the string itself
+  int uiButtonsCount = sizeof(uiButtons) / sizeof(uiButtons[0]);
+
+  // Game loop
+  while ((maxLoops == 0 || loops < maxLoops) && !WindowShouldClose()) {
+    float deltaTime = GetFrameTime();
+    timeSinceLasTick += deltaTime;
 
     // Game logic
-    if (timer >= plantTick) {
+    if (timeSinceLasTick >= plantTickTime) {
       // don't set to 0 but subtract in case timer > plantTick
-      timer -= plantTick;
+      timeSinceLasTick -= plantTickTime;
 
-      plant.nutrients -= 1;
-      plant.water -= 5;
-      printPlant(&plant);
+      plant.nutrients -= 2;
+      plant.water -= 3;
+
+      if (plant.water > 100) {
+        plant.health -= (plant.water - 100) / 10;
+      } else if (plant.water < 30) {
+        plant.health -= (30 - plant.water) / 10;
+      }
+
+      if (plant.nutrients > 100) {
+        plant.health -= (plant.nutrients - 100) / 10;
+      } else if (plant.nutrients > 50) {
+        plant.health += (plant.nutrients - 30) / 30;
+      } else if (plant.nutrients > 30) {
+        plant.health += (plant.nutrients - 30) / 20;
+      } else if (plant.nutrients < 30) {
+        plant.health -= (30 - plant.nutrients) / 10;
+      }
+
+      // TODO: Alerts when health is below 30
+      // TODO: Game over screen when health is <= 0
+
+      // printPlant(&plant);
     }
 
     // Draw
     BeginDrawing();
+    ClearBackground(WHITE);
+
+    for (int i = 0; i < uiButtonsCount; i++) {
+      bool mouseOverButton = isMouseOverButton(&uiButtons[i]);
+      Color buttonColor = mouseOverButton ? LIGHTGRAY : GRAY;
+
+      DrawRectangle(uiButtons[i].bounds.x, uiButtons[i].bounds.y,
+                    uiButtons[i].bounds.width, uiButtons[i].bounds.height,
+                    buttonColor);
+
+      DrawText(uiButtons[i].label, uiButtons[i].bounds.x + 30,
+               uiButtons[i].bounds.y + 10, 18, WHITE);
+
+      if (IsMouseButtonPressed(0)) {
+        if (mouseOverButton) {
+          switch (i) {
+          // Should do something better here?
+          case (0):
+            irrigatePlant(&plant);
+            break;
+
+          case (1):
+            feedPlant(&plant);
+            break;
+          }
+        }
+      }
+    }
+
+    DrawStat("Water", plant.water, 10, 400);
+    DrawStat("Nutrients", plant.nutrients, 10, 430);
+    DrawStat("Health", plant.health, 10, 460);
+
     EndDrawing();
 
     // End game logic
