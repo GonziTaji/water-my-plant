@@ -10,24 +10,28 @@ Crear un juego simple donde el jugador cuida una planta en una maceta:
 
 ## 🗓️ Etapas del desarrollo
 
-### ✅ Semana 1: Núcleo del juego
-- [ ] Crear estructura `Planta` con `agua`, `nutrientes`, `salud`.
-- [ ] Implementar funciones para `regar()`, `nutrir()`, `actualizar()`.
-- [ ] Crear un ciclo de simulación por "tick" (ej: 1 por segundo).
-- [ ] Imprimir stats en consola o dibujar en ventana (con `raylib`).
+### ✅ Milestone 1: Núcleo del juego
+- [X] Crear estructura `Planta` con `agua`, `nutrientes`, `salud`.
+- [X] Implementar funciones para `regar()`, `nutrir()`, `actualizar()`.
+- [X] Crear un ciclo de simulación por "tick" (ej: 1 por segundo).
+- [X] Imprimir stats en consola o dibujar en ventana (con `raylib`).
 
-### ✅ Semana 2: Interacción del jugador
+TODO:
+- [ ] Mover plant, uiButton y ui a sus propios archivos
+- [ ] Crear archivos de cabecera (necesario?)
+
+### ✅ Milestone 2: Interacción del jugador
 - [ ] Agregar sistema de input: teclas para regar/nutrir/podar.
 - [ ] Dibujar planta en pantalla (circulo y maceta).
-- [ ] Mostrar stats visuales (texto o barras).
+- [ ] Mostrar stats visuales (texto o barras). (listo en Milestone 1 pero hagamoslo mas boni)
 - [ ] Implementar efectos negativos si no se cuida.
 
-### ✅ Semana 3: Sistema de eventos y persistencia
+### ✅ Milestone 3: Sistema de eventos y persistencia
 - [ ] Implementar sistema de eventos temporales (simular paso del tiempo).
 - [ ] Registrar historial de acciones recientes (cola circular).
 - [ ] Agregar guardado/carga en archivo (`.txt`, `.json`, etc.).
 
-### ✅ Semana 4: Evolución y ambiente
+### ✅ Milestone 4: Evolución y ambiente
 - [ ] Agregar estados (`saludable`, `marchita`, `muerta`).
 - [ ] Introducir clima aleatorio que afecte la planta (ej: `lluvia` → +agua).
 - [ ] Mostrar cambios de estado en pantalla (colores, texto).
