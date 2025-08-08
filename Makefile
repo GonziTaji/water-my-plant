@@ -1,14 +1,22 @@
 CC = gcc
 CFLAGS = -Wall -Iinclude
 RAYLIB_FLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-SRC = $(wildcard *.c)
+
+SRC := $(shell find src -name "*.c")
+OBJ := $(patsubst src/%.c, build/%.o, $(SRC))
 OUT = build/main
 
 all: $(OUT)
 
-$(OUT): $(SRC)
-	@mkdir -p build
-	$(CC) $(CFLAGS) $^ -o $@ $(RAYLIB_FLAGS)
+# Enlazar objetos para crear el ejecutable
+$(OUT): $(OBJ)
+	@mkdir -p $(dir $@)
+	$(CC) $(OBJ) -o $@ $(RAYLIB_FLAGS)
+
+# Compilar cada .c a .o manteniendo la estructura
+build/%.o: src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf build
