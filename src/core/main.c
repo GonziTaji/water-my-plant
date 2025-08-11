@@ -10,10 +10,12 @@ int main(void) {
     int loops = 0;
     int maxLoops = 0;
 
+    plant_loadTextures();
+
     Game g;
     game_init(&g);
 
-    /* 
+    /*
      * MAIN LOOP
      */
     while ((maxLoops == 0 || loops < maxLoops) && !WindowShouldClose()) {
@@ -31,6 +33,8 @@ int main(void) {
 
         loops++;
     }
+
+    plant_unloadTextures();
 
     return 0;
 }

@@ -3,7 +3,7 @@
 #include "../ui/ui.h"
 
 typedef struct {
-    Plant plant;
+    Garden garden;
     UI ui;
 } Game;
 

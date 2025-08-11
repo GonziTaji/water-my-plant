@@ -1,2 +1,4 @@
 #!/bin/bash
-make && ./build/main
+rm -r /build
+make
+./build/main
