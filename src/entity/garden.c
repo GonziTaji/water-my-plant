@@ -2,7 +2,6 @@
 #include "garden.h"
 #include "plant.h"
 #include <raylib.h>
-#include <stdio.h>
 
 void garden_init(Garden *garden) {
     garden->selectedPlanter = 0;
@@ -14,7 +13,6 @@ void garden_init(Garden *garden) {
         float x = GARDEN_ORIGIN_X + col * (PLANTER_WIDTH + SPACING_X);
         float y = GARDEN_ORIGIN_Y + row * (PLANTER_HEIGHT + SPACING_Y);
 
-        printf("i %d x %f y %f w %d h %d\n", i, x, y, PLANTER_WIDTH, PLANTER_HEIGHT);
         planter_init(&garden->planters[i], (Rectangle){x, y, PLANTER_WIDTH, PLANTER_HEIGHT});
     }
 }
@@ -51,8 +49,6 @@ int garden_getPlanterIndexFromPoint(Vector2 point) {
 
     int col = (point.x - GARDEN_ORIGIN_X) / (PLANTER_WIDTH + SPACING_X);
     int row = (point.y - GARDEN_ORIGIN_Y) / (PLANTER_HEIGHT + SPACING_Y);
-
-    printf("px %f py %f c %d r %d\n", point.x, point.y, col, row);
 
     if (row >= 0 && row < GARDEN_ROWS && col >= 0 && col < GARDEN_COLS) {
         return getPlanterIndexFromCoords(col, row);

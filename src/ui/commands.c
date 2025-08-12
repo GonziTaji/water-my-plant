@@ -23,3 +23,11 @@ void command_addPlant(Garden *garden) {
 void command_removePlant(Garden *garden) {
     planter_removePlant(&garden->planters[garden->selectedPlanter]);
 }
+
+void command_irrigate(Garden *garden) {
+    plant_irrigate(&garden->planters[garden->selectedPlanter].plant);
+}
+
+void command_feed(Garden *garden) {
+    plant_feed(&garden->planters[garden->selectedPlanter].plant);
+}

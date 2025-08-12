@@ -1,6 +1,7 @@
 #include "ui.h"
 #include "../entity/planter.h"
 #include "button.h"
+#include "commands.h"
 #include "raylib.h"
 #include <assert.h>
 #include <stdio.h>
@@ -9,12 +10,9 @@ void ui_init(UI *ui) {
     Vector2 uiButtonSize = {100, 40};
 
     UIButton irrigateButton = {
-        {0, 0, uiButtonSize.x, uiButtonSize.y}, "Water", false, 0, BUTTON_ACTION_IRRIGATE};
-    UIButton feedButton = {{uiButtonSize.x + 2, 0, uiButtonSize.x, uiButtonSize.y},
-        "Feed",
-        false,
-        0,
-        BUTTON_ACTION_FEED};
+        {0, 0, uiButtonSize.x, uiButtonSize.y}, "Water", false, 0, command_irrigate};
+    UIButton feedButton = {
+        {uiButtonSize.x + 2, 0, uiButtonSize.x, uiButtonSize.y}, "Feed", false, 0, command_feed};
 
     UIButton uiButtons[] = {irrigateButton, feedButton};
     ui->buttonsCount = sizeof(uiButtons) / sizeof(uiButtons[0]);
@@ -26,9 +24,7 @@ void ui_init(UI *ui) {
     }
 }
 
-// maneja input y actualiza elementos de la UI
 void ui_processInput(UI *ui, Garden *garden) {
-    // Maybe this should be in ui_update?
     for (int i = 0; i < ui->buttonsCount; i++) {
         ui->buttons[i].isMouseOver = button_isMouseOver(&ui->buttons[i]);
     }
@@ -44,15 +40,7 @@ void ui_processInput(UI *ui, Garden *garden) {
                     Planter *selectedPlanter = &garden->planters[garden->selectedPlanter];
 
                     if (selectedPlanter->hasPlant) {
-                        switch (ui->buttons[i].buttonAction) {
-                        case BUTTON_ACTION_IRRIGATE:
-                            plant_irrigate(&selectedPlanter->plant);
-                            break;
-
-                        case BUTTON_ACTION_FEED:
-                            plant_feed(&selectedPlanter->plant);
-                            break;
-                        }
+                        ui->buttons[i].command(garden);
                     }
                 }
             }
