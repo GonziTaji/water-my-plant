@@ -5,10 +5,12 @@
 void game_init(Game *game) {
     garden_init(&game->garden);
     ui_init(&game->ui);
+    inputmap_init(&game->inputMap);
 }
 
 void game_update(Game *game, float deltaTime) {
     ui_processInput(&game->ui, &game->garden);
+    inputmap_processInput(&game->inputMap, &game->garden);
     garden_update(&game->garden, deltaTime);
 }
 

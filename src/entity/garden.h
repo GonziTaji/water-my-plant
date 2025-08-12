@@ -14,6 +14,7 @@
 typedef struct {
     Planter planters[GARDEN_ROWS * GARDEN_COLS];
     int selectedPlanter;
+    int plantersCount;
 } Garden;
 
 void garden_init(Garden *garden);

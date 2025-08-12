@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Iinclude
+# -g es para debug. Hacer algo para no usarlo en builds para distribucion
+CFLAGS = -Wall -Iinclude -g
 RAYLIB_FLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 SRC := $(shell find src -name "*.c")

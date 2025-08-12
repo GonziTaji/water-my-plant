@@ -4,14 +4,11 @@
 #include <raylib.h>
 #include <stdio.h>
 
-int totalPlanters() {
-    return GARDEN_COLS * GARDEN_ROWS;
-}
-
 void garden_init(Garden *garden) {
     garden->selectedPlanter = 0;
+    garden->plantersCount = GARDEN_COLS * GARDEN_ROWS;
 
-    for (int i = 0; i < totalPlanters(); i++) {
+    for (int i = 0; i < garden->plantersCount; i++) {
         int col = i == 0 ? 0 : i % GARDEN_COLS;
         int row = i == 0 ? 0 : i / GARDEN_COLS;
         float x = GARDEN_ORIGIN_X + col * (PLANTER_WIDTH + SPACING_X);
@@ -23,7 +20,7 @@ void garden_init(Garden *garden) {
 }
 
 void garden_update(Garden *garden, float deltaTime) {
-    for (int i = 0; i < totalPlanters(); i++) {
+    for (int i = 0; i < garden->plantersCount; i++) {
         if (garden->planters[i].hasPlant) {
             plant_update(&garden->planters[i].plant, deltaTime);
         }
@@ -31,7 +28,7 @@ void garden_update(Garden *garden, float deltaTime) {
 }
 
 void garden_draw(Garden *garden) {
-    for (int i = 0; i < totalPlanters(); i++) {
+    for (int i = 0; i < garden->plantersCount; i++) {
         Color planterBorderColor = garden->selectedPlanter == i ? BEIGE : BROWN;
         Rectangle bounds = garden->planters[i].bounds;
 

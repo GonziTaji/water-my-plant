@@ -58,12 +58,6 @@ void ui_processInput(UI *ui, Garden *garden) {
             }
         }
     }
-
-    if (IsKeyPressed(KEY_A)) {
-        planter_addPlant(&garden->planters[garden->selectedPlanter]);
-    } else if (IsKeyPressed(KEY_D)) {
-        planter_removePlant(&garden->planters[garden->selectedPlanter]);
-    }
 }
 
 void ui_draw(UI *ui, Planter *selectedPlanter) {
