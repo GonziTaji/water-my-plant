@@ -17,10 +17,10 @@ void registerCommand(InputMap *inputMap, CommandFunction command, int key) {
 void inputmap_init(InputMap *inputMap) {
     registerCommand(inputMap, &command_addPlant, KEY_A);
     registerCommand(inputMap, &command_removePlant, KEY_R);
-    registerCommand(inputMap, &command_focusNextPlanter, KEY_L);
-    registerCommand(inputMap, &command_focusNextPlanter, KEY_LEFT);
-    registerCommand(inputMap, &command_focusPreviousPlanter, KEY_H);
-    registerCommand(inputMap, &command_focusPreviousPlanter, KEY_RIGHT);
+    registerCommand(inputMap, &command_focusNextPlanter, KEY_N);
+    registerCommand(inputMap, &command_focusNextPlanter, KEY_RIGHT);
+    registerCommand(inputMap, &command_focusPreviousPlanter, KEY_P);
+    registerCommand(inputMap, &command_focusPreviousPlanter, KEY_LEFT);
     registerCommand(inputMap, &command_irrigate, KEY_W);
     registerCommand(inputMap, &command_feed, KEY_F);
 }

@@ -3,11 +3,11 @@
 #include <raylib.h>
 
 typedef struct {
-    Rectangle bounds;
     const char *label;
+    CommandFunction command;
+    Rectangle bounds;
     bool isMouseOver;
     int mouseButtonClicked;
-    CommandFunction command;
 } UIButton;
 
 bool button_isMouseOver(UIButton *b);

@@ -10,8 +10,8 @@ void garden_init(Garden *garden) {
     for (int i = 0; i < garden->plantersCount; i++) {
         int col = i == 0 ? 0 : i % GARDEN_COLS;
         int row = i == 0 ? 0 : i / GARDEN_COLS;
-        float x = GARDEN_ORIGIN_X + col * (PLANTER_WIDTH + SPACING_X);
-        float y = GARDEN_ORIGIN_Y + row * (PLANTER_HEIGHT + SPACING_Y);
+        float x = GARDEN_ORIGIN_X + col * (PLANTER_WIDTH + PLANTER_SPACING_X);
+        float y = GARDEN_ORIGIN_Y + row * (PLANTER_HEIGHT + PLANTER_SPACING_Y);
 
         planter_init(&garden->planters[i], (Rectangle){x, y, PLANTER_WIDTH, PLANTER_HEIGHT});
     }
@@ -47,8 +47,8 @@ int garden_getPlanterIndexFromPoint(Vector2 point) {
         return -1;
     }
 
-    int col = (point.x - GARDEN_ORIGIN_X) / (PLANTER_WIDTH + SPACING_X);
-    int row = (point.y - GARDEN_ORIGIN_Y) / (PLANTER_HEIGHT + SPACING_Y);
+    int col = (point.x - GARDEN_ORIGIN_X) / (PLANTER_WIDTH + PLANTER_SPACING_X);
+    int row = (point.y - GARDEN_ORIGIN_Y) / (PLANTER_HEIGHT + PLANTER_SPACING_Y);
 
     if (row >= 0 && row < GARDEN_ROWS && col >= 0 && col < GARDEN_COLS) {
         return getPlanterIndexFromCoords(col, row);

@@ -4,22 +4,30 @@
 #include "commands.h"
 #include "raylib.h"
 #include <assert.h>
-#include <stdio.h>
 
 void ui_init(UI *ui) {
-    Vector2 uiButtonSize = {100, 40};
+    UIButton uiButtons[] = {
+        (UIButton){.label = "[W]ater", .command = command_irrigate},
+        (UIButton){.label = "[F]eed", .command = command_feed},
+        (UIButton){.label = "[N]ext planter", .command = command_focusNextPlanter},
+        (UIButton){.label = "[P]previous planter", .command = command_focusPreviousPlanter},
+        (UIButton){.label = "[A]dd plant", .command = command_addPlant},
+        (UIButton){.label = "[R]emove plant", .command = command_removePlant},
+    };
 
-    UIButton irrigateButton = {
-        {0, 0, uiButtonSize.x, uiButtonSize.y}, "Water", false, 0, command_irrigate};
-    UIButton feedButton = {
-        {uiButtonSize.x + 2, 0, uiButtonSize.x, uiButtonSize.y}, "Feed", false, 0, command_feed};
-
-    UIButton uiButtons[] = {irrigateButton, feedButton};
     ui->buttonsCount = sizeof(uiButtons) / sizeof(uiButtons[0]);
 
-    assert(ui->buttonsCount <= UI_MAX_BUTTONS_COUNT);
+    assert(ui->buttonsCount <= BUTTON_COLS * BUTTON_ROWS);
 
     for (int i = 0; i < ui->buttonsCount; i++) {
+        int col = i == 0 ? 0 : i % BUTTON_COLS;
+        int row = i == 0 ? 0 : i / BUTTON_COLS;
+        float x = BUTTON_GRID_ORIGIN_X + col * (BUTTON_WIDTH + BUTTON_SPACING_X);
+        float y = BUTTON_GRID_ORIGIN_Y + row * (BUTTON_HEIGHT + BUTTON_SPACING_Y);
+
+        uiButtons[i].bounds = (Rectangle){x, y, BUTTON_WIDTH, BUTTON_HEIGHT};
+        uiButtons[i].isMouseOver = false;
+
         ui->buttons[i] = uiButtons[i];
     }
 }
@@ -37,11 +45,7 @@ void ui_processInput(UI *ui, Garden *garden) {
         } else {
             for (int i = 0; i < ui->buttonsCount; i++) {
                 if (ui->buttons[i].isMouseOver) {
-                    Planter *selectedPlanter = &garden->planters[garden->selectedPlanter];
-
-                    if (selectedPlanter->hasPlant) {
-                        ui->buttons[i].command(garden);
-                    }
+                    ui->buttons[i].command(garden);
                 }
             }
         }
@@ -59,22 +63,13 @@ void ui_draw(UI *ui, Planter *selectedPlanter) {
             buttonColor);
 
         DrawText(ui->buttons[i].label,
-            ui->buttons[i].bounds.x + 30,
+            ui->buttons[i].bounds.x + 10,
             ui->buttons[i].bounds.y + 10,
-            16,
+            12,
             WHITE);
     }
 
     if (selectedPlanter->hasPlant) {
         plant_drawStats(&selectedPlanter->plant, (Vector2){200, 200});
     }
-
-    char buffer[64];
-
-    int x = 10;
-    int y = 200;
-
-    Vector2 mp = GetMousePosition();
-    snprintf(buffer, sizeof(buffer), "x: %f, y: %f", mp.x, mp.y);
-    DrawText(buffer, x, y, 16, BLACK);
 }

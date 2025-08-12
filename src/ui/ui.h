@@ -3,10 +3,17 @@
 #include "../entity/planter.h"
 #include "button.h"
 
-#define UI_MAX_BUTTONS_COUNT 2
+#define BUTTON_ROWS 1
+#define BUTTON_COLS 6
+#define BUTTON_WIDTH 120
+#define BUTTON_HEIGHT 40
+#define BUTTON_SPACING_X 2
+#define BUTTON_SPACING_Y 2
+#define BUTTON_GRID_ORIGIN_X 2
+#define BUTTON_GRID_ORIGIN_Y 0
 
 typedef struct {
-    UIButton buttons[UI_MAX_BUTTONS_COUNT];
+    UIButton buttons[BUTTON_ROWS * BUTTON_COLS];
     int buttonsCount;
 } UI;
 
