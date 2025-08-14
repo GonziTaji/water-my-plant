@@ -4,11 +4,10 @@
 int main(void) {
     SetTargetFPS(144);
 
-    Vector2 screenSize = {800, 600};
-    InitWindow(screenSize.x, screenSize.y, "My little plant");
+    Vector2 windowSize = {0, 0};
 
-    int loops = 0;
-    int maxLoops = 0;
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+    InitWindow(windowSize.x, windowSize.y, "My little plant");
 
     plant_loadTextures();
 
@@ -18,23 +17,15 @@ int main(void) {
     /*
      * MAIN LOOP
      */
-    while ((maxLoops == 0 || loops < maxLoops) && !WindowShouldClose()) {
+    while (!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
 
         game_update(&g, deltaTime);
-
-        // Draw
-        BeginDrawing();
-        ClearBackground(WHITE);
-
         game_draw(&g);
-
-        EndDrawing();
-
-        loops++;
     }
 
     plant_unloadTextures();
+    game_unload(&g);
 
     return 0;
 }

@@ -15,6 +15,8 @@ void registerCommand(InputMap *inputMap, CommandFunction command, int key) {
 }
 
 void inputmap_init(InputMap *inputMap) {
+    inputMap->registeredCommandsCount = 0;
+
     registerCommand(inputMap, &command_addPlant, KEY_A);
     registerCommand(inputMap, &command_removePlant, KEY_R);
     registerCommand(inputMap, &command_focusNextPlanter, KEY_N);
