@@ -17,13 +17,14 @@ Crear un juego simple donde el jugador cuida una planta en una maceta:
 - [X] Imprimir stats en consola o dibujar en ventana (con `raylib`).
 
 TODO:
-    - [X] Mover plant, uiButton y ui a sus propios archivos
-- [X] Crear archivos de cabecera (necesario?)
+- [X] Mover plant, uiButton y ui a sus propios archivos
+- [X] Crear archivos de cabecera
 
 ### ✅ Milestone 2: Interacción del jugador
-    - [ ] Agregar sistema de input: teclas para regar/nutrir/podar.
-    - [ ] Dibujar planta en pantalla (circulo y maceta).
-- [X] Mostrar stats visuales (texto o barras). (listo en Milestone 1 pero hagamoslo mas boni)
+
+- [X] Agregar sistema de input: teclas para regar/nutrir/podar.
+    - [X] Dibujar planta en pantalla (circulo y maceta).
+- [ ] Mostrar stats visuales (texto o barras). (listo en Milestone 1 pero hagamoslo mas boni)
     - [X] Implementar efectos negativos si no se cuida.
 
     TODO:

@@ -25,6 +25,16 @@ void garden_update(Garden *garden, float deltaTime) {
     }
 }
 
+void garden_processClick(Garden *garden, const InputManager *input) {
+    if (input->mouseButtonPressed[0]) {
+        int clickedPlanterIndex = garden_getPlanterIndexFromPoint(input->mousePosVirtual);
+
+        if (clickedPlanterIndex != -1) {
+            garden->selectedPlanter = clickedPlanterIndex;
+        }
+    }
+}
+
 void garden_draw(Garden *garden) {
     for (int i = 0; i < garden->plantersCount; i++) {
         Color planterBorderColor = garden->selectedPlanter == i ? BEIGE : BROWN;

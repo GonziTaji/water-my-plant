@@ -1,6 +1,6 @@
 #include "button.h"
 #include "raylib.h"
 
-bool button_isMouseOver(UIButton *b, const Input *input) {
+bool button_isMouseOver(UIButton *b, const InputManager *input) {
     return CheckCollisionPointRec(input->mousePosVirtual, b->bounds);
 }

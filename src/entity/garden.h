@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../ui/input_manager.h"
 #include "planter.h"
 
 #define GARDEN_ROWS 1
@@ -18,6 +19,7 @@ typedef struct {
 } Garden;
 
 void garden_init(Garden *garden);
+void garden_processClick(Garden *garden, const InputManager *input);
 int garden_getPlanterIndexFromPoint(Vector2 point);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime);

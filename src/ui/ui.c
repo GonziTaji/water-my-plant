@@ -2,7 +2,7 @@
 #include "../entity/planter.h"
 #include "button.h"
 #include "commands.h"
-#include "input.h"
+#include "input_manager.h"
 #include "raylib.h"
 #include <assert.h>
 
@@ -33,21 +33,16 @@ void ui_init(UI *ui) {
     }
 }
 
-void ui_processInput(UI *ui, const Input *input, Garden *garden) {
+void ui_processInput(UI *ui, const InputManager *input, Garden *garden) {
     for (int i = 0; i < ui->buttonsCount; i++) {
         ui->buttons[i].isMouseOver = button_isMouseOver(&ui->buttons[i], input);
     }
 
-    if (IsMouseButtonPressed(0)) {
-        int clickedPlanterIndex = garden_getPlanterIndexFromPoint(input->mousePosVirtual);
-
-        if (clickedPlanterIndex != -1) {
-            garden->selectedPlanter = clickedPlanterIndex;
-        } else {
-            for (int i = 0; i < ui->buttonsCount; i++) {
-                if (ui->buttons[i].isMouseOver) {
-                    ui->buttons[i].command(garden);
-                }
+    if (input->mouseButtonPressed[0]) {
+        for (int i = 0; i < ui->buttonsCount; i++) {
+            if (ui->buttons[i].isMouseOver) {
+                ui->buttons[i].command(garden);
+                return;
             }
         }
     }

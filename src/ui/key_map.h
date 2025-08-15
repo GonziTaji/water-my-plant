@@ -14,7 +14,7 @@ typedef struct {
 typedef struct {
     CommandInputPair registeredCommands[INPUT_MAP_CAPACITY];
     int registeredCommandsCount;
-} InputMap;
+} KeyMap;
 
-void inputmap_init(InputMap *inputMap);
-void inputmap_processInput(InputMap *inputMap, Garden *garden);
+void keyMap_init(KeyMap *keyMap);
+void keyMap_processInput(KeyMap *keyMap, Garden *garden);

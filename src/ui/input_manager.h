@@ -4,8 +4,9 @@
 
 typedef struct {
     Vector2 mousePosVirtual;
+    bool mouseButtonPressed[3];
     // Keycodes de teclas presionadas aqui cuando llegue el punto en que varios
     // subsistemas necesiten chequear sobre un key presionado
-} Input;
+} InputManager;
 
-void input_update(Input *input, float scale, Vector2 screenOffset);
+void inputManager_update(InputManager *input, float scale, Vector2 screenOffset);

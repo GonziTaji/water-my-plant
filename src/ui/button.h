@@ -1,6 +1,6 @@
 #pragma once
-#include "input.h"
-#include "inputmap.h"
+#include "input_manager.h"
+#include "key_map.h"
 #include <raylib.h>
 
 typedef struct {
@@ -11,4 +11,4 @@ typedef struct {
     int mouseButtonClicked;
 } UIButton;
 
-bool button_isMouseOver(UIButton *b, const Input *input);
+bool button_isMouseOver(UIButton *b, const InputManager *input);

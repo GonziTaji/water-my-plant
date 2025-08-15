@@ -27,39 +27,30 @@ void game_init(Game *game) {
 
     garden_init(&game->garden);
     ui_init(&game->ui);
-    inputmap_init(&game->inputMap);
+    keyMap_init(&game->keyMap);
 }
 
 void game_update(Game *game, float deltaTime) {
     calculateScaleAndOffset(game);
 
-    input_update(&game->input, game->scale, game->screenOffset);
+    inputManager_update(&game->input, game->scale, game->screenOffset);
+    keyMap_processInput(&game->keyMap, &game->garden);
     ui_processInput(&game->ui, &game->input, &game->garden);
-    inputmap_processInput(&game->inputMap, &game->garden);
+
+    garden_processClick(&game->garden, &game->input);
     garden_update(&game->garden, deltaTime);
 }
 
 void game_draw(Game *game) {
     Planter *selectedPlanter = &game->garden.planters[game->garden.selectedPlanter];
 
-    // Draw in texture
+    // Draw scene in texture
     BeginTextureMode(game->target);
 
     ClearBackground(WHITE);
 
     ui_draw(&game->ui, selectedPlanter);
     garden_draw(&game->garden);
-
-    // Vector2 mouse = GetMousePosition();
-    // Vector2 virtualMouse = game->input.mousePosVirtual;
-
-    // DrawText(
-    //     TextFormat("Default Mouse: [%i , %i]", (int)mouse.x, (int)mouse.y), 350, 25, 20, GREEN);
-    // DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y),
-    //     350,
-    //     55,
-    //     20,
-    //     YELLOW);
 
     EndTextureMode();
 

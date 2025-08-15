@@ -18,5 +18,5 @@ typedef struct {
 } UI;
 
 void ui_init(UI *ui);
-void ui_processInput(UI *ui, const Input *input, Garden *plant);
+void ui_processInput(UI *ui, const InputManager *input, Garden *plant);
 void ui_draw(UI *ui, Planter *selectedPlanter);

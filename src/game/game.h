@@ -1,14 +1,14 @@
 #pragma once
 #include "../entity/plant.h"
-#include "../ui/inputmap.h"
+#include "../ui/key_map.h"
 #include "../ui/ui.h"
 #include <raylib.h>
 
 typedef struct {
     Garden garden;
     UI ui;
-    InputMap inputMap;
-    Input input;
+    KeyMap keyMap;
+    InputManager input;
     RenderTexture2D target;
     Vector2 screenSize;
     float scale;
