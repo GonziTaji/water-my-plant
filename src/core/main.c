@@ -1,5 +1,6 @@
 #include "../game/game.h"
 #include "raylib.h"
+#include <stdio.h>
 
 int main(void) {
     SetTargetFPS(144);
@@ -24,8 +25,10 @@ int main(void) {
         game_draw(&g);
     }
 
+    printf(">>>>>Unloading\n");
     plant_unloadTextures();
     game_unload(&g);
+    printf(">>>>>Unloaded\n");
 
     return 0;
 }

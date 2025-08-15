@@ -20,6 +20,7 @@ void game_init(Game *game) {
 
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
+    game->state = GAME_STATE_MAIN_MENU;
 
     calculateScaleAndOffset(game);
 
@@ -33,24 +34,45 @@ void game_init(Game *game) {
 void game_update(Game *game, float deltaTime) {
     calculateScaleAndOffset(game);
 
-    inputManager_update(&game->input, game->scale, game->screenOffset);
-    keyMap_processInput(&game->keyMap, &game->garden);
-    ui_processInput(&game->ui, &game->input, &game->garden);
+    switch (game->state) {
+    case GAME_STATE_MAIN_MENU:
+        if (IsKeyPressed(KEY_SPACE)) {
+            game->state = GAME_STATE_GARDEN;
+        }
+        break;
+    case GAME_STATE_GARDEN:
+        inputManager_update(&game->input, game->scale, game->screenOffset);
+        keyMap_processInput(&game->keyMap, &game->garden);
+        ui_processInput(&game->ui, &game->input, &game->garden);
 
-    garden_processClick(&game->garden, &game->input);
-    garden_update(&game->garden, deltaTime);
+        garden_processClick(&game->garden, &game->input);
+        garden_update(&game->garden, deltaTime);
+        break;
+    }
 }
 
 void game_draw(Game *game) {
-    Planter *selectedPlanter = &game->garden.planters[game->garden.selectedPlanter];
-
     // Draw scene in texture
     BeginTextureMode(game->target);
 
-    ClearBackground(WHITE);
+    switch (game->state) {
+    case GAME_STATE_MAIN_MENU:
+        ClearBackground(BLACK);
+        // TODO: change UI with some mechanism an draw here
+        int fontSize = 28;
+        const char *text = "Press space to start!";
+        int textWidth = MeasureText(text, fontSize);
+        float textPositionX = (game->screenSize.x - textWidth) / 2;
+        float textPositionY = (game->screenSize.y - fontSize) / 2;
 
-    ui_draw(&game->ui, selectedPlanter);
-    garden_draw(&game->garden);
+        DrawText(text, textPositionX, textPositionY, fontSize, WHITE);
+        break;
+    case GAME_STATE_GARDEN:
+        ClearBackground(WHITE);
+        ui_draw(&game->ui, &game->garden.planters[game->garden.selectedPlanter]);
+        garden_draw(&game->garden);
+        break;
+    }
 
     EndTextureMode();
 
