@@ -8,6 +8,10 @@ void planter_init(Planter *planter, Rectangle bounds) {
 }
 
 void planter_addPlant(Planter *planter) {
+    if (planter->hasPlant) {
+        return;
+    }
+
     plant_init(&planter->plant);
     planter->hasPlant = true;
 }

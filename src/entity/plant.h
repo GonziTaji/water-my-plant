@@ -17,4 +17,3 @@ void plant_feed(Plant *p);
 void plant_printStats(Plant *p);
 void plant_update(Plant *plant, float deltaTime);
 void plant_draw(Plant *plant, Vector2 origin);
-void plant_drawStats(Plant *plant, Vector2 origin);

@@ -5,7 +5,7 @@
 
 #define PLANT_STATE_COUNT 6
 
-static const float PLANT_TICKS_PER_SECOND = 2.0f;
+static const float PLANT_TICKS_PER_SECOND = 0.5f;
 static const float PLANT_TICK_TIME = 1.0f / PLANT_TICKS_PER_SECOND;
 
 static Texture2D plantTextures[PLANT_STATE_COUNT];
@@ -19,12 +19,12 @@ void plant_init(Plant *p) {
 }
 
 void plant_loadTextures() {
-    plantTextures[0] = LoadTexture("assets/plant_1.png");
-    plantTextures[1] = LoadTexture("assets/plant_2.png");
-    plantTextures[2] = LoadTexture("assets/plant_3.png");
-    plantTextures[3] = LoadTexture("assets/plant_4.png");
-    plantTextures[4] = LoadTexture("assets/plant_5.png");
-    plantTextures[5] = LoadTexture("assets/plant_6.png");
+    plantTextures[0] = LoadTexture("resources/assets/plant_1.png");
+    plantTextures[1] = LoadTexture("resources/assets/plant_2.png");
+    plantTextures[2] = LoadTexture("resources/assets/plant_3.png");
+    plantTextures[3] = LoadTexture("resources/assets/plant_4.png");
+    plantTextures[4] = LoadTexture("resources/assets/plant_5.png");
+    plantTextures[5] = LoadTexture("resources/assets/plant_6.png");
 }
 
 void plant_unloadTextures() {
@@ -100,27 +100,4 @@ void plant_draw(Plant *plant, Vector2 origin) {
     assert(t.id != 0);
 
     DrawTextureEx(t, origin, 0, textureScale, WHITE);
-}
-
-void plant_drawStats(Plant *plant, Vector2 origin) {
-    struct {
-        const char *label;
-        int value;
-    } stats[] = {
-        {"Water", plant->water},
-        {"Nutrients", plant->nutrients},
-        {"Health", plant->health},
-    };
-
-    int statsCount = sizeof(stats) / sizeof(stats[0]);
-    char buffer[64];
-
-    int x = origin.x;
-    int y = origin.y;
-
-    for (int i = 0; i < statsCount; i++) {
-        snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, stats[i].value);
-        DrawText(buffer, x, y, 16, BLACK);
-        y += 30;
-    }
 }

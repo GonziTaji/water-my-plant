@@ -2,6 +2,7 @@
 #include "../entity/garden.h"
 #include "../ui/ui.h"
 #include <raylib.h>
+#include <stdio.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -16,7 +17,7 @@ void calculateScaleAndOffset(Game *game) {
 }
 
 void game_init(Game *game) {
-    Vector2 screenSize = {800, 600};
+    Vector2 screenSize = {1920, 1080};
 
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
@@ -24,7 +25,7 @@ void game_init(Game *game) {
 
     calculateScaleAndOffset(game);
 
-    // SetTextureFilter(game->targetTexture.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(game->target.texture, TEXTURE_FILTER_BILINEAR);
 
     garden_init(&game->garden);
     ui_init(&game->ui);
@@ -33,6 +34,8 @@ void game_init(Game *game) {
 
 void game_update(Game *game, float deltaTime) {
     calculateScaleAndOffset(game);
+
+    inputManager_update(&game->input, game->scale, game->screenOffset);
 
     switch (game->state) {
     case GAME_STATE_MAIN_MENU:
@@ -59,18 +62,22 @@ void game_draw(Game *game) {
     case GAME_STATE_MAIN_MENU:
         ClearBackground(BLACK);
         // TODO: change UI with some mechanism an draw here
-        int fontSize = 28;
+        int fontSize = game->ui.font.baseSize * 2.0f;
         const char *text = "Press space to start!";
-        int textWidth = MeasureText(text, fontSize);
-        float textPositionX = (game->screenSize.x - textWidth) / 2;
-        float textPositionY = (game->screenSize.y - fontSize) / 2;
+        Vector2 textSize = MeasureTextEx(game->ui.font, text, fontSize, 0);
+        Vector2 textPos = {
+            (game->screenSize.x - textSize.x) / 2,
+            (game->screenSize.y - textSize.y) / 2,
+        };
 
-        DrawText(text, textPositionX, textPositionY, fontSize, WHITE);
+        DrawTextEx(game->ui.font, text, textPos, fontSize, 0, WHITE);
+
         break;
     case GAME_STATE_GARDEN:
-        ClearBackground(WHITE);
-        ui_draw(&game->ui, &game->garden.planters[game->garden.selectedPlanter]);
+        ClearBackground((Color){185, 131, 131, 100});
         garden_draw(&game->garden);
+        // UI must be at the end
+        ui_draw(&game->ui, &game->screenSize, &game->garden.planters[game->garden.selectedPlanter]);
         break;
     }
 
@@ -97,4 +104,6 @@ void game_draw(Game *game) {
 
 void game_unload(Game *game) {
     UnloadRenderTexture(game->target);
+    ui_unloadResources(&game->ui);
+    garden_unload();
 }

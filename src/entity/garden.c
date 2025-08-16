@@ -2,10 +2,15 @@
 #include "garden.h"
 #include "plant.h"
 #include <raylib.h>
+#include <stdio.h>
+
+Texture2D texture;
 
 void garden_init(Garden *garden) {
     garden->selectedPlanter = 0;
     garden->plantersCount = GARDEN_COLS * GARDEN_ROWS;
+
+    texture = LoadTexture("resources/assets/balcony_floor.png");
 
     for (int i = 0; i < garden->plantersCount; i++) {
         int col = i == 0 ? 0 : i % GARDEN_COLS;
@@ -36,6 +41,8 @@ void garden_processClick(Garden *garden, const InputManager *input) {
 }
 
 void garden_draw(Garden *garden) {
+    DrawTexture(texture, 300, 130, WHITE);
+
     for (int i = 0; i < garden->plantersCount; i++) {
         Color planterBorderColor = garden->selectedPlanter == i ? BEIGE : BROWN;
         Rectangle bounds = garden->planters[i].bounds;
@@ -65,4 +72,8 @@ int garden_getPlanterIndexFromPoint(Vector2 point) {
     } else {
         return -1;
     }
+}
+
+void garden_unload() {
+    UnloadTexture(texture);
 }

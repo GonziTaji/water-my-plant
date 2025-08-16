@@ -29,6 +29,9 @@ TODO:
 
     TODO:
     - [ ] Estudiar plantas para tomar una funcion en particular de agua y nutrientes sobre "vida"
+    - [ ] Unificar nombres de load/unload de recursos: game->load/plant->loadTexture/ui->loadResources
+
+    - [ ] Lugares predeterminados para los maceteros. + agregar/quitar maceteros??
 
 ### ✅ Milestone 3: Sistema de eventos y persistencia
     - [ ] Implementar sistema de eventos temporales (simular paso del tiempo).

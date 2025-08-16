@@ -12,7 +12,7 @@ all: $(OUT)
 # Enlazar objetos para crear el ejecutable
 $(OUT): $(OBJ)
 	@mkdir -p $(dir $@)
-	@cp -r assets build/
+	@cp -r resources build/
 	$(CC) $(OBJ) -o $@ $(RAYLIB_FLAGS)
 
 # Compilar cada .c a .o manteniendo la estructura
