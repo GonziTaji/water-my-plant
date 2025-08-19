@@ -10,8 +10,6 @@ int main(void) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(windowSize.x, windowSize.y, "My little plant");
 
-    plant_loadTextures();
-
     Game g;
     game_init(&g);
 
@@ -28,6 +26,7 @@ int main(void) {
     printf(">>>>>Unloading\n");
     plant_unloadTextures();
     game_unload(&g);
+    garden_unload();
     printf(">>>>>Unloaded\n");
 
     return 0;
