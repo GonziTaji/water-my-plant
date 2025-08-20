@@ -3,7 +3,7 @@
 #include <raylib.h>
 
 typedef struct {
-    Vector2 mousePosVirtual;
+    Vector2 worldMousePos;
     bool mouseButtonPressed[3];
     // Keycodes de teclas presionadas aqui cuando llegue el punto en que varios
     // subsistemas necesiten chequear sobre un key presionado

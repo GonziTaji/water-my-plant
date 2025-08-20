@@ -2,8 +2,7 @@
 #include "planter.h"
 #include <raylib.h>
 
-void planter_init(Planter *planter, Rectangle bounds) {
-    planter->bounds = bounds;
+void planter_init(Planter *planter) {
     planter->hasPlant = false;
 }
 
