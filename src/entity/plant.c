@@ -8,7 +8,7 @@
 static const float PLANT_TICKS_PER_SECOND = 0.5f;
 static const float PLANT_TICK_TIME = 1.0f / PLANT_TICKS_PER_SECOND;
 
-static Texture2D plantTextures[PLANT_STATE_COUNT];
+static Texture2D plantAtlas;
 
 void plant_init(Plant *p) {
     p->water = 100;
@@ -19,20 +19,11 @@ void plant_init(Plant *p) {
 }
 
 void plant_loadTextures() {
-    plantTextures[0] = LoadTexture("resources/assets/plant_1.png");
-    plantTextures[1] = LoadTexture("resources/assets/plant_2.png");
-    plantTextures[2] = LoadTexture("resources/assets/plant_3.png");
-    plantTextures[3] = LoadTexture("resources/assets/plant_4.png");
-    plantTextures[4] = LoadTexture("resources/assets/plant_5.png");
-    plantTextures[5] = LoadTexture("resources/assets/plant_6.png");
+    plantAtlas = LoadTexture("resources/assets/plant1.png");
 }
 
 void plant_unloadTextures() {
-    for (int i = 1; i < PLANT_STATE_COUNT; i++) {
-        if (plantTextures[i].id != 0) {
-            UnloadTexture(plantTextures[i]);
-        }
-    }
+    UnloadTexture(plantAtlas);
 }
 
 void plant_irrigate(Plant *p) {
@@ -92,12 +83,23 @@ void plant_update(Plant *plant, float deltaTime) {
     }
 }
 
-void plant_draw(Plant *plant, Vector2 origin) {
-    float textureScale = 2.0;
+/// The plant is drawn with the center of its base at the origin
+void plant_draw(Plant *plant, Vector2 tileBase) {
+    Rectangle source = {
+        plant->healthStatusIndex * PLANT_SPRITE_WIDTH,
+        0,
+        PLANT_SPRITE_WIDTH,
+        PLANT_SPRITE_HEIGHT,
+    };
 
-    Texture2D t = plantTextures[plant->healthStatusIndex];
+    Rectangle dest = {
+        tileBase.x,
+        tileBase.y,
+        PLANT_SPRITE_WIDTH,
+        PLANT_SPRITE_HEIGHT,
+    };
 
-    assert(t.id != 0);
+    Vector2 origin = {dest.width / 2, dest.height};
 
-    DrawTextureEx(t, origin, 0, textureScale, WHITE);
+    DrawTexturePro(plantAtlas, source, dest, origin, 0, WHITE);
 }

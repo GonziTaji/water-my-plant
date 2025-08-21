@@ -2,7 +2,6 @@
 #include "../entity/garden.h"
 #include "../ui/ui.h"
 #include <raylib.h>
-#include <stdio.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -77,7 +76,7 @@ void game_draw(Game *game) {
         ClearBackground((Color){185, 131, 131, 100});
         garden_draw(&game->garden);
         // UI must be at the end
-        ui_draw(&game->ui, &game->screenSize, &game->garden.planters[game->garden.selectedPlanter]);
+        ui_draw(&game->ui, &game->screenSize, &game->garden);
         break;
     }
 

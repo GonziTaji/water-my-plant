@@ -59,7 +59,7 @@ void ui_processInput(UI *ui, const InputManager *input, Garden *garden) {
     }
 }
 
-void ui_draw(UI *ui, const Vector2 *screenSize, const Planter *selectedPlanter) {
+void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
     int buttonGridHeight = (BUTTON_ROWS * BUTTON_HEIGHT) + ((BUTTON_ROWS - 1) * BUTTON_SPACING_Y) +
                            (BUTTON_GRID_PADDING_Y * 2);
     int buttonGridWidth = (BUTTON_COLS * BUTTON_WIDTH) + ((BUTTON_COLS - 1) * BUTTON_SPACING_X) +
@@ -87,7 +87,9 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Planter *selectedPlanter) 
         DrawTextEx(ui->font, ui->buttons[i].label, textPos, fontSize, 0, WHITE);
     }
 
-    if (selectedPlanter->hasPlant) {
+    if (garden->selectedPlanter != -1 && garden->planters[garden->selectedPlanter].hasPlant) {
+        const Planter *selectedPlanter = &garden->planters[garden->selectedPlanter];
+
         struct {
             const char *label;
             int value;

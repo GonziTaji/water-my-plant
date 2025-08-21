@@ -1,6 +1,9 @@
 #pragma once
 #include <raylib.h>
 
+#define PLANT_SPRITE_WIDTH 32
+#define PLANT_SPRITE_HEIGHT 64
+
 typedef struct {
     int water;
     int nutrients;
