@@ -1,5 +1,5 @@
 #pragma once
-#include "../entity/plant.h"
+
 #include "../ui/key_map.h"
 #include "../ui/ui.h"
 #include <raylib.h>

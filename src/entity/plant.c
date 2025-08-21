@@ -1,4 +1,5 @@
 #include "plant.h"
+#include "../game/constants.h"
 #include "raylib.h"
 #include <assert.h>
 #include <stdio.h>
@@ -95,8 +96,8 @@ void plant_draw(Plant *plant, Vector2 tileBase) {
     Rectangle dest = {
         tileBase.x,
         tileBase.y,
-        PLANT_SPRITE_WIDTH,
-        PLANT_SPRITE_HEIGHT,
+        PLANT_SPRITE_WIDTH * WORLD_SCALE,
+        PLANT_SPRITE_HEIGHT * WORLD_SCALE,
     };
 
     Vector2 origin = {dest.width / 2, dest.height};
