@@ -1,1 +1,1 @@
-#define WORLD_SCALE 3.0f
+#define WORLD_SCALE 1.0f

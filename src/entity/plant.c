@@ -52,6 +52,14 @@ void plant_update(Plant *plant, float deltaTime) {
         plant->nutrients -= 2;
         plant->water -= 3;
 
+        if (plant->nutrients < 0) {
+            plant->nutrients = 0;
+        }
+
+        if (plant->water < 0) {
+            plant->water = 0;
+        }
+
         if (plant->water > 100) {
             plant->health -= (plant->water - 100) / 10;
         } else if (plant->water < 30) {
@@ -66,6 +74,10 @@ void plant_update(Plant *plant, float deltaTime) {
             plant->health += (plant->nutrients - 30) / 20;
         } else if (plant->nutrients < 30) {
             plant->health -= (30 - plant->nutrients) / 10;
+        }
+
+        if (plant->health < 0) {
+            plant->health = 0;
         }
     }
 
@@ -85,7 +97,7 @@ void plant_update(Plant *plant, float deltaTime) {
 }
 
 /// The plant is drawn with the center of its base at the origin
-void plant_draw(Plant *plant, Vector2 tileBase) {
+void plant_draw(Plant *plant, Vector2 origin) {
     Rectangle source = {
         plant->healthStatusIndex * PLANT_SPRITE_WIDTH,
         0,
@@ -94,13 +106,13 @@ void plant_draw(Plant *plant, Vector2 tileBase) {
     };
 
     Rectangle dest = {
-        tileBase.x,
-        tileBase.y,
+        origin.x,
+        origin.y,
         PLANT_SPRITE_WIDTH * WORLD_SCALE,
         PLANT_SPRITE_HEIGHT * WORLD_SCALE,
     };
 
-    Vector2 origin = {dest.width / 2, dest.height};
+    Vector2 pivot = {dest.width / 2, dest.height};
 
-    DrawTexturePro(plantAtlas, source, dest, origin, 0, WHITE);
+    DrawTexturePro(plantAtlas, source, dest, pivot, 0, WHITE);
 }

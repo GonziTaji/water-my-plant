@@ -1,7 +1,7 @@
 #pragma once
 #include <raylib.h>
 
-#define PLANT_SPRITE_WIDTH 32
+#define PLANT_SPRITE_WIDTH 64
 #define PLANT_SPRITE_HEIGHT 64
 
 typedef struct {

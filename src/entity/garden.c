@@ -4,7 +4,7 @@
 #include "plant.h"
 #include <raylib.h>
 
-Texture2D texture;
+Texture2D gardenTexture;
 
 typedef struct {
     Vector2 vertices[4];
@@ -73,12 +73,13 @@ RectVertices getPlanterIsoVertices(int planterIndex) {
 
 void garden_init(Garden *garden) {
     plant_loadTextures();
+    planter_loadTextures();
 
     garden->selectedPlanter = 0;
     garden->plantersCount = GARDEN_COLS * GARDEN_ROWS;
 
-    texture = LoadTexture("resources/assets/floor.png");
-    SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+    gardenTexture = LoadTexture("resources/assets/floor.png");
+    SetTextureFilter(gardenTexture, TEXTURE_FILTER_BILINEAR);
 
     for (int i = 0; i < garden->plantersCount; i++) {
         planter_init(&garden->planters[i]);
@@ -107,18 +108,18 @@ void garden_processClick(Garden *garden, const InputManager *input) {
 }
 
 void garden_draw(Garden *garden) {
-    Rectangle source = {0, 0, texture.width, texture.height};
+    Rectangle source = {0, 0, gardenTexture.width, gardenTexture.height};
 
     Rectangle dest = {
         GARDEN_ORIGIN_X,
         GARDEN_ORIGIN_Y,
-        texture.width * WORLD_SCALE,
-        texture.height * WORLD_SCALE,
+        gardenTexture.width * WORLD_SCALE,
+        gardenTexture.height * WORLD_SCALE,
     };
 
     Vector2 origin = {dest.width / 2, 0};
 
-    DrawTexturePro(texture, source, dest, origin, 0, WHITE);
+    DrawTexturePro(gardenTexture, source, dest, origin, 0, WHITE);
 
     for (int i = 0; i < garden->plantersCount; i++) {
         Vector2 *rv = getPlanterIsoVertices(i).vertices;
@@ -132,13 +133,20 @@ void garden_draw(Garden *garden) {
             DrawLineEx(rv[3], rv[0], 2, planterBorderColor);
         }
 
+        Vector2 tileBase = {rv[2].x, rv[2].y};
+
+        planter_draw(&garden->planters[i], tileBase);
+
+        Vector2 plantOrigin = {tileBase.x, tileBase.y - garden->planters[i].height};
+
         if (garden->planters[i].hasPlant) {
-            plant_draw(&garden->planters[i].plant, (Vector2){rv[2].x, rv[2].y});
+            plant_draw(&garden->planters[i].plant, plantOrigin);
         }
     }
 }
 
 void garden_unload() {
-    UnloadTexture(texture);
+    UnloadTexture(gardenTexture);
     plant_unloadTextures();
+    planter_unloadTextures();
 }
