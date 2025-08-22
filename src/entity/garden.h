@@ -10,11 +10,17 @@
 #define GARDEN_ORIGIN_X 900
 #define GARDEN_ORIGIN_Y 160
 
+// TODO: maybe export to it's own file
 typedef struct {
-    Planter planters[GARDEN_ROWS * GARDEN_COLS];
-    int selectedPlanter;
-    int hoveredPlanter;
-    int plantersCount;
+    bool hasPlanter;
+    Planter planter;
+} GardenTile;
+
+typedef struct {
+    GardenTile tiles[GARDEN_ROWS * GARDEN_COLS];
+    int tileSelected;
+    int tileHovered;
+    int tilesCount;
 } Garden;
 
 void garden_init(Garden *garden);

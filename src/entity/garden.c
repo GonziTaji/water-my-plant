@@ -75,21 +75,21 @@ void garden_init(Garden *garden) {
     plant_loadTextures();
     planter_loadTextures();
 
-    garden->selectedPlanter = 0;
-    garden->plantersCount = GARDEN_COLS * GARDEN_ROWS;
+    garden->tileSelected = 0;
+    garden->tilesCount = GARDEN_COLS * GARDEN_ROWS;
 
     gardenTexture = LoadTexture("resources/assets/floor.png");
     SetTextureFilter(gardenTexture, TEXTURE_FILTER_BILINEAR);
 
-    for (int i = 0; i < garden->plantersCount; i++) {
-        planter_init(&garden->planters[i]);
+    for (int i = 0; i < garden->tilesCount; i++) {
+        garden->tiles[i].hasPlanter = false;
     }
 }
 
 void garden_update(Garden *garden, float deltaTime) {
-    for (int i = 0; i < garden->plantersCount; i++) {
-        if (garden->planters[i].hasPlant) {
-            plant_update(&garden->planters[i].plant, deltaTime);
+    for (int i = 0; i < garden->tilesCount; i++) {
+        if (garden->tiles[i].hasPlanter && garden->tiles[i].planter.hasPlant) {
+            plant_update(&garden->tiles[i].planter.plant, deltaTime);
         }
     }
 }
@@ -100,10 +100,10 @@ void garden_processClick(Garden *garden, const InputManager *input) {
 
     int cellHoveredIndex = getPlanterIndexFromCoords(cellHoveredCoords.x, cellHoveredCoords.y);
 
-    garden->hoveredPlanter = cellHoveredIndex;
+    garden->tileHovered = cellHoveredIndex;
 
     if (input->mouseButtonPressed[0]) {
-        garden->selectedPlanter = cellHoveredIndex;
+        garden->tileSelected = cellHoveredIndex;
     }
 }
 
@@ -121,11 +121,11 @@ void garden_draw(Garden *garden) {
 
     DrawTexturePro(gardenTexture, source, dest, origin, 0, WHITE);
 
-    for (int i = 0; i < garden->plantersCount; i++) {
+    for (int i = 0; i < garden->tilesCount; i++) {
         Vector2 *rv = getPlanterIsoVertices(i).vertices;
 
-        if (garden->selectedPlanter == i || garden->hoveredPlanter == i) {
-            Color planterBorderColor = garden->selectedPlanter == i ? DARKBROWN : BROWN;
+        if (garden->tileSelected == i || garden->tileHovered == i) {
+            Color planterBorderColor = garden->tileSelected == i ? DARKBROWN : BROWN;
 
             DrawLineEx(rv[0], rv[1], 2, planterBorderColor);
             DrawLineEx(rv[1], rv[2], 2, planterBorderColor);
@@ -135,12 +135,15 @@ void garden_draw(Garden *garden) {
 
         Vector2 tileBase = {rv[2].x, rv[2].y};
 
-        planter_draw(&garden->planters[i], tileBase);
+        if (garden->tiles[i].hasPlanter) {
+            Planter *planter = &garden->tiles[i].planter;
 
-        Vector2 plantOrigin = {tileBase.x, tileBase.y - garden->planters[i].height};
+            planter_draw(&garden->tiles[i].planter, tileBase);
 
-        if (garden->planters[i].hasPlant) {
-            plant_draw(&garden->planters[i].plant, plantOrigin);
+            if (planter->hasPlant) {
+                Vector2 plantOrigin = {tileBase.x, tileBase.y - (planter->height * WORLD_SCALE)};
+                plant_draw(&planter->plant, plantOrigin);
+            }
         }
     }
 }

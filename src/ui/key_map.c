@@ -16,12 +16,14 @@ void registerCommand(KeyMap *keyMap, CommandFunction command, int key) {
 void keyMap_init(KeyMap *keyMap) {
     keyMap->registeredCommandsCount = 0;
 
+    registerCommand(keyMap, &command_addPlanter, KEY_M);
+    registerCommand(keyMap, &command_removePlanter, KEY_C);
     registerCommand(keyMap, &command_addPlant, KEY_A);
     registerCommand(keyMap, &command_removePlant, KEY_R);
-    registerCommand(keyMap, &command_focusNextPlanter, KEY_N);
-    registerCommand(keyMap, &command_focusNextPlanter, KEY_RIGHT);
-    registerCommand(keyMap, &command_focusPreviousPlanter, KEY_P);
-    registerCommand(keyMap, &command_focusPreviousPlanter, KEY_LEFT);
+    registerCommand(keyMap, &command_focusNextTile, KEY_N);
+    registerCommand(keyMap, &command_focusNextTile, KEY_RIGHT);
+    registerCommand(keyMap, &command_focusPreviousTile, KEY_P);
+    registerCommand(keyMap, &command_focusPreviousTile, KEY_LEFT);
     registerCommand(keyMap, &command_irrigate, KEY_W);
     registerCommand(keyMap, &command_feed, KEY_F);
 }

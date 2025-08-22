@@ -3,7 +3,7 @@
 #include "../entity/planter.h"
 #include "button.h"
 
-#define BUTTON_ROWS 6
+#define BUTTON_ROWS 8
 #define BUTTON_COLS 1
 #define BUTTON_WIDTH 200
 #define BUTTON_HEIGHT 80
@@ -21,6 +21,6 @@ typedef struct {
 } UI;
 
 void ui_init(UI *ui);
-void ui_processInput(UI *ui, const InputManager *input, Garden *garden);
+void ui_processInput(UI *ui, InputManager *input, Garden *garden);
 void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden);
 void ui_unloadResources(UI *ui);

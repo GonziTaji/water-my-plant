@@ -19,10 +19,12 @@ void ui_init(UI *ui) {
     UIButton uiButtons[] = {
         (UIButton){.label = "[W]ater", .command = command_irrigate},
         (UIButton){.label = "[F]eed", .command = command_feed},
+        (UIButton){.label = "Add planter [M]", .command = command_addPlanter},
+        (UIButton){.label = "Remove planter [C]", .command = command_removePlanter},
         (UIButton){.label = "[A]dd plant", .command = command_addPlant},
         (UIButton){.label = "[R]emove plant", .command = command_removePlant},
-        (UIButton){.label = "[N]ext planter", .command = command_focusNextPlanter},
-        (UIButton){.label = "[P]prev. planter", .command = command_focusPreviousPlanter},
+        (UIButton){.label = "[N]ext tile", .command = command_focusNextTile},
+        (UIButton){.label = "[P]rev tile", .command = command_focusPreviousTile},
     };
 
     ui->buttonsCount = sizeof(uiButtons) / sizeof(uiButtons[0]);
@@ -44,7 +46,7 @@ void ui_init(UI *ui) {
     }
 }
 
-void ui_processInput(UI *ui, const InputManager *input, Garden *garden) {
+void ui_processInput(UI *ui, InputManager *input, Garden *garden) {
     for (int i = 0; i < ui->buttonsCount; i++) {
         ui->buttons[i].isMouseOver = button_isMouseOver(&ui->buttons[i], input);
     }
@@ -52,6 +54,7 @@ void ui_processInput(UI *ui, const InputManager *input, Garden *garden) {
     if (input->mouseButtonPressed[0]) {
         for (int i = 0; i < ui->buttonsCount; i++) {
             if (ui->buttons[i].isMouseOver) {
+                input->mouseButtonPressed[0] = false;
                 ui->buttons[i].command(garden);
                 return;
             }
@@ -87,8 +90,9 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
         DrawTextEx(ui->font, ui->buttons[i].label, textPos, fontSize, 0, WHITE);
     }
 
-    if (garden->selectedPlanter != -1 && garden->planters[garden->selectedPlanter].hasPlant) {
-        const Planter *selectedPlanter = &garden->planters[garden->selectedPlanter];
+    if (garden->tileSelected != -1 && garden->tiles[garden->tileSelected].hasPlanter &&
+        garden->tiles[garden->tileSelected].planter.hasPlant) {
+        const Planter *selectedPlanter = &garden->tiles[garden->tileSelected].planter;
 
         struct {
             const char *label;
