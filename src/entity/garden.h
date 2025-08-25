@@ -14,6 +14,7 @@
 typedef struct {
     bool hasPlanter;
     Planter planter;
+    int lightLevel;
 } GardenTile;
 
 typedef struct {
@@ -21,10 +22,12 @@ typedef struct {
     int tileSelected;
     int tileHovered;
     int tilesCount;
+    Vector2 lightSourcePos;
+    int lightSourceLevel;
 } Garden;
 
 void garden_init(Garden *garden);
-void garden_processClick(Garden *garden, const InputManager *input);
+void garden_processClick(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime);
 void garden_unload();

@@ -43,7 +43,6 @@ void game_update(Game *game, float deltaTime) {
         }
         break;
     case GAME_STATE_GARDEN:
-        inputManager_update(&game->input, game->scale, game->screenOffset);
         keyMap_processInput(&game->keyMap, &game->garden);
         ui_processInput(&game->ui, &game->input, &game->garden);
 
@@ -77,6 +76,7 @@ void game_draw(Game *game) {
         garden_draw(&game->garden);
         // UI must be at the end
         ui_draw(&game->ui, &game->screenSize, &game->garden);
+        inputManager_drawMousePos(&game->input, game->screenSize);
         break;
     }
 

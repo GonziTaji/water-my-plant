@@ -90,48 +90,72 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
         DrawTextEx(ui->font, ui->buttons[i].label, textPos, fontSize, 0, WHITE);
     }
 
-    if (garden->tileSelected != -1 && garden->tiles[garden->tileSelected].hasPlanter &&
-        garden->tiles[garden->tileSelected].planter.hasPlant) {
-        const Planter *selectedPlanter = &garden->tiles[garden->tileSelected].planter;
+    if (garden->tileSelected != -1) {
+        bool hasPlant = garden->tiles[garden->tileSelected].hasPlanter &&
+                        garden->tiles[garden->tileSelected].planter.hasPlant;
 
-        struct {
-            const char *label;
-            int value;
-        } stats[] = {
-            {"Water", selectedPlanter->plant.water},
-            {"Nutrients", selectedPlanter->plant.nutrients},
-            {"Health", selectedPlanter->plant.health},
-        };
+        int fontSize = 30;
+        int tileInfoRecPadding = 20;
+        int tileInfoRecWidth = 300;
 
-        const char *title = "Plant stats";
+        // Height = 2 lines of text and padding top and bottom
+        Rectangle tileInfoPos = {screenSize->x - tileInfoRecWidth,
+            0,
+            tileInfoRecWidth,
+            tileInfoRecPadding * 2 + fontSize * 2};
 
-        int statsCount = sizeof(stats) / sizeof(stats[0]);
-        char buffer[64];
-
-        int titleFontSize = 36;
-        int statFontSize = 32;
-
-        float widestText = MeasureTextEx(ui->font, title, titleFontSize, 0).x;
-
-        for (int i = 0; i < statsCount; i++) {
-            // TODO: MAX_STAT_VALUE?
-            snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, 1000);
-            float statTextWidth = widestText = MeasureTextEx(ui->font, buffer, statFontSize, 0).x;
-
-            if (statTextWidth > widestText) {
-                widestText = statTextWidth;
-            }
+        if (hasPlant) {
+            // Space for 3 lines of text for plant stats
+            tileInfoPos.height += fontSize * 3;
+        } else {
+            // Space for 1 line of text for "None" (no plant)
+            tileInfoPos.height += fontSize;
         }
 
-        Vector2 textPos = {screenSize->x - widestText - 20, 20};
+        DrawRectangle(tileInfoPos.x, tileInfoPos.y, tileInfoPos.width, tileInfoPos.height, GRAY);
 
-        DrawTextEx(ui->font, title, textPos, titleFontSize, 0, BLACK);
-        textPos.y += 30;
+        char buffer[64];
+        int fontSpacing = 0;
 
-        for (int i = 0; i < statsCount; i++) {
-            snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, stats[i].value);
-            DrawTextEx(ui->font, buffer, textPos, statFontSize, 0, BLACK);
-            textPos.y += 30;
+        snprintf(buffer,
+            sizeof(buffer),
+            "Light level: %d",
+            garden->tiles[garden->tileSelected].lightLevel);
+
+        Vector2 textPos = {tileInfoPos.x + tileInfoRecPadding, tileInfoPos.y + tileInfoRecPadding};
+
+        DrawTextEx(ui->font, buffer, textPos, fontSize, fontSpacing, BLACK);
+
+        textPos.y += fontSize;
+
+        DrawTextEx(ui->font, "Plant:", textPos, fontSize, fontSpacing, BLACK);
+
+        textPos.y += fontSize;
+
+        if (garden->tiles[garden->tileSelected].hasPlanter &&
+            garden->tiles[garden->tileSelected].planter.hasPlant) {
+            const Planter *selectedPlanter = &garden->tiles[garden->tileSelected].planter;
+
+            struct {
+                const char *label;
+                int value;
+            } stats[] = {
+                {"Water", selectedPlanter->plant.water},
+                {"Nutrients", selectedPlanter->plant.nutrients},
+                {"Health", selectedPlanter->plant.health},
+            };
+
+            int statsCount = 3;
+
+            char buffer[64];
+
+            for (int i = 0; i < statsCount; i++) {
+                snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, stats[i].value);
+                DrawTextEx(ui->font, buffer, textPos, fontSize, 0, BLACK);
+                textPos.y += fontSize;
+            }
+        } else {
+            DrawTextEx(ui->font, "None", textPos, fontSize, 0, BLACK);
         }
     }
 }

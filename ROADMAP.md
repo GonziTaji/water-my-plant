@@ -69,19 +69,10 @@ Misc.
 
 ### ✅ Milestone: Mejoras antes de continuar
 
-- [ ] Sprite para macetero
-- [ ] Mostrar stats visuales (texto o barras). (listo en "Milestone: Núcleo del juego" pero hagamoslo mas boni)
-- [ ] No de-seleccionar planter cuando se clickea la UI
+- [X] Sprite para macetero
+- [X] Mostrar stats visuales (texto o barras). (listo en "Milestone: Núcleo del juego" pero hagamoslo mas boni)
+- [X] No de-seleccionar planter cuando se clickea la UI
   => Esto lo hacemos procesando el click en la UI primero y "usando" el click para que en el garden no se procese
-
-### ✅ Milestone: Persistencia
-
-- [ ] Agregar guardado/carga en archivo (`.txt`, `.json`, etc.).
-  => UI de menu principal Cargar/Nuevo
-  => Definir estructura de datos para determinar como guardarlos
-- [ ] 3 slots para guardar
-  => fecha de inicio / fecha de modificacion
-  => fechas guardadas en el mismo savefile para simplificar
 
 ### ✅ Milestone: Paso del tiempo y reacción de plantas sobre el tiempo
 
@@ -94,7 +85,6 @@ Misc.
     => Podría hacerse que las plantas consuman menos de cada cosa dependiendo del tipo
     => Por cada tick de planta baja X candidad de nutrientes y agua
     => Dependiendo de la planta, estar sin agua por X cantidad de ticks puede bajar mucho o poco la salud
-
 
 ### ✅ Milestone: Evolución y ambiente
 
@@ -111,6 +101,14 @@ Misc.
       . verano: luz AM que es temperatura 3, o PM que es temperatura 5
       . invierno: luz AM que es temperatura 3, o PM que es temperatura 1
 
+### ✅ Milestone: Persistencia
+
+- [ ] Agregar guardado/carga en archivo (`.txt`, `.json`, etc.).
+  => UI de menu principal Cargar/Nuevo
+  => Definir estructura de datos para determinar como guardarlos
+- [ ] 3 slots para guardar
+  => fecha de inicio / fecha de modificacion
+  => fechas guardadas en el mismo savefile para simplificar
 
 ### ✅ Milestone: UI/UX
 

@@ -2,7 +2,10 @@
 #include "garden.h"
 #include "../game/constants.h"
 #include "plant.h"
+#include <math.h>
 #include <raylib.h>
+
+#define LIGHT_SOURCE_RADIUS 40
 
 Texture2D gardenTexture;
 
@@ -71,10 +74,24 @@ RectVertices getPlanterIsoVertices(int planterIndex) {
     return rv;
 }
 
+void updateLightLevelOfTiles(Garden *garden) {
+    Vector2 lightSourceInGrid =
+        screenCoordsToGridCoords(garden->lightSourcePos.x, garden->lightSourcePos.y);
+
+    for (int i = 0; i < garden->tilesCount; i++) {
+        Vector2 tileCoords = getPlanterCoordsFromIndex(i);
+        float distance = sqrtf(pow(tileCoords.x - lightSourceInGrid.x, 2) +
+                               pow(tileCoords.y - lightSourceInGrid.y, 2));
+        garden->tiles[i].lightLevel = garden->lightSourceLevel - distance;
+    }
+}
+
 void garden_init(Garden *garden) {
     plant_loadTextures();
     planter_loadTextures();
 
+    garden->lightSourceLevel = 12;
+    garden->lightSourcePos = (Vector2){GARDEN_ORIGIN_X + 100, GARDEN_ORIGIN_Y - 100};
     garden->tileSelected = 0;
     garden->tilesCount = GARDEN_COLS * GARDEN_ROWS;
 
@@ -84,17 +101,35 @@ void garden_init(Garden *garden) {
     for (int i = 0; i < garden->tilesCount; i++) {
         garden->tiles[i].hasPlanter = false;
     }
+
+    updateLightLevelOfTiles(garden);
 }
 
 void garden_update(Garden *garden, float deltaTime) {
     for (int i = 0; i < garden->tilesCount; i++) {
+
         if (garden->tiles[i].hasPlanter && garden->tiles[i].planter.hasPlant) {
             plant_update(&garden->tiles[i].planter.plant, deltaTime);
         }
     }
 }
 
-void garden_processClick(Garden *garden, const InputManager *input) {
+void garden_processClick(Garden *garden, InputManager *input) {
+    // Drag light source to test mechanic
+    bool isMouseInLightSource = CheckCollisionPointCircle(
+        input->worldMousePos, garden->lightSourcePos, LIGHT_SOURCE_RADIUS);
+
+    if (isMouseInLightSource && IsMouseButtonDown(0)) {
+        garden->lightSourcePos = (Vector2){
+            garden->lightSourcePos.x - input->worldMouseDelta.x,
+            garden->lightSourcePos.y - input->worldMouseDelta.y,
+        };
+
+        updateLightLevelOfTiles(garden);
+
+        input->mouseButtonPressed[0] = false;
+    }
+
     Vector2 cellHoveredCoords =
         screenCoordsToGridCoords(input->worldMousePos.x, input->worldMousePos.y);
 
@@ -104,6 +139,7 @@ void garden_processClick(Garden *garden, const InputManager *input) {
 
     if (input->mouseButtonPressed[0]) {
         garden->tileSelected = cellHoveredIndex;
+        input->mouseButtonPressed[0] = false;
     }
 }
 
@@ -146,6 +182,8 @@ void garden_draw(Garden *garden) {
             }
         }
     }
+
+    DrawCircle(garden->lightSourcePos.x, garden->lightSourcePos.y, LIGHT_SOURCE_RADIUS, YELLOW);
 }
 
 void garden_unload() {

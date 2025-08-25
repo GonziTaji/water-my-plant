@@ -12,7 +12,7 @@
 #define BUTTON_GRID_PADDING_X 8
 #define BUTTON_GRID_PADDING_Y 8
 #define BUTTON_GRID_ORIGIN_X 20
-#define BUTTON_GRID_ORIGIN_Y 300
+#define BUTTON_GRID_ORIGIN_Y 20
 
 typedef struct {
     UIButton buttons[BUTTON_ROWS * BUTTON_COLS];
