@@ -187,9 +187,9 @@ void garden_processClick(Garden *garden, InputManager *input) {
 
     garden->tileHovered = cellHoveredIndex;
 
-    if (input->mouseButtonPressed[0]) {
+    if (input->mouseButtonPressed[MOUSE_BUTTON_LEFT]) {
         garden->tileSelected = cellHoveredIndex;
-        input->mouseButtonPressed[0] = false;
+        input->mouseButtonPressed[MOUSE_BUTTON_LEFT] = false;
     }
 }
 

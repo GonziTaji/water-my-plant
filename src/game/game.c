@@ -28,7 +28,7 @@ void game_init(Game *game) {
     SetTextureFilter(game->target.texture, TEXTURE_FILTER_BILINEAR);
 
     garden_init(&game->garden);
-    ui_init(&game->ui);
+    ui_init(&game->ui, &screenSize);
     keyMap_init(&game->keyMap);
 }
 

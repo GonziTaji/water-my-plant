@@ -20,10 +20,6 @@ void inputManager_update(InputManager *input, float scale, Vector2 screenOffset)
     for (int i = 0; i < 3; i++) {
         input->mouseButtonPressed[i] = IsMouseButtonPressed(i);
     }
-
-    if (input->mouseButtonPressed[0]) {
-        printf("Mouse pressed at %f %f\n", input->worldMousePos.x, input->worldMousePos.y);
-    }
 }
 
 // For debug purposes
