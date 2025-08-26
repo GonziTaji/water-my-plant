@@ -1,4 +1,5 @@
 #include "game.h"
+#include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../ui/ui.h"
 #include <raylib.h>
@@ -60,15 +61,15 @@ void game_draw(Game *game) {
     case GAME_STATE_MAIN_MENU:
         ClearBackground(BLACK);
         // TODO: change UI with some mechanism an draw here
-        int fontSize = game->ui.font.baseSize * 2.0f;
+        int fontSize = uiFont.baseSize * 2.0f;
         const char *text = "Press space to start!";
-        Vector2 textSize = MeasureTextEx(game->ui.font, text, fontSize, 0);
+        Vector2 textSize = MeasureTextEx(uiFont, text, fontSize, 0);
         Vector2 textPos = {
             (game->screenSize.x - textSize.x) / 2,
             (game->screenSize.y - textSize.y) / 2,
         };
 
-        DrawTextEx(game->ui.font, text, textPos, fontSize, 0, WHITE);
+        DrawTextEx(uiFont, text, textPos, fontSize, 0, WHITE);
 
         break;
     case GAME_STATE_GARDEN:
@@ -99,10 +100,4 @@ void game_draw(Game *game) {
 
     DrawTexturePro(game->target.texture, source, dest, origin, 0.0f, WHITE);
     EndDrawing();
-}
-
-void game_unload(Game *game) {
-    UnloadRenderTexture(game->target);
-    ui_unloadResources(&game->ui);
-    garden_unload();
 }

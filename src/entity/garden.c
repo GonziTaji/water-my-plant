@@ -1,5 +1,6 @@
 
 #include "garden.h"
+#include "../core/asset_manager.h"
 #include "../game/constants.h"
 #include "plant.h"
 #include <math.h>
@@ -9,8 +10,6 @@
 #define LIGHT_SOURCE_RADIUS 40
 #define MAX_TIME 1440         // minutes in a 24h day
 #define SECONDS_PER_MINUTE 10 // real seconds equivalent to a game minute
-
-Texture2D gardenTexture;
 
 typedef struct {
     Vector2 vertices[4];
@@ -134,18 +133,12 @@ void updateLightLevelOfTiles(Garden *garden) {
 }
 
 void garden_init(Garden *garden) {
-    plant_loadTextures();
-    planter_loadTextures();
-
     garden->time = 0;
     garden->secondsPassed = 0;
     garden->lightSourceLevel = 12;
     garden->lightSourcePos = getLightSourcePosition(garden->time);
     garden->tileSelected = 0;
     garden->tilesCount = GARDEN_COLS * GARDEN_ROWS;
-
-    gardenTexture = LoadTexture("resources/assets/floor.png");
-    SetTextureFilter(gardenTexture, TEXTURE_FILTER_BILINEAR);
 
     for (int i = 0; i < garden->tilesCount; i++) {
         garden->tiles[i].hasPlanter = false;
@@ -255,10 +248,4 @@ void garden_draw(Garden *garden) {
 
     snprintf(buffer, 64, "Raw time: %d", garden->time);
     DrawText(buffer, 300, 30, 30, WHITE);
-}
-
-void garden_unload() {
-    UnloadTexture(gardenTexture);
-    plant_unloadTextures();
-    planter_unloadTextures();
 }

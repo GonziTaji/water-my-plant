@@ -15,4 +15,3 @@ void planter_init(Planter *planter);
 void planter_addPlant(Planter *planter);
 void planter_removePlant(Planter *planter);
 void planter_draw(Planter *planter, Vector2 origin);
-void planter_unloadTextures();

@@ -17,10 +17,8 @@
 typedef struct {
     UIButton buttons[BUTTON_ROWS * BUTTON_COLS];
     int buttonsCount;
-    Font font;
 } UI;
 
 void ui_init(UI *ui);
 void ui_processInput(UI *ui, InputManager *input, Garden *garden);
 void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden);
-void ui_unloadResources(UI *ui);

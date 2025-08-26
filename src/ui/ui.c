@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "../core/asset_manager.h"
 #include "../entity/planter.h"
 #include "button.h"
 #include "commands.h"
@@ -7,21 +8,23 @@
 #include <assert.h>
 #include <stdio.h>
 
+bool showPlantSelection = false;
+
+void tmpCommant_showPlantSelection(Garden *g) {
+    showPlantSelection = true;
+}
+
 void ui_init(UI *ui) {
-    const char *fontUrl = "resources/fonts/friendlyscribbles/friendlyscribbles.ttf";
 
-    ui->font = LoadFontEx(fontUrl, 64, NULL, 0);
-
-    printf("Font base size: %d\n", ui->font.baseSize);
-
-    SetTextureFilter(ui->font.texture, TEXTURE_FILTER_BILINEAR);
+    printf("Font base size: %d\n", uiFont.baseSize);
 
     UIButton uiButtons[] = {
         (UIButton){.label = "[W]ater", .command = command_irrigate},
         (UIButton){.label = "[F]eed", .command = command_feed},
         (UIButton){.label = "Add planter [M]", .command = command_addPlanter},
         (UIButton){.label = "Remove planter [C]", .command = command_removePlanter},
-        (UIButton){.label = "[A]dd plant", .command = command_addPlant},
+        // (UIButton){.label = "[A]dd plant", .command = command_addPlant},
+        (UIButton){.label = "[A]dd plant", .command = tmpCommant_showPlantSelection},
         (UIButton){.label = "[R]emove plant", .command = command_removePlant},
         (UIButton){.label = "[N]ext tile", .command = command_focusNextTile},
         (UIButton){.label = "[P]rev tile", .command = command_focusPreviousTile},
@@ -32,8 +35,8 @@ void ui_init(UI *ui) {
     assert(ui->buttonsCount <= BUTTON_COLS * BUTTON_ROWS);
 
     for (int i = 0; i < ui->buttonsCount; i++) {
-        int col = i == 0 ? 0 : i % BUTTON_COLS;
-        int row = i == 0 ? 0 : i / BUTTON_COLS;
+        int col = i % BUTTON_COLS;
+        int row = i / BUTTON_COLS;
         float x =
             BUTTON_GRID_ORIGIN_X + BUTTON_GRID_PADDING_X + col * (BUTTON_WIDTH + BUTTON_SPACING_X);
         float y =
@@ -80,14 +83,14 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
             ui->buttons[i].bounds.height,
             buttonColor);
 
-        int fontSize = ui->font.baseSize * 0.5f;
-        Vector2 textSize = MeasureTextEx(ui->font, ui->buttons[i].label, fontSize, 0);
+        int fontSize = uiFont.baseSize * 0.5f;
+        Vector2 textSize = MeasureTextEx(uiFont, ui->buttons[i].label, fontSize, 0);
         Vector2 textPos = {
             ui->buttons[i].bounds.x + (ui->buttons[i].bounds.width - textSize.x) / 2,
             ui->buttons[i].bounds.y + (ui->buttons[i].bounds.height - textSize.y) / 2,
         };
 
-        DrawTextEx(ui->font, ui->buttons[i].label, textPos, fontSize, 0, WHITE);
+        DrawTextEx(uiFont, ui->buttons[i].label, textPos, fontSize, 0, WHITE);
     }
 
     if (garden->tileSelected != -1) {
@@ -124,11 +127,11 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
 
         Vector2 textPos = {tileInfoPos.x + tileInfoRecPadding, tileInfoPos.y + tileInfoRecPadding};
 
-        DrawTextEx(ui->font, buffer, textPos, fontSize, fontSpacing, BLACK);
+        DrawTextEx(uiFont, buffer, textPos, fontSize, fontSpacing, BLACK);
 
         textPos.y += fontSize;
 
-        DrawTextEx(ui->font, "Plant:", textPos, fontSize, fontSpacing, BLACK);
+        DrawTextEx(uiFont, "Plant:", textPos, fontSize, fontSpacing, BLACK);
 
         textPos.y += fontSize;
 
@@ -140,6 +143,7 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
                 const char *label;
                 int value;
             } stats[] = {
+                {"Type", selectedPlanter->plant.type},
                 {"Water", selectedPlanter->plant.water},
                 {"Nutrients", selectedPlanter->plant.nutrients},
                 {"Health", selectedPlanter->plant.health},
@@ -151,15 +155,50 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
 
             for (int i = 0; i < statsCount; i++) {
                 snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, stats[i].value);
-                DrawTextEx(ui->font, buffer, textPos, fontSize, 0, BLACK);
+                DrawTextEx(uiFont, buffer, textPos, fontSize, 0, BLACK);
                 textPos.y += fontSize;
             }
         } else {
-            DrawTextEx(ui->font, "None", textPos, fontSize, 0, BLACK);
+            DrawTextEx(uiFont, "None", textPos, fontSize, 0, BLACK);
         }
     }
-}
 
-void ui_unloadResources(UI *ui) {
-    UnloadFont(ui->font);
+    if (showPlantSelection) {
+        int fontSize = 30;
+        Rectangle baseRect = {100, screenSize->y - 200, 100, 100};
+
+        for (int i = 0; i < sizeof(enum PLANT_TYPE); i++) {
+            char *plantType = "";
+            switch (i) {
+            case 0:
+                plantType = "A";
+                break;
+            case 1:
+                plantType = "B";
+                break;
+            case 2:
+                plantType = "C";
+            }
+
+            Vector2 textDimensions = MeasureTextEx(uiFont, plantType, fontSize, 0);
+
+            DrawRectangleRec(baseRect, WHITE);
+            DrawRectangleLinesEx(baseRect, 2, BLACK);
+            DrawTextPro(uiFont,
+                plantType,
+                (Vector2){
+                    baseRect.x + (baseRect.width / 2),
+                    baseRect.y + (baseRect.height / 2),
+                },
+                (Vector2){
+                    (textDimensions.x) / 2,
+                    (textDimensions.y) / 2,
+                },
+                0,
+                fontSize,
+                0,
+                BLACK);
+            baseRect.x += baseRect.width;
+        }
+    }
 }

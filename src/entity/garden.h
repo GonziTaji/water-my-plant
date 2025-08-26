@@ -32,4 +32,3 @@ void garden_init(Garden *garden);
 void garden_processClick(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime);
-void garden_unload();

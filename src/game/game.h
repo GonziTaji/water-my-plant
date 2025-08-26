@@ -22,4 +22,3 @@ typedef struct {
 void game_init(Game *game);
 void game_update(Game *game, float deltaTime);
 void game_draw(Game *game);
-void game_unload(Game *game);

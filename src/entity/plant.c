@@ -1,4 +1,5 @@
 #include "plant.h"
+#include "../core/asset_manager.h"
 #include "../game/constants.h"
 #include "raylib.h"
 #include <assert.h>
@@ -9,22 +10,13 @@
 static const float PLANT_TICKS_PER_SECOND = 0.5f;
 static const float PLANT_TICK_TIME = 1.0f / PLANT_TICKS_PER_SECOND;
 
-static Texture2D plantAtlas;
-
-void plant_init(Plant *p) {
+void plant_init(Plant *p, enum PLANT_TYPE type) {
+    p->type = type;
     p->water = 100;
     p->nutrients = 100;
     p->health = 80;
     p->timeSinceLastTick = 0;
     p->healthStatusIndex = 0;
-}
-
-void plant_loadTextures() {
-    plantAtlas = LoadTexture("resources/assets/plant1.png");
-}
-
-void plant_unloadTextures() {
-    UnloadTexture(plantAtlas);
 }
 
 void plant_irrigate(Plant *p) {

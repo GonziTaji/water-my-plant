@@ -1,17 +1,8 @@
 
 #include "planter.h"
+#include "../core/asset_manager.h"
 #include "../game/constants.h"
 #include <raylib.h>
-
-Texture2D planterTexture;
-
-void planter_loadTextures() {
-    planterTexture = LoadTexture("resources/assets/planter-1.png");
-}
-
-void planter_unloadTextures() {
-    UnloadTexture(planterTexture);
-}
 
 void planter_init(Planter *planter) {
     planter->hasPlant = false;
@@ -24,7 +15,7 @@ void planter_addPlant(Planter *planter) {
         return;
     }
 
-    plant_init(&planter->plant);
+    plant_init(&planter->plant, PLANT_TYPE_A);
     planter->hasPlant = true;
 }
 
@@ -33,7 +24,6 @@ void planter_removePlant(Planter *planter) {
 }
 
 void planter_draw(Planter *planter, Vector2 origin) {
-    // TODO: sprite dimensions
     Rectangle source = {0, 0, planterTexture.width, planterTexture.height};
 
     Rectangle dest = {

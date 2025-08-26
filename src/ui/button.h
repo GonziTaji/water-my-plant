@@ -8,7 +8,6 @@ typedef struct {
     CommandFunction command;
     Rectangle bounds;
     bool isMouseOver;
-    int mouseButtonClicked;
 } UIButton;
 
 bool button_isMouseOver(UIButton *b, const InputManager *input);
