@@ -24,6 +24,8 @@ typedef struct {
     int tilesCount;
     Vector2 lightSourcePos;
     int lightSourceLevel;
+    int time;
+    float secondsPassed;
 } Garden;
 
 void garden_init(Garden *garden);

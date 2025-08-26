@@ -4,14 +4,59 @@
 #include "plant.h"
 #include <math.h>
 #include <raylib.h>
+#include <stdio.h>
 
 #define LIGHT_SOURCE_RADIUS 40
+#define MAX_TIME 1440         // minutes in a 24h day
+#define SECONDS_PER_MINUTE 10 // real seconds equivalent to a game minute
 
 Texture2D gardenTexture;
 
 typedef struct {
     Vector2 vertices[4];
 } RectVertices;
+
+/// `timeOfDay` is the % of the day passed (time/MAX_TIME)
+float getLightSourceHeight(float timeOfDay) {
+    // 4x^2 - x
+    // because:
+    // x = 0 (sunrise) => y = 0
+    // x = 1 (sunset) => y = 0
+    // x = 0.5 (noon) => y = 0.5
+    return 4.0f * timeOfDay * -(1.0f - timeOfDay);
+}
+
+// Linear interpolation
+float lerp(float a, float b, float t) {
+    return a + (b - a) * t;
+}
+
+Vector2 getLightSourcePosition(float time) {
+    float timeOfDay = time / MAX_TIME;
+    int maxHeight = 256;
+
+    // position in a 1x1 universe
+    Vector2 v = {
+        lerp(0, 1, timeOfDay),
+        getLightSourceHeight(timeOfDay),
+    };
+
+    // scale and translate
+    v.x *= (GARDEN_COLS)*PLANTER_WIDTH;
+    v.y *= maxHeight;
+
+    float rad = 25 * (M_PI / 180);
+
+    Vector2 rotated = {
+        v.x * cos(rad) - v.y * sin(rad),
+        v.y * cos(rad) + v.x * sin(rad),
+    };
+
+    rotated.x += GARDEN_ORIGIN_X + PLANTER_WIDTH;
+    rotated.y += GARDEN_ORIGIN_Y - PLANTER_HEIGHT;
+
+    return rotated;
+}
 
 Vector2 gridCoordsToWorldCoords(float x, float y) {
     return (Vector2){
@@ -80,8 +125,10 @@ void updateLightLevelOfTiles(Garden *garden) {
 
     for (int i = 0; i < garden->tilesCount; i++) {
         Vector2 tileCoords = getPlanterCoordsFromIndex(i);
+
         float distance = sqrtf(pow(tileCoords.x - lightSourceInGrid.x, 2) +
                                pow(tileCoords.y - lightSourceInGrid.y, 2));
+
         garden->tiles[i].lightLevel = garden->lightSourceLevel - distance;
     }
 }
@@ -90,8 +137,10 @@ void garden_init(Garden *garden) {
     plant_loadTextures();
     planter_loadTextures();
 
+    garden->time = 0;
+    garden->secondsPassed = 0;
     garden->lightSourceLevel = 12;
-    garden->lightSourcePos = (Vector2){GARDEN_ORIGIN_X + 100, GARDEN_ORIGIN_Y - 100};
+    garden->lightSourcePos = getLightSourcePosition(garden->time);
     garden->tileSelected = 0;
     garden->tilesCount = GARDEN_COLS * GARDEN_ROWS;
 
@@ -106,30 +155,38 @@ void garden_init(Garden *garden) {
 }
 
 void garden_update(Garden *garden, float deltaTime) {
-    for (int i = 0; i < garden->tilesCount; i++) {
+    garden->secondsPassed += deltaTime;
 
+    if (garden->secondsPassed >= SECONDS_PER_MINUTE) {
+        garden->time += 1;
+        garden->secondsPassed = 0;
+
+        if (garden->time > MAX_TIME) {
+            garden->time = 0;
+        }
+
+        garden->lightSourcePos = getLightSourcePosition(garden->time);
+        updateLightLevelOfTiles(garden);
+    }
+
+    for (int i = 0; i < garden->tilesCount; i++) {
         if (garden->tiles[i].hasPlanter && garden->tiles[i].planter.hasPlant) {
             plant_update(&garden->tiles[i].planter.plant, deltaTime);
+        }
+    }
+
+    // to test time
+    if (IsKeyDown(KEY_T)) {
+        garden->time += 5;
+        garden->lightSourcePos = getLightSourcePosition(garden->time);
+        updateLightLevelOfTiles(garden);
+        if (garden->time > MAX_TIME) {
+            garden->time = 0;
         }
     }
 }
 
 void garden_processClick(Garden *garden, InputManager *input) {
-    // Drag light source to test mechanic
-    bool isMouseInLightSource = CheckCollisionPointCircle(
-        input->worldMousePos, garden->lightSourcePos, LIGHT_SOURCE_RADIUS);
-
-    if (isMouseInLightSource && IsMouseButtonDown(0)) {
-        garden->lightSourcePos = (Vector2){
-            garden->lightSourcePos.x - input->worldMouseDelta.x,
-            garden->lightSourcePos.y - input->worldMouseDelta.y,
-        };
-
-        updateLightLevelOfTiles(garden);
-
-        input->mouseButtonPressed[0] = false;
-    }
-
     Vector2 cellHoveredCoords =
         screenCoordsToGridCoords(input->worldMousePos.x, input->worldMousePos.y);
 
@@ -184,6 +241,20 @@ void garden_draw(Garden *garden) {
     }
 
     DrawCircle(garden->lightSourcePos.x, garden->lightSourcePos.y, LIGHT_SOURCE_RADIUS, YELLOW);
+
+    char buffer[64];
+    int hours = garden->time / 60;
+    int minutes = garden->time % 60;
+    snprintf(buffer,
+        64,
+        "Time: %02d:%02d:%02d",
+        hours,
+        minutes,
+        (int)(garden->secondsPassed * 60 / SECONDS_PER_MINUTE));
+    DrawText(buffer, 300, 0, 30, WHITE);
+
+    snprintf(buffer, 64, "Raw time: %d", garden->time);
+    DrawText(buffer, 300, 30, 30, WHITE);
 }
 
 void garden_unload() {
