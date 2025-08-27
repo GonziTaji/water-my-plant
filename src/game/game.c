@@ -32,6 +32,11 @@ void game_init(Game *game) {
     keyMap_init(&game->keyMap);
 }
 
+void game_processInput(Game *game) {
+    command_dispatchCommand(keyMap_processInput(&game->keyMap), game);
+    command_dispatchCommand(ui_processInput(&game->ui, &game->input), game);
+}
+
 void game_update(Game *game, float deltaTime) {
     calculateScaleAndOffset(game);
 
@@ -44,9 +49,7 @@ void game_update(Game *game, float deltaTime) {
         }
         break;
     case GAME_STATE_GARDEN:
-        keyMap_processInput(&game->keyMap, &game->garden);
-        ui_processInput(&game->ui, &game->input, &game->garden);
-
+        game_processInput(game);
         garden_processClick(&game->garden, &game->input);
         garden_update(&game->garden, deltaTime);
         break;

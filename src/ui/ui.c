@@ -9,35 +9,25 @@
 #include <assert.h>
 #include <stdio.h>
 
-static bool showPlantSelection = false;
-
-void tmpCommant_showPlantSelection(Garden *g) {
-    showPlantSelection = true;
-}
-
-void tmpCommant_hidePlantSelection(Garden *g) {
-    showPlantSelection = false;
-}
-
 void ui_init(UI *ui, Vector2 *screenSize) {
     // main button pannel:
     buttonPannel_init(&ui->mainButtonPannel,
         1,
         8,
-        (Vector2i){200, 80},
-        (Vector2i){8, 8},
-        (Vector2i){8, 8},
+        (Vector2i){160, 40},
+        (Vector2i){2, 2},
+        (Vector2i){4, 4},
         (Vector2i){20, 20},
         (UIButton[PANNEL_MAX_BUTTONS]){
-            (UIButton){.label = "[W]ater", .command = command_irrigate},
-            (UIButton){.label = "[F]eed", .command = command_feed},
-            (UIButton){.label = "Add planter [M]", .command = command_addPlanter},
-            (UIButton){.label = "Remove planter [C]", .command = command_removePlanter},
+            (UIButton){.label = "[W]ater", .command = (Command){COMMAND_IRRIGATE}},
+            (UIButton){.label = "[F]eed", .command = (Command){COMMAND_FEED}},
+            (UIButton){.label = "Add planter [M]", .command = (Command){COMMAND_ADD_PLANTER}},
+            (UIButton){.label = "Remove planter [C]", .command = (Command){COMMAND_REMOVE_PLANTER}},
             // (UIButton){.label = "[A]dd plant", .command = command_addPlant},
-            (UIButton){.label = "[A]dd plant", .command = tmpCommant_showPlantSelection},
-            (UIButton){.label = "[R]emove plant", .command = command_removePlant},
-            (UIButton){.label = "[N]ext tile", .command = command_focusNextTile},
-            (UIButton){.label = "[P]rev tile", .command = command_focusPreviousTile},
+            (UIButton){.label = "[A]dd plant", .command = (Command){COMMAND_OPEN_PLANT_SELECTION}},
+            (UIButton){.label = "[R]emove plant", .command = (Command){COMMAND_REMOVE_PLANT}},
+            (UIButton){.label = "[N]ext tile", .command = (Command){COMMAND_FOCUS_NEXT_TILE}},
+            (UIButton){.label = "[P]rev tile", .command = (Command){COMMAND_FOCUS_PREV_TILE}},
         });
 
     UIButton plantSelectionButtons[PANNEL_MAX_BUTTONS];
@@ -57,7 +47,7 @@ void ui_init(UI *ui, Vector2 *screenSize) {
 
         plantSelectionButtons[i] = (UIButton){
             plantType,
-            tmpCommant_hidePlantSelection,
+            (Command){COMMAND_ADD_PLANT, {.plantType = i}},
         };
     }
 
@@ -65,30 +55,40 @@ void ui_init(UI *ui, Vector2 *screenSize) {
         3,
         1,
         (Vector2i){100, 100},
-        (Vector2i){8, 8},
-        (Vector2i){8, 8},
+        (Vector2i){2, 2},
+        (Vector2i){4, 4},
         (Vector2i){100, screenSize->y - 200},
         plantSelectionButtons);
 }
 
-void ui_processInput(UI *ui, InputManager *input, Garden *garden) {
-    buttonPannel_processInput(&ui->mainButtonPannel, input, garden);
+Command ui_processInput(UI *ui, InputManager *input) {
+    if (ui->showPlantSelection) {
+        Command cmd = buttonPannel_processInput(&ui->plantSelectionButtonPannel, input);
 
-    if (showPlantSelection) {
-        buttonPannel_processInput(&ui->plantSelectionButtonPannel, input, garden);
+        if (cmd.type != COMMAND_NONE) {
+            return cmd;
+        }
 
         if (input->mouseButtonPressed[MOUSE_BUTTON_LEFT]) {
-            showPlantSelection = false;
-            input->mouseButtonPressed[MOUSE_BUTTON_LEFT] = false;
+            ui->showPlantSelection = false;
         }
     }
+
+    Command cmd = buttonPannel_processInput(&ui->mainButtonPannel, input);
+
+    if (cmd.type != COMMAND_NONE) {
+        return cmd;
+    }
+
+    return (Command){COMMAND_NONE};
 }
 
 void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
-    buttonPannel_draw(&ui->mainButtonPannel);
+    int fontSize = uiFont.baseSize * 0.4f;
+    buttonPannel_draw(&ui->mainButtonPannel, fontSize);
 
-    if (showPlantSelection) {
-        buttonPannel_draw(&ui->plantSelectionButtonPannel);
+    if (ui->showPlantSelection) {
+        buttonPannel_draw(&ui->plantSelectionButtonPannel, fontSize);
     }
 
     // draw selected tile outline

@@ -7,7 +7,7 @@
 // ProtoScenes
 enum GameState { GAME_STATE_MAIN_MENU, GAME_STATE_GARDEN };
 
-typedef struct {
+typedef struct Game {
     Garden garden;
     enum GameState state;
     UI ui;

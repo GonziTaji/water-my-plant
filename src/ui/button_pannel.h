@@ -25,5 +25,5 @@ void buttonPannel_init(ButtonPannel *bp,
     Vector2i padding,
     Vector2i origin,
     UIButton buttons[PANNEL_MAX_BUTTONS]);
-void buttonPannel_processInput(ButtonPannel *ui, InputManager *input, Garden *garden);
-void buttonPannel_draw(ButtonPannel *bp);
+Command buttonPannel_processInput(ButtonPannel *bp, InputManager *input);
+void buttonPannel_draw(ButtonPannel *bp, int fontSize);

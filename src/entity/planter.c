@@ -10,12 +10,12 @@ void planter_init(Planter *planter) {
     planter->height = 48;
 }
 
-void planter_addPlant(Planter *planter) {
+void planter_addPlant(Planter *planter, enum PLANT_TYPE type) {
     if (planter->hasPlant) {
         return;
     }
 
-    plant_init(&planter->plant, PLANT_TYPE_A);
+    plant_init(&planter->plant, type);
     planter->hasPlant = true;
 }
 

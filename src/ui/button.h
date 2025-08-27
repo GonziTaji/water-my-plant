@@ -1,11 +1,11 @@
 #pragma once
+#include "commands.h"
 #include "input_manager.h"
-#include "key_map.h"
 #include <raylib.h>
 
 typedef struct {
     const char *label;
-    CommandFunction command;
+    Command command;
     Rectangle bounds;
     bool isMouseOver;
 } UIButton;

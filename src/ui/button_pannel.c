@@ -1,6 +1,7 @@
 #include "button_pannel.h"
 #include "../core/asset_manager.h"
 #include "button.h"
+#include "commands.h"
 #include "input_manager.h"
 #include "raylib.h"
 #include <assert.h>
@@ -37,23 +38,24 @@ void buttonPannel_init(ButtonPannel *bp,
     }
 }
 
-void buttonPannel_processInput(ButtonPannel *ui, InputManager *input, Garden *garden) {
-    for (int i = 0; i < ui->buttonsCount; i++) {
-        ui->buttons[i].isMouseOver = button_isMouseOver(&ui->buttons[i], input);
+Command buttonPannel_processInput(ButtonPannel *bn, InputManager *input) {
+    for (int i = 0; i < bn->buttonsCount; i++) {
+        bn->buttons[i].isMouseOver = button_isMouseOver(&bn->buttons[i], input);
     }
 
     if (input->mouseButtonPressed[MOUSE_BUTTON_LEFT]) {
-        for (int i = 0; i < ui->buttonsCount; i++) {
-            if (ui->buttons[i].isMouseOver) {
+        for (int i = 0; i < bn->buttonsCount; i++) {
+            if (bn->buttons[i].isMouseOver) {
                 input->mouseButtonPressed[MOUSE_BUTTON_LEFT] = false;
-                ui->buttons[i].command(garden);
-                return;
+                return bn->buttons[i].command;
             }
         }
     }
+
+    return (Command){COMMAND_NONE};
 }
 
-void buttonPannel_draw(ButtonPannel *bp) {
+void buttonPannel_draw(ButtonPannel *bp, int fontSize) {
     int buttonGridWidth = (bp->cols * bp->buttonDimensions.x) +
                           ((bp->cols - 1) * bp->buttonSpacing.x) + (bp->padding.x * 2);
 
@@ -71,7 +73,6 @@ void buttonPannel_draw(ButtonPannel *bp) {
             bp->buttons[i].bounds.height,
             buttonColor);
 
-        int fontSize = uiFont.baseSize * 0.5f;
         Vector2 textSize = MeasureTextEx(uiFont, bp->buttons[i].label, fontSize, 0);
         Vector2 textPos = {
             bp->buttons[i].bounds.x + (bp->buttons[i].bounds.width - textSize.x) / 2,
