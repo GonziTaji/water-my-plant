@@ -17,9 +17,16 @@ void inputManager_update(InputManager *input, float scale, Vector2 screenOffset)
 
     input->worldMousePos = newWorldMousePos;
 
+    input->mouseButtonPressed = -1;
     for (int i = 0; i < 3; i++) {
-        input->mouseButtonPressed[i] = IsMouseButtonPressed(i);
+        if (IsMouseButtonPressed(i)) {
+            input->mouseButtonPressed = i;
+            break;
+        }
     }
+
+    // If we need more than one key pressed here, change this
+    input->keyPressed = GetKeyPressed();
 }
 
 // For debug purposes

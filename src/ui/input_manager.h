@@ -5,7 +5,8 @@
 typedef struct {
     Vector2 worldMousePos;
     Vector2 worldMouseDelta;
-    bool mouseButtonPressed[3];
+    int mouseButtonPressed;
+    int keyPressed;
 } InputManager;
 
 void inputManager_update(InputManager *input, float scale, Vector2 screenOffset);

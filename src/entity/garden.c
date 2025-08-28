@@ -2,6 +2,7 @@
 #include "garden.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
+#include "../ui/commands.h"
 #include "plant.h"
 #include <math.h>
 #include <raylib.h>
@@ -179,18 +180,18 @@ void garden_update(Garden *garden, float deltaTime) {
     }
 }
 
-void garden_processClick(Garden *garden, InputManager *input) {
-    Vector2 cellHoveredCoords =
-        screenCoordsToGridCoords(input->worldMousePos.x, input->worldMousePos.y);
-
+Command garden_processInput(Garden *garden, InputManager *input) {
+    Vector2 *mousePos = &input->worldMousePos;
+    Vector2 cellHoveredCoords = screenCoordsToGridCoords(mousePos->x, mousePos->y);
     int cellHoveredIndex = getPlanterIndexFromCoords(cellHoveredCoords.x, cellHoveredCoords.y);
 
     garden->tileHovered = cellHoveredIndex;
 
-    if (input->mouseButtonPressed[MOUSE_BUTTON_LEFT]) {
-        garden->tileSelected = cellHoveredIndex;
-        input->mouseButtonPressed[MOUSE_BUTTON_LEFT] = false;
+    if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
+        return (Command){COMMAND_TILE_CLICKED, {.tileIndex = cellHoveredIndex}};
     }
+
+    return (Command){COMMAND_NONE};
 }
 
 void garden_draw(Garden *garden) {

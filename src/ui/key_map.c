@@ -1,5 +1,6 @@
 #include "key_map.h"
 #include "commands.h"
+#include "input_manager.h"
 #include <stdio.h>
 
 void registerCommand(KeyMap *keyMap, Command cmd, int key) {
@@ -28,9 +29,9 @@ void keyMap_init(KeyMap *keyMap) {
     registerCommand(keyMap, (Command){COMMAND_FEED}, KEY_F);
 }
 
-Command keyMap_processInput(KeyMap *keyMap) {
+Command keyMap_processInput(KeyMap *keyMap, InputManager *input) {
     for (int i = 0; i < keyMap->registeredCommandsCount; i++) {
-        if (IsKeyPressed(keyMap->registeredCommands[i].key)) {
+        if (input->keyPressed == keyMap->registeredCommands[i].key) {
             return keyMap->registeredCommands[i].command;
         }
     }

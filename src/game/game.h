@@ -17,8 +17,10 @@ typedef struct Game {
     Vector2 screenSize;
     float scale;
     Vector2 screenOffset;
+    enum GameplayMode gameplayMode;
 } Game;
 
 void game_init(Game *game);
+void game_processInput(Game *game);
 void game_update(Game *game, float deltaTime);
 void game_draw(Game *game);

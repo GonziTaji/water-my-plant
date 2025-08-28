@@ -19,6 +19,7 @@ void calculateScaleAndOffset(Game *game) {
 void game_init(Game *game) {
     Vector2 screenSize = {1920, 1080};
 
+    game->gameplayMode = GAMEPLAY_MODE_NORMAL;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
@@ -33,14 +34,31 @@ void game_init(Game *game) {
 }
 
 void game_processInput(Game *game) {
-    command_dispatchCommand(keyMap_processInput(&game->keyMap), game);
-    command_dispatchCommand(ui_processInput(&game->ui, &game->input), game);
+    inputManager_update(&game->input, game->scale, game->screenOffset);
+
+    // One command per frame?
+    if (game->input.mouseButtonPressed == MOUSE_RIGHT_BUTTON) {
+        // Now it's the only action with right click.
+        // Change this  if there's a different action like when right clicking a tile
+        game->gameplayMode = GAMEPLAY_MODE_NORMAL;
+        return;
+    }
+
+    if (command_dispatchCommand(keyMap_processInput(&game->keyMap, &game->input), game)) {
+        return;
+    }
+
+    if (command_dispatchCommand(ui_processInput(&game->ui, &game->input), game)) {
+        return;
+    }
+
+    if (command_dispatchCommand(garden_processInput(&game->garden, &game->input), game)) {
+        return;
+    }
 }
 
 void game_update(Game *game, float deltaTime) {
     calculateScaleAndOffset(game);
-
-    inputManager_update(&game->input, game->scale, game->screenOffset);
 
     switch (game->state) {
     case GAME_STATE_MAIN_MENU:
@@ -49,11 +67,34 @@ void game_update(Game *game, float deltaTime) {
         }
         break;
     case GAME_STATE_GARDEN:
-        game_processInput(game);
-        garden_processClick(&game->garden, &game->input);
         garden_update(&game->garden, deltaTime);
         break;
     }
+}
+
+void drawGarden(Game *game) {
+    ClearBackground((Color){185, 131, 131, 100});
+
+    garden_draw(&game->garden);
+    // UI must be at the end
+    ui_draw(&game->ui, &game->input, &game->screenSize, &game->garden, game->gameplayMode);
+
+    // For debug
+    inputManager_drawMousePos(&game->input, game->screenSize);
+}
+
+void drawMainMenu(Game *game) {
+    ClearBackground(BLACK);
+
+    int fontSize = uiFont.baseSize * 2.0f;
+    const char *text = "Press space to start!";
+    Vector2 textSize = MeasureTextEx(uiFont, text, fontSize, 0);
+    Vector2 textPos = {
+        (game->screenSize.x - textSize.x) / 2,
+        (game->screenSize.y - textSize.y) / 2,
+    };
+
+    DrawTextEx(uiFont, text, textPos, fontSize, 0, WHITE);
 }
 
 void game_draw(Game *game) {
@@ -61,26 +102,13 @@ void game_draw(Game *game) {
     BeginTextureMode(game->target);
 
     switch (game->state) {
+
     case GAME_STATE_MAIN_MENU:
-        ClearBackground(BLACK);
-        // TODO: change UI with some mechanism an draw here
-        int fontSize = uiFont.baseSize * 2.0f;
-        const char *text = "Press space to start!";
-        Vector2 textSize = MeasureTextEx(uiFont, text, fontSize, 0);
-        Vector2 textPos = {
-            (game->screenSize.x - textSize.x) / 2,
-            (game->screenSize.y - textSize.y) / 2,
-        };
-
-        DrawTextEx(uiFont, text, textPos, fontSize, 0, WHITE);
-
+        drawMainMenu(game);
         break;
+
     case GAME_STATE_GARDEN:
-        ClearBackground((Color){185, 131, 131, 100});
-        garden_draw(&game->garden);
-        // UI must be at the end
-        ui_draw(&game->ui, &game->screenSize, &game->garden);
-        inputManager_drawMousePos(&game->input, game->screenSize);
+        drawGarden(game);
         break;
     }
 
@@ -102,5 +130,6 @@ void game_draw(Game *game) {
     Vector2 origin = {0, 0};
 
     DrawTexturePro(game->target.texture, source, dest, origin, 0.0f, WHITE);
+
     EndDrawing();
 }

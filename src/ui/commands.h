@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../entity/garden.h"
+#include "../entity/plant.h"
 
 typedef struct Game Game;
 
@@ -15,10 +15,13 @@ enum COMMAND_TYPE {
     COMMAND_REMOVE_PLANT,
     COMMAND_IRRIGATE,
     COMMAND_FEED,
+    COMMAND_IRRIGATION_MODE,
+    COMMAND_TILE_CLICKED,
 };
 
 typedef union {
     enum PLANT_TYPE plantType;
+    int tileIndex;
 } CommandArgs;
 
 typedef struct {
@@ -26,4 +29,4 @@ typedef struct {
     CommandArgs args;
 } Command;
 
-void command_dispatchCommand(Command cmd, Game *g);
+bool command_dispatchCommand(Command cmd, Game *g);

@@ -1,5 +1,6 @@
 #pragma once
 #include "button.h"
+#include "input_manager.h"
 
 // to avoid dynamic array and malloc. The memory "wasted" is negligible
 #define PANNEL_MAX_BUTTONS 20
@@ -25,5 +26,5 @@ void buttonPannel_init(ButtonPannel *bp,
     Vector2i padding,
     Vector2i origin,
     UIButton buttons[PANNEL_MAX_BUTTONS]);
-Command buttonPannel_processInput(ButtonPannel *bp, InputManager *input);
+Command buttonPannel_processInput(ButtonPannel *bn, InputManager *input);
 void buttonPannel_draw(ButtonPannel *bp, int fontSize);

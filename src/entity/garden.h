@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../ui/commands.h"
 #include "../ui/input_manager.h"
 #include "planter.h"
 
@@ -29,6 +30,6 @@ typedef struct {
 } Garden;
 
 void garden_init(Garden *garden);
-void garden_processClick(Garden *garden, InputManager *input);
+Command garden_processInput(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime);

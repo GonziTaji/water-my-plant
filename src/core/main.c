@@ -1,7 +1,6 @@
 #include "../game/game.h"
 #include "asset_manager.h"
 #include "raylib.h"
-#include <stdio.h>
 
 int main(void) {
     SetTargetFPS(144);
@@ -10,6 +9,7 @@ int main(void) {
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(windowSize.x, windowSize.y, "My little plant");
+    // SetExitKey(KEY_NULL);
 
     assetManager_loadAssets();
 
@@ -22,13 +22,13 @@ int main(void) {
     while (!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
 
+        game_processInput(&g);
         game_update(&g, deltaTime);
         game_draw(&g);
     }
 
-    printf(">>>>>Unloading\n");
+    // Should we?
     assetManager_unloadAssets();
-    printf(">>>>>Unloaded\n");
 
     return 0;
 }

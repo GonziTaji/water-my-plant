@@ -16,4 +16,4 @@ typedef struct {
 } KeyMap;
 
 void keyMap_init(KeyMap *keyMap);
-Command keyMap_processInput(KeyMap *keyMap);
+Command keyMap_processInput(KeyMap *keyMap, InputManager *input);

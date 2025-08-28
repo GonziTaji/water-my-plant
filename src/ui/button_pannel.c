@@ -40,13 +40,12 @@ void buttonPannel_init(ButtonPannel *bp,
 
 Command buttonPannel_processInput(ButtonPannel *bn, InputManager *input) {
     for (int i = 0; i < bn->buttonsCount; i++) {
-        bn->buttons[i].isMouseOver = button_isMouseOver(&bn->buttons[i], input);
+        bn->buttons[i].isMouseOver = button_isMouseOver(&bn->buttons[i], input->worldMousePos);
     }
 
-    if (input->mouseButtonPressed[MOUSE_BUTTON_LEFT]) {
+    if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
         for (int i = 0; i < bn->buttonsCount; i++) {
             if (bn->buttons[i].isMouseOver) {
-                input->mouseButtonPressed[MOUSE_BUTTON_LEFT] = false;
                 return bn->buttons[i].command;
             }
         }

@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../game/game.h"
 
@@ -98,8 +99,31 @@ void command_feed(Garden *garden) {
     plant_feed(&planter->plant);
 }
 
-// should be here?
-void command_dispatchCommand(Command cmd, Game *g) {
+void command_startIrrigationMode(Game *g) {
+    if (g->gameplayMode == GAMEPLAY_MODE_IRRIGATION) {
+        g->gameplayMode = GAMEPLAY_MODE_NORMAL;
+    } else {
+        g->gameplayMode = GAMEPLAY_MODE_IRRIGATION;
+    }
+}
+
+void command_tileClicked(Garden *garden, int tileIndex, enum GameplayMode gameplayMode) {
+    switch (gameplayMode) {
+
+    case GAMEPLAY_MODE_NORMAL:
+        garden->tileSelected = tileIndex;
+        break;
+
+    case GAMEPLAY_MODE_IRRIGATION:
+        if (garden->tiles[tileIndex].hasPlanter && garden->tiles[tileIndex].planter.hasPlant) {
+            plant_irrigate(&garden->tiles[tileIndex].planter.plant);
+        }
+        break;
+    }
+}
+
+/// returns `true` if a command was executed (cmd.type is not "COMMAND_NONE"
+bool command_dispatchCommand(Command cmd, Game *g) {
     switch (cmd.type) {
     case COMMAND_FOCUS_NEXT_TILE:
         command_focusNextTile(&g->garden);
@@ -137,7 +161,17 @@ void command_dispatchCommand(Command cmd, Game *g) {
         command_feed(&g->garden);
         break;
 
+    case COMMAND_IRRIGATION_MODE:
+        command_startIrrigationMode(g);
+        break;
+
+    case COMMAND_TILE_CLICKED:
+        command_tileClicked(&g->garden, cmd.args.tileIndex, g->gameplayMode);
+
     case COMMAND_NONE:
+        return false;
         break;
     }
+
+    return true;
 }

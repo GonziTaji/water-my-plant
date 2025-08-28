@@ -10,6 +10,9 @@
 #include <stdio.h>
 
 void ui_init(UI *ui, Vector2 *screenSize) {
+    HideCursor();
+    ui->showPlantSelection = false;
+
     // main button pannel:
     buttonPannel_init(&ui->mainButtonPannel,
         1,
@@ -19,7 +22,7 @@ void ui_init(UI *ui, Vector2 *screenSize) {
         (Vector2i){4, 4},
         (Vector2i){20, 20},
         (UIButton[PANNEL_MAX_BUTTONS]){
-            (UIButton){.label = "[W]ater", .command = (Command){COMMAND_IRRIGATE}},
+            (UIButton){.label = "[W]ater", .command = (Command){COMMAND_IRRIGATION_MODE}},
             (UIButton){.label = "[F]eed", .command = (Command){COMMAND_FEED}},
             (UIButton){.label = "Add planter [M]", .command = (Command){COMMAND_ADD_PLANTER}},
             (UIButton){.label = "Remove planter [C]", .command = (Command){COMMAND_REMOVE_PLANTER}},
@@ -61,6 +64,9 @@ void ui_init(UI *ui, Vector2 *screenSize) {
         plantSelectionButtons);
 }
 
+void ui_updateCursor(UI *ui, enum GameplayMode gameplayMode) {
+}
+
 Command ui_processInput(UI *ui, InputManager *input) {
     if (ui->showPlantSelection) {
         Command cmd = buttonPannel_processInput(&ui->plantSelectionButtonPannel, input);
@@ -69,7 +75,7 @@ Command ui_processInput(UI *ui, InputManager *input) {
             return cmd;
         }
 
-        if (input->mouseButtonPressed[MOUSE_BUTTON_LEFT]) {
+        if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
             ui->showPlantSelection = false;
         }
     }
@@ -83,7 +89,12 @@ Command ui_processInput(UI *ui, InputManager *input) {
     return (Command){COMMAND_NONE};
 }
 
-void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
+void ui_draw(UI *ui,
+    const InputManager *input,
+    const Vector2 *screenSize,
+    const Garden *garden,
+    enum GameplayMode gameplayMode) {
+
     int fontSize = uiFont.baseSize * 0.4f;
     buttonPannel_draw(&ui->mainButtonPannel, fontSize);
 
@@ -161,4 +172,20 @@ void ui_draw(UI *ui, const Vector2 *screenSize, const Garden *garden) {
             DrawTextEx(uiFont, "None", textPos, fontSize, 0, BLACK);
         }
     }
+
+    // Draw cursor at the end
+    Texture2D cursorTexture;
+
+    switch (gameplayMode) {
+    case GAMEPLAY_MODE_IRRIGATION:
+        cursorTexture = cursorTexture_water;
+        break;
+
+    case GAMEPLAY_MODE_NORMAL:
+        cursorTexture = cursorTexture_1;
+        break;
+    }
+
+    Vector2 mp = input->worldMousePos;
+    DrawTexture(cursorTexture, mp.x - cursorTexture_1.width, mp.y, WHITE);
 }
