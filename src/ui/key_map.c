@@ -1,9 +1,10 @@
 #include "key_map.h"
 #include "commands.h"
 #include "input_manager.h"
+#include <raylib.h>
 #include <stdio.h>
 
-void registerCommand(KeyMap *keyMap, Command cmd, int key) {
+void registerCommand(KeyMap *keyMap, int key, Command cmd) {
     if (keyMap->registeredCommandsCount == INPUT_MAP_CAPACITY - 1) {
         printf("Trying to register a command in a full keyMap");
         return;
@@ -17,16 +18,22 @@ void registerCommand(KeyMap *keyMap, Command cmd, int key) {
 void keyMap_init(KeyMap *keyMap) {
     keyMap->registeredCommandsCount = 0;
 
-    registerCommand(keyMap, (Command){COMMAND_ADD_PLANTER}, KEY_M);
-    registerCommand(keyMap, (Command){COMMAND_REMOVE_PLANTER}, KEY_C);
-    registerCommand(keyMap, (Command){COMMAND_OPEN_PLANT_SELECTION}, KEY_A);
-    registerCommand(keyMap, (Command){COMMAND_REMOVE_PLANT}, KEY_R);
-    registerCommand(keyMap, (Command){COMMAND_FOCUS_NEXT_TILE}, KEY_N);
-    registerCommand(keyMap, (Command){COMMAND_FOCUS_NEXT_TILE}, KEY_RIGHT);
-    registerCommand(keyMap, (Command){COMMAND_FOCUS_PREV_TILE}, KEY_P);
-    registerCommand(keyMap, (Command){COMMAND_FOCUS_PREV_TILE}, KEY_LEFT);
-    registerCommand(keyMap, (Command){COMMAND_IRRIGATE}, KEY_W);
-    registerCommand(keyMap, (Command){COMMAND_FEED}, KEY_F);
+    registerCommand(
+        keyMap, KEY_M, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}});
+    registerCommand(
+        keyMap, KEY_A, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}});
+    registerCommand(
+        keyMap, KEY_R, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}});
+    registerCommand(
+        keyMap, KEY_W, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}});
+    registerCommand(
+        keyMap, KEY_F, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}});
+    registerCommand(keyMap, KEY_N, (Command){COMMAND_FOCUS_NEXT_TILE});
+    registerCommand(keyMap, KEY_RIGHT, (Command){COMMAND_FOCUS_NEXT_TILE});
+    registerCommand(keyMap, KEY_P, (Command){COMMAND_FOCUS_PREV_TILE});
+    registerCommand(keyMap, KEY_LEFT, (Command){COMMAND_FOCUS_PREV_TILE});
+    registerCommand(
+        keyMap, KEY_ESCAPE, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NONE}});
 }
 
 Command keyMap_processInput(KeyMap *keyMap, InputManager *input) {

@@ -9,7 +9,7 @@ int main(void) {
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(windowSize.x, windowSize.y, "My little plant");
-    // SetExitKey(KEY_NULL);
+    SetExitKey(KEY_NULL);
 
     assetManager_loadAssets();
 

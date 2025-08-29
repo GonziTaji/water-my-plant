@@ -6,6 +6,15 @@
 #include "raylib.h"
 #include <assert.h>
 
+Rectangle calculateButtonPos(ButtonPannel *bp, int buttonIndex) {
+    int col = buttonIndex % bp->cols;
+    int row = buttonIndex / bp->cols;
+    float x = bp->origin.x + bp->padding.x + col * (bp->buttonDimensions.x + bp->buttonSpacing.x);
+    float y = bp->origin.y + bp->padding.y + row * (bp->buttonDimensions.y + bp->buttonSpacing.y);
+
+    return (Rectangle){x, y, bp->buttonDimensions.x, bp->buttonDimensions.y};
+}
+
 void buttonPannel_init(ButtonPannel *bp,
     int cols,
     int rows,
@@ -26,15 +35,18 @@ void buttonPannel_init(ButtonPannel *bp,
     assert(bp->buttonsCount <= PANNEL_MAX_BUTTONS);
 
     for (int i = 0; i < bp->buttonsCount; i++) {
-        int col = i % cols;
-        int row = i / cols;
-        float x = origin.x + padding.x + col * (buttonDimensions.x + buttonSpacing.x);
-        float y = origin.y + padding.y + row * (buttonDimensions.y + buttonSpacing.y);
-
-        buttons[i].bounds = (Rectangle){x, y, buttonDimensions.x, buttonDimensions.y};
+        buttons[i].bounds = calculateButtonPos(bp, i);
         buttons[i].isMouseOver = false;
 
         bp->buttons[i] = buttons[i];
+    }
+}
+
+void buttonPannel_translate(ButtonPannel *bp, Vector2 newPos) {
+    bp->origin = (Vector2i){newPos.x, newPos.y};
+
+    for (int i = 0; i < bp->buttonsCount; i++) {
+        bp->buttons[i].bounds = calculateButtonPos(bp, i);
     }
 }
 

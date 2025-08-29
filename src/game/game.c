@@ -2,6 +2,7 @@
 #include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../ui/ui.h"
+#include "gameplay.h"
 #include <raylib.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -19,7 +20,7 @@ void calculateScaleAndOffset(Game *game) {
 void game_init(Game *game) {
     Vector2 screenSize = {1920, 1080};
 
-    game->gameplayMode = GAMEPLAY_MODE_NORMAL;
+    game->toolSelected = GARDENING_TOOL_NONE;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
@@ -37,10 +38,11 @@ void game_processInput(Game *game) {
     inputManager_update(&game->input, game->scale, game->screenOffset);
 
     // One command per frame?
-    if (game->input.mouseButtonPressed == MOUSE_RIGHT_BUTTON) {
+    if (game->input.mouseButtonPressed == MOUSE_RIGHT_BUTTON &&
+        game->toolSelected != GARDENING_TOOL_NONE) {
         // Now it's the only action with right click.
         // Change this  if there's a different action like when right clicking a tile
-        game->gameplayMode = GAMEPLAY_MODE_NORMAL;
+        game->toolSelected = GARDENING_TOOL_NONE;
         return;
     }
 
@@ -77,7 +79,7 @@ void drawGarden(Game *game) {
 
     garden_draw(&game->garden);
     // UI must be at the end
-    ui_draw(&game->ui, &game->input, &game->screenSize, &game->garden, game->gameplayMode);
+    ui_draw(&game->ui, &game->input, &game->screenSize, &game->garden, game->toolSelected);
 
     // For debug
     inputManager_drawMousePos(&game->input, game->screenSize);

@@ -16,21 +16,25 @@ void ui_init(UI *ui, Vector2 *screenSize) {
     // main button pannel:
     buttonPannel_init(&ui->mainButtonPannel,
         1,
-        8,
+        7,
         (Vector2i){160, 40},
         (Vector2i){2, 2},
         (Vector2i){4, 4},
         (Vector2i){20, 20},
         (UIButton[PANNEL_MAX_BUTTONS]){
-            (UIButton){.label = "[W]ater", .command = (Command){COMMAND_IRRIGATION_MODE}},
-            (UIButton){.label = "[F]eed", .command = (Command){COMMAND_FEED}},
-            (UIButton){.label = "Add planter [M]", .command = (Command){COMMAND_ADD_PLANTER}},
-            (UIButton){.label = "Remove planter [C]", .command = (Command){COMMAND_REMOVE_PLANTER}},
-            // (UIButton){.label = "[A]dd plant", .command = command_addPlant},
-            (UIButton){.label = "[A]dd plant", .command = (Command){COMMAND_OPEN_PLANT_SELECTION}},
-            (UIButton){.label = "[R]emove plant", .command = (Command){COMMAND_REMOVE_PLANT}},
             (UIButton){.label = "[N]ext tile", .command = (Command){COMMAND_FOCUS_NEXT_TILE}},
             (UIButton){.label = "[P]rev tile", .command = (Command){COMMAND_FOCUS_PREV_TILE}},
+            (UIButton){.label = "[W]ater",
+                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}}},
+            (UIButton){.label = "[F]eed",
+                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}}},
+            (UIButton){.label = "[R]emove",
+                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}}},
+            (UIButton){.label = "[A]dd plant",
+                .command =
+                    (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}}},
+            (UIButton){.label = "Add planter [M]",
+                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}}},
         });
 
     UIButton plantSelectionButtons[PANNEL_MAX_BUTTONS];
@@ -64,9 +68,6 @@ void ui_init(UI *ui, Vector2 *screenSize) {
         plantSelectionButtons);
 }
 
-void ui_updateCursor(UI *ui, enum GameplayMode gameplayMode) {
-}
-
 Command ui_processInput(UI *ui, InputManager *input) {
     if (ui->showPlantSelection) {
         Command cmd = buttonPannel_processInput(&ui->plantSelectionButtonPannel, input);
@@ -93,7 +94,7 @@ void ui_draw(UI *ui,
     const InputManager *input,
     const Vector2 *screenSize,
     const Garden *garden,
-    enum GameplayMode gameplayMode) {
+    enum GardeningTool toolSelected) {
 
     int fontSize = uiFont.baseSize * 0.4f;
     buttonPannel_draw(&ui->mainButtonPannel, fontSize);
@@ -176,12 +177,28 @@ void ui_draw(UI *ui,
     // Draw cursor at the end
     Texture2D cursorTexture;
 
-    switch (gameplayMode) {
-    case GAMEPLAY_MODE_IRRIGATION:
+    switch (toolSelected) {
+    case GARDENING_TOOL_IRRIGATOR:
         cursorTexture = cursorTexture_water;
         break;
 
-    case GAMEPLAY_MODE_NORMAL:
+    case GARDENING_TOOL_NUTRIENTS:
+        cursorTexture = cursorTexture_feed;
+        break;
+
+    case GARDENING_TOOL_PLANTER:
+        cursorTexture = cursorTexture_planter;
+        break;
+
+    case GARDENING_TOOL_PLANT_CUTTING:
+        cursorTexture = cursorTexture_plant;
+        break;
+
+    case GARDENING_TOOL_TRASH_BIN:
+        cursorTexture = cursorTexture_remove;
+        break;
+
+    case GARDENING_TOOL_NONE:
         cursorTexture = cursorTexture_1;
         break;
     }

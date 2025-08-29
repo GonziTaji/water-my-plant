@@ -2,6 +2,7 @@
 
 #include "../ui/key_map.h"
 #include "../ui/ui.h"
+#include "gameplay.h"
 #include <raylib.h>
 
 // ProtoScenes
@@ -17,7 +18,7 @@ typedef struct Game {
     Vector2 screenSize;
     float scale;
     Vector2 screenOffset;
-    enum GameplayMode gameplayMode;
+    enum GardeningTool toolSelected;
 } Game;
 
 void game_init(Game *game);

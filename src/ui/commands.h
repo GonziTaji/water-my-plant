@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../entity/plant.h"
+#include "../game/gameplay.h"
 
 typedef struct Game Game;
 
@@ -8,20 +9,15 @@ enum COMMAND_TYPE {
     COMMAND_NONE = 0,
     COMMAND_FOCUS_NEXT_TILE,
     COMMAND_FOCUS_PREV_TILE,
-    COMMAND_ADD_PLANTER,
-    COMMAND_REMOVE_PLANTER,
-    COMMAND_ADD_PLANT,
-    COMMAND_OPEN_PLANT_SELECTION,
-    COMMAND_REMOVE_PLANT,
-    COMMAND_IRRIGATE,
-    COMMAND_FEED,
-    COMMAND_IRRIGATION_MODE,
     COMMAND_TILE_CLICKED,
+    COMMAND_TOOL_SELECTED,
+    COMMAND_ADD_PLANT,
 };
 
 typedef union {
     enum PLANT_TYPE plantType;
     int tileIndex;
+    enum GardeningTool tool;
 } CommandArgs;
 
 typedef struct {

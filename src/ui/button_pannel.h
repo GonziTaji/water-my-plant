@@ -28,3 +28,4 @@ void buttonPannel_init(ButtonPannel *bp,
     UIButton buttons[PANNEL_MAX_BUTTONS]);
 Command buttonPannel_processInput(ButtonPannel *bn, InputManager *input);
 void buttonPannel_draw(ButtonPannel *bp, int fontSize);
+void buttonPannel_translate(ButtonPannel *bp, Vector2 newPos);
