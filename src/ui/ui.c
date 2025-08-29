@@ -12,35 +12,53 @@ void ui_init(UI *ui, Vector2 *screenSize) {
     HideCursor();
     ui->showPlantSelection = false;
 
+    UIButton toolButtons[PANNEL_MAX_BUTTONS];
+    ButtonContent bcontent = (ButtonContent){.label = ""};
+    int toolButtonsCount = 0;
+
+    for (int toolIndex = 0; toolIndex < GARDENING_TOOL_COUNT; toolIndex++) {
+        switch (toolIndex) {
+        case GARDENING_TOOL_IRRIGATOR:
+            bcontent.label = "[W]ater";
+            break;
+
+        case GARDENING_TOOL_NUTRIENTS:
+            bcontent.label = "[F]eed";
+            break;
+
+        case GARDENING_TOOL_PLANTER:
+            bcontent.label = "Add planter [M]";
+            break;
+
+        case GARDENING_TOOL_PLANT_CUTTING:
+            bcontent.label = "[A]dd Plant";
+            break;
+
+        case GARDENING_TOOL_TRASH_BIN:
+            bcontent.label = "[R]emove";
+            break;
+
+        case GARDENING_TOOL_NONE:
+        case GARDENING_TOOL_COUNT:
+            continue;
+        }
+
+        toolButtons[toolButtonsCount] = button_create(BUTTON_TYPE_TEXT_LABEL,
+            bcontent,
+            (Command){COMMAND_TOOL_SELECTED, {.tool = toolIndex}});
+
+        toolButtonsCount++;
+    }
+
     // main button pannel:
     buttonPannel_init(&ui->toolSelectionButtonPannel,
         1,
-        5,
+        toolButtonsCount,
         (Vector2i){160, 40},
         (Vector2i){2, 2},
         (Vector2i){4, 4},
         (Vector2i){20, 20},
-        (UIButton[PANNEL_MAX_BUTTONS]){
-            button_create(BUTTON_TYPE_TEXT_LABEL,
-                (ButtonContent){.label = "[W]ater"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}}),
-
-            button_create(BUTTON_TYPE_TEXT_LABEL,
-                (ButtonContent){.label = "[F]eed"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}}),
-
-            button_create(BUTTON_TYPE_TEXT_LABEL,
-                (ButtonContent){.label = "[R]emove"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}}),
-
-            button_create(BUTTON_TYPE_TEXT_LABEL,
-                (ButtonContent){.label = "[A]dd Plant"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}}),
-
-            button_create(BUTTON_TYPE_TEXT_LABEL,
-                (ButtonContent){.label = "Add planter [M]"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}}),
-        });
+        toolButtons);
 
     UIButton plantSelectionButtons[PANNEL_MAX_BUTTONS];
 
@@ -192,6 +210,10 @@ void ui_draw(UI *ui,
 
     case GARDENING_TOOL_NONE:
         cursorTexture = cursorTexture_1;
+        break;
+
+    case GARDENING_TOOL_COUNT:
+        assert(false);
         break;
     }
 

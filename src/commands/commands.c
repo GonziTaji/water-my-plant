@@ -2,6 +2,7 @@
 #include "../entity/garden.h"
 #include "../game/game.h"
 #include "../ui/input_manager.h"
+#include <assert.h>
 
 void command_addPlanter(Garden *garden) {
     if (garden->tileSelected == -1 && garden->tiles[garden->tileSelected].hasPlanter) {
@@ -87,7 +88,6 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
     game->garden.tileSelected = tileIndex;
 
     switch (toolSelected) {
-
     case GARDENING_TOOL_IRRIGATOR:
         command_irrigate(&game->garden);
         break;
@@ -110,6 +110,10 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
 
     case GARDENING_TOOL_NONE:
         game->toolSelected = GARDENING_TOOL_NONE;
+        break;
+
+    case GARDENING_TOOL_COUNT:
+        assert(false);
         break;
     }
 }
