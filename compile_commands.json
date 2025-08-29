@@ -119,20 +119,6 @@
    "-Iinclude",
    "-g",
    "-c",
-   "src/commands/concrete_commands.c",
-   "-o",
-   "build/commands/concrete_commands.o"
-  ],
-  "file": "src/commands/concrete_commands.c"
- },
- {
-  "directory": "/home/yogusita/proyectos/water-my-plant",
-  "arguments": [
-   "gcc",
-   "-Wall",
-   "-Iinclude",
-   "-g",
-   "-c",
    "src/game/scenes/garden_scene.c",
    "-o",
    "build/game/scenes/garden_scene.o"

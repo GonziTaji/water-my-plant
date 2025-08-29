@@ -3,19 +3,13 @@
 #include "../game/game.h"
 #include "../ui/input_manager.h"
 
-Planter *getSelectedPlanter(Garden *garden) {
-    return &garden->tiles[garden->tileSelected].planter;
-}
-
-// Commands
-
 void command_addPlanter(Garden *garden) {
     if (garden->tileSelected == -1 && garden->tiles[garden->tileSelected].hasPlanter) {
         return;
     }
 
     garden->tiles[garden->tileSelected].hasPlanter = true;
-    planter_init(getSelectedPlanter(garden));
+    planter_init(garden_getSelectedPlanter(garden));
 }
 
 void command_removeFromTile(Garden *garden) {
@@ -23,7 +17,7 @@ void command_removeFromTile(Garden *garden) {
         return;
     }
 
-    Planter *planter = getSelectedPlanter(garden);
+    Planter *planter = garden_getSelectedPlanter(garden);
 
     if (!planter->hasPlant) {
         garden->tiles[garden->tileSelected].hasPlanter = false;
@@ -33,30 +27,36 @@ void command_removeFromTile(Garden *garden) {
     }
 }
 
-void command_requestPlantTypeToAdd(Garden *garden, UI *ui, InputManager *input, int tileIndex) {
-    if (garden_hasPlanterSelected(garden)) {
-        ui->showPlantSelection = true;
+void command_requestPlantTypeToAdd(Garden *garden, UI *ui, InputManager *input) {
+    Planter *p = garden_getSelectedPlanter(garden);
 
-        Vector2 buttonPannelPos = {
-            input->worldMousePos.x + 20,
-            input->worldMousePos.y + 20,
-        };
-
-        buttonPannel_translate(&ui->plantSelectionButtonPannel, buttonPannelPos);
-    }
-}
-
-void command_addPlant(Garden *garden, UI *ui, enum PlantType type) {
-    if (!garden_hasPlanterSelected(garden)) {
+    if (!garden_hasPlanterSelected(garden) || p->hasPlant) {
         return;
     }
 
-    planter_addPlant(&garden->tiles[garden->tileSelected].planter, type);
+    ui->showPlantSelection = true;
+
+    Vector2 buttonPannelPos = {
+        input->worldMousePos.x + 20,
+        input->worldMousePos.y + 20,
+    };
+
+    buttonPannel_translate(&ui->plantSelectionButtonPannel, buttonPannelPos);
+}
+
+void command_addPlant(Garden *garden, UI *ui, enum PlantType type) {
+    Planter *planter = garden_getSelectedPlanter(garden);
+
+    if (!garden_hasPlanterSelected(garden) || planter->hasPlant) {
+        return;
+    }
+
+    planter_addPlant(planter, type);
     ui->showPlantSelection = false;
 }
 
 void command_irrigate(Garden *garden) {
-    Planter *planter = getSelectedPlanter(garden);
+    Planter *planter = garden_getSelectedPlanter(garden);
 
     if (!garden_hasPlanterSelected(garden) || !planter->hasPlant) {
         return;
@@ -66,7 +66,7 @@ void command_irrigate(Garden *garden) {
 }
 
 void command_feed(Garden *garden) {
-    Planter *planter = getSelectedPlanter(garden);
+    Planter *planter = garden_getSelectedPlanter(garden);
 
     if (!garden_hasPlanterSelected(garden) || !planter->hasPlant) {
         return;
@@ -101,7 +101,7 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
-        command_requestPlantTypeToAdd(&game->garden, &game->ui, &game->input, tileIndex);
+        command_requestPlantTypeToAdd(&game->garden, &game->ui, &game->input);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:

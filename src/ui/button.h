@@ -21,6 +21,8 @@ typedef struct {
     Command command;
     Rectangle bounds;
     bool isMouseOver;
+    bool isActive;
 } UIButton;
 
 bool button_isMouseOver(UIButton *b, Vector2 mousePos);
+UIButton button_create(enum ButtonType type, ButtonContent content, Command cmd);

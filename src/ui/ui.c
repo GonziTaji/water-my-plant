@@ -21,42 +21,33 @@ void ui_init(UI *ui, Vector2 *screenSize) {
         (Vector2i){4, 4},
         (Vector2i){20, 20},
         (UIButton[PANNEL_MAX_BUTTONS]){
-            (UIButton){
-                BUTTON_TYPE_TEXT_LABEL,
-                {.label = "[W]ater"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}},
-            },
-            (UIButton){
-                BUTTON_TYPE_TEXT_LABEL,
-                {.label = "[F]eed"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}},
-            },
-            (UIButton){
-                BUTTON_TYPE_TEXT_LABEL,
-                {.label = "[R]emove"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}},
-            },
-            (UIButton){
-                BUTTON_TYPE_TEXT_LABEL,
-                {.label = "[A]dd plant"},
+            button_create(BUTTON_TYPE_TEXT_LABEL,
+                (ButtonContent){.label = "[W]ater"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}}),
 
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}},
-            },
-            (UIButton){
-                BUTTON_TYPE_TEXT_LABEL,
-                {.label = "Add planter [M]"},
-                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}},
-            },
+            button_create(BUTTON_TYPE_TEXT_LABEL,
+                (ButtonContent){.label = "[F]eed"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}}),
+
+            button_create(BUTTON_TYPE_TEXT_LABEL,
+                (ButtonContent){.label = "[R]emove"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}}),
+
+            button_create(BUTTON_TYPE_TEXT_LABEL,
+                (ButtonContent){.label = "[A]dd Plant"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}}),
+
+            button_create(BUTTON_TYPE_TEXT_LABEL,
+                (ButtonContent){.label = "Add planter [M]"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}}),
         });
 
     UIButton plantSelectionButtons[PANNEL_MAX_BUTTONS];
 
     for (int i = 0; i < PLANT_TYPE_COUNT; i++) {
-        plantSelectionButtons[i] = (UIButton){
-            BUTTON_TYPE_SPRITE,
-            {.icon = {plantAtlas, plant_getSpriteSourceRect(i, 100)}},
-            (Command){COMMAND_ADD_PLANT, {.plantType = i}},
-        };
+        plantSelectionButtons[i] = button_create(BUTTON_TYPE_SPRITE,
+            (ButtonContent){.icon = {plantAtlas, plant_getSpriteSourceRect(i, 100)}},
+            (Command){COMMAND_ADD_PLANT, {.plantType = i}});
     }
 
     buttonPannel_init(&ui->plantSelectionButtonPannel,

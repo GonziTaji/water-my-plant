@@ -151,6 +151,10 @@ bool garden_hasPlanterSelected(Garden *garden) {
     return garden->tileSelected != -1 && garden->tiles[garden->tileSelected].hasPlanter;
 }
 
+Planter *garden_getSelectedPlanter(Garden *garden) {
+    return &garden->tiles[garden->tileSelected].planter;
+}
+
 void garden_update(Garden *garden, float deltaTime) {
     garden->secondsPassed += deltaTime;
 

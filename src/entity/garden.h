@@ -34,3 +34,4 @@ Command garden_processInput(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime);
 bool garden_hasPlanterSelected(Garden *garden);
+Planter *garden_getSelectedPlanter(Garden *garden);
