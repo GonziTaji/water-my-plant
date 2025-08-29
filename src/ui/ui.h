@@ -9,7 +9,7 @@
 typedef struct Game Game;
 
 typedef struct {
-    ButtonPannel mainButtonPannel;
+    ButtonPannel toolSelectionButtonPannel;
     ButtonPannel plantSelectionButtonPannel;
     bool showPlantSelection;
 } UI;

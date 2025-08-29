@@ -2,7 +2,6 @@
 #include "garden.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
-#include "../ui/commands.h"
 #include "plant.h"
 #include <math.h>
 #include <raylib.h>
@@ -146,6 +145,10 @@ void garden_init(Garden *garden) {
     }
 
     updateLightLevelOfTiles(garden);
+}
+
+bool garden_hasPlanterSelected(Garden *garden) {
+    return garden->tileSelected != -1 && garden->tiles[garden->tileSelected].hasPlanter;
 }
 
 void garden_update(Garden *garden, float deltaTime) {

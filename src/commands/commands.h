@@ -7,15 +7,13 @@ typedef struct Game Game;
 
 enum COMMAND_TYPE {
     COMMAND_NONE = 0,
-    COMMAND_FOCUS_NEXT_TILE,
-    COMMAND_FOCUS_PREV_TILE,
     COMMAND_TILE_CLICKED,
     COMMAND_TOOL_SELECTED,
     COMMAND_ADD_PLANT,
 };
 
 typedef union {
-    enum PLANT_TYPE plantType;
+    enum PlantType plantType;
     int tileIndex;
     enum GardeningTool tool;
 } CommandArgs;

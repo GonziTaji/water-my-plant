@@ -4,24 +4,32 @@
 #define PLANT_SPRITE_WIDTH 64
 #define PLANT_SPRITE_HEIGHT 64
 
-enum PLANT_TYPE {
-    PLANT_TYPE_A,
-    PLANT_TYPE_B,
-    PLANT_TYPE_C,
+enum PlantType {
+    PLANT_TYPE_CRASSULA_OVATA,     // jade
+    PLANT_TYPE_SENECIO_ROWLEYANUS, // rosario
+    PLANT_TYPE_COUNT,              // keep at the end
 };
 
 typedef struct {
-    enum PLANT_TYPE type;
+    // TODO: add water needs, heat/sunlight tolerance, etc
+    const char *scientificName;
+    const char *name;
+    const char *altName;
+} PlantInfo;
+
+typedef struct {
+    enum PlantType type;
     int water;
     int nutrients;
     int health;
     float timeSinceLastTick;
-    int healthStatusIndex;
 } Plant;
 
-void plant_init(Plant *p, enum PLANT_TYPE type);
+void plant_init(Plant *p, enum PlantType type);
 void plant_irrigate(Plant *p);
 void plant_feed(Plant *p);
 void plant_printStats(Plant *p);
 void plant_update(Plant *plant, float deltaTime);
+PlantInfo plant_getInfo(enum PlantType type);
+Rectangle plant_getSpriteSourceRect(enum PlantType type, int health);
 void plant_draw(Plant *plant, Vector2 origin);

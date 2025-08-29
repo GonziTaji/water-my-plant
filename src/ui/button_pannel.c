@@ -1,7 +1,6 @@
 #include "button_pannel.h"
 #include "../core/asset_manager.h"
 #include "button.h"
-#include "commands.h"
 #include "input_manager.h"
 #include "raylib.h"
 #include <assert.h>
@@ -84,12 +83,32 @@ void buttonPannel_draw(ButtonPannel *bp, int fontSize) {
             bp->buttons[i].bounds.height,
             buttonColor);
 
-        Vector2 textSize = MeasureTextEx(uiFont, bp->buttons[i].label, fontSize, 0);
-        Vector2 textPos = {
-            bp->buttons[i].bounds.x + (bp->buttons[i].bounds.width - textSize.x) / 2,
-            bp->buttons[i].bounds.y + (bp->buttons[i].bounds.height - textSize.y) / 2,
-        };
+        if (bp->buttons[i].type == BUTTON_TYPE_SPRITE) {
+            Rectangle dest = {
+                bp->buttons[i].bounds.x,
+                bp->buttons[i].bounds.y,
+                bp->buttons[i].bounds.width,
+                bp->buttons[i].bounds.height,
+            };
 
-        DrawTextEx(uiFont, bp->buttons[i].label, textPos, fontSize, 0, WHITE);
+            // Vector2 pivot = {dest.width / 2, dest.height};
+            Vector2 pivot = {0, 0};
+
+            DrawTexturePro(bp->buttons[i].content.icon.sprite,
+                bp->buttons[i].content.icon.sourceRect,
+                dest,
+                pivot,
+                0,
+                WHITE);
+
+        } else {
+            Vector2 textSize = MeasureTextEx(uiFont, bp->buttons[i].content.label, fontSize, 0);
+            Vector2 textPos = {
+                bp->buttons[i].bounds.x + (bp->buttons[i].bounds.width - textSize.x) / 2,
+                bp->buttons[i].bounds.y + (bp->buttons[i].bounds.height - textSize.y) / 2,
+            };
+
+            DrawTextEx(uiFont, bp->buttons[i].content.label, textPos, fontSize, 0, WHITE);
+        }
     }
 }

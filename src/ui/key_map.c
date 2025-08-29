@@ -1,5 +1,4 @@
 #include "key_map.h"
-#include "commands.h"
 #include "input_manager.h"
 #include <raylib.h>
 #include <stdio.h>
@@ -28,10 +27,6 @@ void keyMap_init(KeyMap *keyMap) {
         keyMap, KEY_W, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}});
     registerCommand(
         keyMap, KEY_F, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}});
-    registerCommand(keyMap, KEY_N, (Command){COMMAND_FOCUS_NEXT_TILE});
-    registerCommand(keyMap, KEY_RIGHT, (Command){COMMAND_FOCUS_NEXT_TILE});
-    registerCommand(keyMap, KEY_P, (Command){COMMAND_FOCUS_PREV_TILE});
-    registerCommand(keyMap, KEY_LEFT, (Command){COMMAND_FOCUS_PREV_TILE});
     registerCommand(
         keyMap, KEY_ESCAPE, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NONE}});
 }

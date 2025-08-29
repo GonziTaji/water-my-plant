@@ -7,7 +7,7 @@ SRC := $(shell find src -name "*.c")
 OBJ := $(patsubst src/%.c, build/%.o, $(SRC))
 OUT = build/main
 
-all: $(OUT)
+all: compile_commands.json $(OUT)
 
 # Enlazar objetos para crear el ejecutable
 $(OUT): $(OBJ)
@@ -20,5 +20,10 @@ build/%.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Generar compile_commands.json con compiledb
+compile_commands.json: $(SRC) Makefile
+	@echo ">> Generating compile_commands.json with compiledb..."
+	@compiledb -n make $(OUT)
+
 clean:
-	rm -rf build
+	rm -rf build compile_commands.json

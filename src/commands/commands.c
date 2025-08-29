@@ -1,15 +1,7 @@
-#include "commands.h"
 #include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../game/game.h"
-#include "input_manager.h"
-
-// Utils
-
-// TODO: move functions to garden?
-bool gardenHasPlanterSelected(Garden *garden) {
-    return garden->tileSelected != -1 && garden->tiles[garden->tileSelected].hasPlanter;
-}
+#include "../ui/input_manager.h"
 
 Planter *getSelectedPlanter(Garden *garden) {
     return &garden->tiles[garden->tileSelected].planter;
@@ -27,7 +19,7 @@ void command_addPlanter(Garden *garden) {
 }
 
 void command_removeFromTile(Garden *garden) {
-    if (!gardenHasPlanterSelected(garden)) {
+    if (!garden_hasPlanterSelected(garden)) {
         return;
     }
 
@@ -41,32 +33,21 @@ void command_removeFromTile(Garden *garden) {
     }
 }
 
-void command_focusNextTile(Garden *garden) {
-    if (garden->tileSelected == -1 || garden->tileSelected == garden->tilesCount - 1) {
-        garden->tileSelected = 0;
-    } else {
-        garden->tileSelected = garden->tileSelected + 1;
-    }
-}
-
-void command_focusPreviousTile(Garden *garden) {
-    if (garden->tileSelected == -1 || garden->tileSelected == 0) {
-        garden->tileSelected = garden->tilesCount - 1;
-    } else {
-        garden->tileSelected = garden->tileSelected - 1;
-    }
-}
-
 void command_requestPlantTypeToAdd(Garden *garden, UI *ui, InputManager *input, int tileIndex) {
-    if (gardenHasPlanterSelected(garden)) {
+    if (garden_hasPlanterSelected(garden)) {
         ui->showPlantSelection = true;
 
-        buttonPannel_translate(&ui->plantSelectionButtonPannel, input->worldMousePos);
+        Vector2 buttonPannelPos = {
+            input->worldMousePos.x + 20,
+            input->worldMousePos.y + 20,
+        };
+
+        buttonPannel_translate(&ui->plantSelectionButtonPannel, buttonPannelPos);
     }
 }
 
-void command_addPlant(Garden *garden, UI *ui, enum PLANT_TYPE type) {
-    if (!gardenHasPlanterSelected(garden)) {
+void command_addPlant(Garden *garden, UI *ui, enum PlantType type) {
+    if (!garden_hasPlanterSelected(garden)) {
         return;
     }
 
@@ -77,7 +58,7 @@ void command_addPlant(Garden *garden, UI *ui, enum PLANT_TYPE type) {
 void command_irrigate(Garden *garden) {
     Planter *planter = getSelectedPlanter(garden);
 
-    if (!gardenHasPlanterSelected(garden) || !planter->hasPlant) {
+    if (!garden_hasPlanterSelected(garden) || !planter->hasPlant) {
         return;
     }
 
@@ -87,7 +68,7 @@ void command_irrigate(Garden *garden) {
 void command_feed(Garden *garden) {
     Planter *planter = getSelectedPlanter(garden);
 
-    if (!gardenHasPlanterSelected(garden) || !planter->hasPlant) {
+    if (!garden_hasPlanterSelected(garden) || !planter->hasPlant) {
         return;
     }
 
@@ -136,14 +117,6 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
 /// returns `true` if a command was executed (cmd.type is not "COMMAND_NONE"
 bool command_dispatchCommand(Command cmd, Game *g) {
     switch (cmd.type) {
-    case COMMAND_FOCUS_NEXT_TILE:
-        command_focusNextTile(&g->garden);
-        break;
-
-    case COMMAND_FOCUS_PREV_TILE:
-        command_focusPreviousTile(&g->garden);
-        break;
-
     case COMMAND_TILE_CLICKED:
         command_tileClicked(g, cmd.args.tileIndex, g->toolSelected);
         break;

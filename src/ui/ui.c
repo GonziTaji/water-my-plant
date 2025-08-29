@@ -3,7 +3,6 @@
 #include "../entity/planter.h"
 #include "button.h"
 #include "button_pannel.h"
-#include "commands.h"
 #include "input_manager.h"
 #include "raylib.h"
 #include <assert.h>
@@ -14,57 +13,59 @@ void ui_init(UI *ui, Vector2 *screenSize) {
     ui->showPlantSelection = false;
 
     // main button pannel:
-    buttonPannel_init(&ui->mainButtonPannel,
+    buttonPannel_init(&ui->toolSelectionButtonPannel,
         1,
-        7,
+        5,
         (Vector2i){160, 40},
         (Vector2i){2, 2},
         (Vector2i){4, 4},
         (Vector2i){20, 20},
         (UIButton[PANNEL_MAX_BUTTONS]){
-            (UIButton){.label = "[N]ext tile", .command = (Command){COMMAND_FOCUS_NEXT_TILE}},
-            (UIButton){.label = "[P]rev tile", .command = (Command){COMMAND_FOCUS_PREV_TILE}},
-            (UIButton){.label = "[W]ater",
-                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}}},
-            (UIButton){.label = "[F]eed",
-                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}}},
-            (UIButton){.label = "[R]emove",
-                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}}},
-            (UIButton){.label = "[A]dd plant",
-                .command =
-                    (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}}},
-            (UIButton){.label = "Add planter [M]",
-                .command = (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}}},
+            (UIButton){
+                BUTTON_TYPE_TEXT_LABEL,
+                {.label = "[W]ater"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}},
+            },
+            (UIButton){
+                BUTTON_TYPE_TEXT_LABEL,
+                {.label = "[F]eed"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}},
+            },
+            (UIButton){
+                BUTTON_TYPE_TEXT_LABEL,
+                {.label = "[R]emove"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}},
+            },
+            (UIButton){
+                BUTTON_TYPE_TEXT_LABEL,
+                {.label = "[A]dd plant"},
+
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}},
+            },
+            (UIButton){
+                BUTTON_TYPE_TEXT_LABEL,
+                {.label = "Add planter [M]"},
+                (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}},
+            },
         });
 
     UIButton plantSelectionButtons[PANNEL_MAX_BUTTONS];
 
-    for (int i = 0; i < sizeof(enum PLANT_TYPE); i++) {
-        char *plantType = "";
-        switch (i) {
-        case 0:
-            plantType = "A";
-            break;
-        case 1:
-            plantType = "B";
-            break;
-        case 2:
-            plantType = "C";
-        }
-
+    for (int i = 0; i < PLANT_TYPE_COUNT; i++) {
         plantSelectionButtons[i] = (UIButton){
-            plantType,
+            BUTTON_TYPE_SPRITE,
+            {.icon = {plantAtlas, plant_getSpriteSourceRect(i, 100)}},
             (Command){COMMAND_ADD_PLANT, {.plantType = i}},
         };
     }
 
     buttonPannel_init(&ui->plantSelectionButtonPannel,
-        3,
+        PLANT_TYPE_COUNT,
         1,
-        (Vector2i){100, 100},
+        (Vector2i){40, 40},
         (Vector2i){2, 2},
-        (Vector2i){4, 4},
-        (Vector2i){100, screenSize->y - 200},
+        (Vector2i){2, 2},
+        (Vector2i){0, 0},
         plantSelectionButtons);
 }
 
@@ -81,7 +82,7 @@ Command ui_processInput(UI *ui, InputManager *input) {
         }
     }
 
-    Command cmd = buttonPannel_processInput(&ui->mainButtonPannel, input);
+    Command cmd = buttonPannel_processInput(&ui->toolSelectionButtonPannel, input);
 
     if (cmd.type != COMMAND_NONE) {
         return cmd;
@@ -97,7 +98,7 @@ void ui_draw(UI *ui,
     enum GardeningTool toolSelected) {
 
     int fontSize = uiFont.baseSize * 0.4f;
-    buttonPannel_draw(&ui->mainButtonPannel, fontSize);
+    buttonPannel_draw(&ui->toolSelectionButtonPannel, fontSize);
 
     if (ui->showPlantSelection) {
         buttonPannel_draw(&ui->plantSelectionButtonPannel, fontSize);

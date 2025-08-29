@@ -1,4 +1,3 @@
 #!/bin/bash
-rm -r ./build
-make
+make clean all
 ./build/main

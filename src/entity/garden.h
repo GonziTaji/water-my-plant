@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ui/commands.h"
+#include "../commands/commands.h"
 #include "../ui/input_manager.h"
 #include "planter.h"
 
@@ -33,3 +33,4 @@ void garden_init(Garden *garden);
 Command garden_processInput(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime);
+bool garden_hasPlanterSelected(Garden *garden);

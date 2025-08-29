@@ -12,6 +12,6 @@ typedef struct {
 
 void planter_loadTextures();
 void planter_init(Planter *planter);
-void planter_addPlant(Planter *planter, enum PLANT_TYPE type);
+void planter_addPlant(Planter *planter, enum PlantType type);
 void planter_removePlant(Planter *planter);
 void planter_draw(Planter *planter, Vector2 origin);
