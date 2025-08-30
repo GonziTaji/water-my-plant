@@ -1,6 +1,5 @@
 
 #include <raylib.h>
-#include <stdio.h>
 
 Texture2D plantAtlas;
 Texture2D gardenTexture;
@@ -14,9 +13,9 @@ Texture2D cursorTexture_remove;
 Font uiFont;
 
 void assetManager_loadAssets() {
-    char *fontUrl = "resources/fonts/friendlyscribbles/friendlyscribbles.ttf";
-    uiFont = LoadFontEx(fontUrl, 64, NULL, 0);
-    SetTextureFilter(uiFont.texture, TEXTURE_FILTER_BILINEAR);
+    char *fontUrl = "resources/fonts/micro_5/regular.ttf";
+    uiFont = LoadFont(fontUrl);
+    // SetTextureFilter(uiFont.texture, TEXTURE_FILTER_POINT);
 
     plantAtlas = LoadTexture("resources/assets/plant1.png");
 

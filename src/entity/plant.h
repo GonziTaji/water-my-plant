@@ -28,7 +28,6 @@ typedef struct {
 void plant_init(Plant *p, enum PlantType type);
 void plant_irrigate(Plant *p);
 void plant_feed(Plant *p);
-void plant_printStats(Plant *p);
 void plant_update(Plant *plant, float deltaTime);
 PlantInfo plant_getInfo(enum PlantType type);
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health);

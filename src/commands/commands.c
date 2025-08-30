@@ -1,7 +1,7 @@
+#include "commands.h"
 #include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../game/game.h"
-#include "../ui/input_manager.h"
 #include <assert.h>
 
 void command_addPlanter(Garden *garden) {
@@ -27,33 +27,42 @@ void command_removeFromTile(Garden *garden) {
         planter_removePlant(planter);
     }
 }
-
-void command_requestPlantTypeToAdd(Garden *garden, UI *ui, InputManager *input) {
-    Planter *p = garden_getSelectedPlanter(garden);
-
-    if (!garden_hasPlanterSelected(garden) || p->hasPlant) {
+void command_changePlantSelected(Game *g, enum PlantType type) {
+    if (g->plantTypeSelected == type) {
         return;
     }
 
-    ui->showPlantSelection = true;
+    g->plantTypeSelected = type;
 
-    Vector2 buttonPannelPos = {
-        input->worldMousePos.x + 20,
-        input->worldMousePos.y + 20,
-    };
+    UIButtonGrid *plantGrid = &g->ui.plantSelectionButtonPannel;
 
-    buttonPannel_translate(&ui->plantSelectionButtonPannel, buttonPannelPos);
+    for (int i = 0; i < plantGrid->buttonsCount; i++) {
+        if (plantGrid->buttons[i].command.type == COMMAND_PLANT_TYPE_SELECTED) {
+            if (plantGrid->buttons[i].command.args.plantType == type) {
+                plantGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
+            } else {
+                plantGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
+            }
+        }
+    }
 }
 
-void command_addPlant(Garden *garden, UI *ui, enum PlantType type) {
+void command_addPlant(Garden *garden, UI *ui) {
     Planter *planter = garden_getSelectedPlanter(garden);
 
     if (!garden_hasPlanterSelected(garden) || planter->hasPlant) {
         return;
     }
 
+    // save in memory somewhere?
+    enum PlantType type;
+    for (int i = 0; i < ui->plantSelectionButtonPannel.buttonsCount; i++) {
+        if (ui->plantSelectionButtonPannel.buttons[i].status == BUTTON_STATUS_ACTIVE) {
+            type = ui->plantSelectionButtonPannel.buttons[i].command.args.plantType;
+        }
+    }
+
     planter_addPlant(planter, type);
-    ui->showPlantSelection = false;
 }
 
 void command_irrigate(Garden *garden) {
@@ -82,6 +91,20 @@ void command_changeTool(Game *g, enum GardeningTool tool) {
     } else {
         g->toolSelected = tool;
     }
+
+    g->ui.showPlantSelection = g->toolSelected == GARDENING_TOOL_PLANT_CUTTING;
+
+    UIButtonGrid *toolGrid = &g->ui.toolSelectionButtonPannel;
+
+    for (int i = 0; i < toolGrid->buttonsCount; i++) {
+        if (toolGrid->buttons[i].command.type == COMMAND_TOOL_SELECTED) {
+            if (toolGrid->buttons[i].command.args.tool == tool) {
+                toolGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
+            } else if (toolGrid->buttons[i].status == BUTTON_STATUS_ACTIVE) {
+                toolGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
+            }
+        }
+    }
 }
 
 void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelected) {
@@ -101,7 +124,7 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
-        command_requestPlantTypeToAdd(&game->garden, &game->ui, &game->input);
+        command_addPlant(&game->garden, &game->ui);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:
@@ -129,8 +152,12 @@ bool command_dispatchCommand(Command cmd, Game *g) {
         command_changeTool(g, cmd.args.tool);
         break;
 
-    case COMMAND_ADD_PLANT:
-        command_addPlant(&g->garden, &g->ui, cmd.args.plantType);
+    case COMMAND_PLANT_TYPE_SELECTED:
+        command_changePlantSelected(g, cmd.args.plantType);
+        break;
+
+    case COMMAND_UI_CLICKED:
+        // fallback
         break;
 
     case COMMAND_NONE:

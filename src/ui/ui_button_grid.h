@@ -3,7 +3,7 @@
 #include "input_manager.h"
 
 // to avoid dynamic array and malloc. The memory "wasted" is negligible
-#define PANNEL_MAX_BUTTONS 20
+#define UI_BUTTON_PANNEL_MAX_BUTTONS 20
 
 typedef struct {
     int x, y;
@@ -14,18 +14,18 @@ typedef struct {
     int rows, cols;
     Vector2i buttonDimensions, buttonSpacing, padding, origin;
     // buttons
-    UIButton buttons[PANNEL_MAX_BUTTONS];
+    UIButton buttons[UI_BUTTON_PANNEL_MAX_BUTTONS];
     int buttonsCount;
-} ButtonPannel;
+} UIButtonGrid;
 
-void buttonPannel_init(ButtonPannel *bp,
+void uiButtonGrid_init(UIButtonGrid *bp,
     int cols,
     int rows,
     Vector2i buttonDimensions,
     Vector2i buttonSpacing,
     Vector2i padding,
     Vector2i origin,
-    UIButton buttons[PANNEL_MAX_BUTTONS]);
-Command buttonPannel_processInput(ButtonPannel *bn, InputManager *input);
-void buttonPannel_draw(ButtonPannel *bp, int fontSize);
-void buttonPannel_translate(ButtonPannel *bp, Vector2 newPos);
+    UIButton buttons[UI_BUTTON_PANNEL_MAX_BUTTONS]);
+Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input);
+void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize);
+void uiButtonGrid_tranform(UIButtonGrid *bp, Vector2 newPos);

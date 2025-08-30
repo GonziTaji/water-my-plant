@@ -147,7 +147,7 @@ void garden_init(Garden *garden) {
     updateLightLevelOfTiles(garden);
 }
 
-bool garden_hasPlanterSelected(Garden *garden) {
+bool garden_hasPlanterSelected(const Garden *garden) {
     return garden->tileSelected != -1 && garden->tiles[garden->tileSelected].hasPlanter;
 }
 

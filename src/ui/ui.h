@@ -1,16 +1,15 @@
 #pragma once
 #include "../entity/garden.h"
-#include "../entity/planter.h"
 #include "../game/gameplay.h"
-#include "button_pannel.h"
 #include "input_manager.h"
+#include "ui_button_grid.h"
 #include <raylib.h>
 
 typedef struct Game Game;
 
 typedef struct {
-    ButtonPannel toolSelectionButtonPannel;
-    ButtonPannel plantSelectionButtonPannel;
+    UIButtonGrid toolSelectionButtonPannel;
+    UIButtonGrid plantSelectionButtonPannel;
     bool showPlantSelection;
 } UI;
 

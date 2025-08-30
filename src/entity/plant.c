@@ -3,7 +3,6 @@
 #include "../game/constants.h"
 #include "raylib.h"
 #include <assert.h>
-#include <stdio.h>
 
 #define PLANT_STATE_COUNT 6
 
@@ -24,13 +23,6 @@ void plant_irrigate(Plant *p) {
 
 void plant_feed(Plant *p) {
     p->nutrients += 20;
-}
-
-void plant_printStats(Plant *p) {
-    printf("My plant:\n");
-    printf("- water %d\n", p->water);
-    printf("- nutrients %d\n", p->nutrients);
-    printf("- health %d\n", p->health);
 }
 
 void plant_update(Plant *plant, float deltaTime) {

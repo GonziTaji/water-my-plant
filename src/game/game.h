@@ -19,6 +19,7 @@ typedef struct Game {
     float scale;
     Vector2 screenOffset;
     enum GardeningTool toolSelected;
+    enum PlantType plantTypeSelected;
 } Game;
 
 void game_init(Game *game);

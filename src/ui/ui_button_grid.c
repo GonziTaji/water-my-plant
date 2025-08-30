@@ -1,11 +1,11 @@
-#include "button_pannel.h"
+#include "ui_button_grid.h"
 #include "../core/asset_manager.h"
 #include "button.h"
 #include "input_manager.h"
 #include "raylib.h"
 #include <assert.h>
 
-Rectangle calculateButtonPos(ButtonPannel *bp, int buttonIndex) {
+Rectangle calculateButtonPos(UIButtonGrid *bp, int buttonIndex) {
     int col = buttonIndex % bp->cols;
     int row = buttonIndex / bp->cols;
     float x = bp->origin.x + bp->padding.x + col * (bp->buttonDimensions.x + bp->buttonSpacing.x);
@@ -14,14 +14,14 @@ Rectangle calculateButtonPos(ButtonPannel *bp, int buttonIndex) {
     return (Rectangle){x, y, bp->buttonDimensions.x, bp->buttonDimensions.y};
 }
 
-void buttonPannel_init(ButtonPannel *bp,
+void uiButtonGrid_init(UIButtonGrid *bp,
     int cols,
     int rows,
     Vector2i buttonDimensions,
     Vector2i buttonSpacing,
     Vector2i padding,
     Vector2i origin,
-    UIButton buttons[PANNEL_MAX_BUTTONS]) {
+    UIButton buttons[UI_BUTTON_PANNEL_MAX_BUTTONS]) {
 
     bp->cols = cols;
     bp->rows = rows;
@@ -31,17 +31,16 @@ void buttonPannel_init(ButtonPannel *bp,
     bp->origin = origin;
     bp->buttonsCount = cols * rows;
 
-    assert(bp->buttonsCount <= PANNEL_MAX_BUTTONS);
+    assert(bp->buttonsCount != 0);
+    assert(bp->buttonsCount <= UI_BUTTON_PANNEL_MAX_BUTTONS);
 
     for (int i = 0; i < bp->buttonsCount; i++) {
         buttons[i].bounds = calculateButtonPos(bp, i);
-        buttons[i].isMouseOver = false;
-
         bp->buttons[i] = buttons[i];
     }
 }
 
-void buttonPannel_translate(ButtonPannel *bp, Vector2 newPos) {
+void uiButtonGrid_tranform(UIButtonGrid *bp, Vector2 newPos) {
     bp->origin = (Vector2i){newPos.x, newPos.y};
 
     for (int i = 0; i < bp->buttonsCount; i++) {
@@ -49,14 +48,19 @@ void buttonPannel_translate(ButtonPannel *bp, Vector2 newPos) {
     }
 }
 
-Command buttonPannel_processInput(ButtonPannel *bn, InputManager *input) {
+Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input) {
     for (int i = 0; i < bn->buttonsCount; i++) {
-        bn->buttons[i].isMouseOver = button_isMouseOver(&bn->buttons[i], input->worldMousePos);
+        bool isMouseOver = button_isMouseOver(&bn->buttons[i], input->worldMousePos);
+        if (isMouseOver && bn->buttons[i].status != BUTTON_STATUS_ACTIVE) {
+            bn->buttons[i].status = BUTTON_STATUS_HOVER;
+        } else if (bn->buttons[i].status == BUTTON_STATUS_HOVER) {
+            bn->buttons[i].status = BUTTON_STATUS_NORMAL;
+        };
     }
 
     if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
         for (int i = 0; i < bn->buttonsCount; i++) {
-            if (bn->buttons[i].isMouseOver) {
+            if (bn->buttons[i].status == BUTTON_STATUS_HOVER) {
                 return bn->buttons[i].command;
             }
         }
@@ -65,17 +69,34 @@ Command buttonPannel_processInput(ButtonPannel *bn, InputManager *input) {
     return (Command){COMMAND_NONE};
 }
 
-void buttonPannel_draw(ButtonPannel *bp, int fontSize) {
-    int buttonGridWidth = (bp->cols * bp->buttonDimensions.x) +
-                          ((bp->cols - 1) * bp->buttonSpacing.x) + (bp->padding.x * 2);
+void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize) {
+    int uiPannelWidth = (bp->cols * bp->buttonDimensions.x) +
+                        ((bp->cols - 1) * bp->buttonSpacing.x) + (bp->padding.x * 2);
 
-    int buttonGridHeight = (bp->rows * bp->buttonDimensions.y) +
-                           ((bp->rows - 1) * bp->buttonSpacing.y) + (bp->padding.y * 2);
+    int uiPannelHeight = (bp->rows * bp->buttonDimensions.y) +
+                         ((bp->rows - 1) * bp->buttonSpacing.y) + (bp->padding.y * 2);
 
-    DrawRectangle(bp->origin.x, bp->origin.y, buttonGridWidth, buttonGridHeight, BLACK);
+    DrawRectangle(bp->origin.x, bp->origin.y, uiPannelWidth, uiPannelHeight, BLACK);
 
     for (int i = 0; i < bp->buttonsCount; i++) {
-        Color buttonColor = bp->buttons[i].isMouseOver ? LIGHTGRAY : GRAY;
+        Color buttonColor;
+        switch (bp->buttons[i].status) {
+        case BUTTON_STATUS_HOVER:
+            buttonColor = LIGHTGRAY;
+            break;
+
+        case BUTTON_STATUS_ACTIVE:
+            buttonColor = WHITE;
+            break;
+
+        case BUTTON_STATUS_NORMAL:
+            buttonColor = GRAY;
+            break;
+
+        case BUTTON_STATUS_CLICK:
+            buttonColor = YELLOW;
+            break;
+        }
 
         DrawRectangle(bp->buttons[i].bounds.x,
             bp->buttons[i].bounds.y,
@@ -108,7 +129,7 @@ void buttonPannel_draw(ButtonPannel *bp, int fontSize) {
                 bp->buttons[i].bounds.y + (bp->buttons[i].bounds.height - textSize.y) / 2,
             };
 
-            DrawTextEx(uiFont, bp->buttons[i].content.label, textPos, fontSize, 0, WHITE);
+            DrawTextEx(uiFont, bp->buttons[i].content.label, textPos, fontSize, 0, BLACK);
         }
     }
 }

@@ -2,17 +2,29 @@
 #include "../core/asset_manager.h"
 #include "../entity/planter.h"
 #include "button.h"
-#include "button_pannel.h"
 #include "input_manager.h"
 #include "raylib.h"
+#include "ui_button_grid.h"
+#include "ui_text_box.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
+
+int getButtonGridFullWidth(UIButtonGrid *grid) {
+    return ((grid->padding.x * 2) + ((grid->cols - 1) * grid->buttonSpacing.x) +
+            (grid->cols * grid->buttonDimensions.x));
+}
+
+int getButtonGridFullHeight(UIButtonGrid *grid) {
+    return ((grid->padding.y * 2) + ((grid->rows - 1) * grid->buttonSpacing.y) +
+            (grid->rows * grid->buttonDimensions.y));
+}
 
 void ui_init(UI *ui, Vector2 *screenSize) {
     HideCursor();
     ui->showPlantSelection = false;
 
-    UIButton toolButtons[PANNEL_MAX_BUTTONS];
+    UIButton toolButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
     ButtonContent bcontent = (ButtonContent){.label = ""};
     int toolButtonsCount = 0;
 
@@ -43,55 +55,77 @@ void ui_init(UI *ui, Vector2 *screenSize) {
             continue;
         }
 
-        toolButtons[toolButtonsCount] = button_create(BUTTON_TYPE_TEXT_LABEL,
-            bcontent,
-            (Command){COMMAND_TOOL_SELECTED, {.tool = toolIndex}});
+        toolButtons[toolButtonsCount] = (UIButton){
+            .type = BUTTON_TYPE_TEXT_LABEL,
+            .content = bcontent,
+            .command = (Command){COMMAND_TOOL_SELECTED, {.tool = toolIndex}},
+            .status = toolButtonsCount == 0 ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
+        };
 
         toolButtonsCount++;
     }
 
-    // main button pannel:
-    buttonPannel_init(&ui->toolSelectionButtonPannel,
-        1,
+    uiButtonGrid_init(&ui->toolSelectionButtonPannel,
         toolButtonsCount,
-        (Vector2i){160, 40},
-        (Vector2i){2, 2},
+        1,
+        (Vector2i){160, 80},
         (Vector2i){4, 4},
-        (Vector2i){20, 20},
+        (Vector2i){4, 4},
+        (Vector2i){0, 0},
         toolButtons);
 
-    UIButton plantSelectionButtons[PANNEL_MAX_BUTTONS];
+    UIButtonGrid *toolGrid = &ui->toolSelectionButtonPannel;
+
+    float toolGridWidth = getButtonGridFullWidth(toolGrid);
+    float toolGridHeight = getButtonGridFullHeight(toolGrid);
+
+    Vector2 toolGridPos = {
+        (screenSize->x - toolGridWidth) / 2,
+        screenSize->y - (toolGridHeight + 20),
+    };
+
+    uiButtonGrid_tranform(toolGrid, toolGridPos);
+
+    UIButton plantSelectionButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
 
     for (int i = 0; i < PLANT_TYPE_COUNT; i++) {
-        plantSelectionButtons[i] = button_create(BUTTON_TYPE_SPRITE,
-            (ButtonContent){.icon = {plantAtlas, plant_getSpriteSourceRect(i, 100)}},
-            (Command){COMMAND_ADD_PLANT, {.plantType = i}});
+        plantSelectionButtons[i] = (UIButton){
+            .type = BUTTON_TYPE_SPRITE,
+            .content = (ButtonContent){.icon = {plantAtlas, plant_getSpriteSourceRect(i, 100)}},
+            .command = (Command){COMMAND_PLANT_TYPE_SELECTED, {.plantType = i}},
+            .status = i == 0 ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
+        };
     }
 
-    buttonPannel_init(&ui->plantSelectionButtonPannel,
+    uiButtonGrid_init(&ui->plantSelectionButtonPannel,
         PLANT_TYPE_COUNT,
         1,
-        (Vector2i){40, 40},
-        (Vector2i){2, 2},
-        (Vector2i){2, 2},
+        (Vector2i){80, 80},
+        (Vector2i){4, 4},
+        (Vector2i){4, 4},
         (Vector2i){0, 0},
         plantSelectionButtons);
+
+    UIButtonGrid *plantGrid = &ui->plantSelectionButtonPannel;
+
+    Vector2 plantGridPos = (Vector2){
+        (screenSize->x - getButtonGridFullWidth(plantGrid)) / 2,
+        toolGrid->origin.y - (getButtonGridFullHeight(plantGrid) + 20),
+    };
+
+    uiButtonGrid_tranform(plantGrid, plantGridPos);
 }
 
 Command ui_processInput(UI *ui, InputManager *input) {
     if (ui->showPlantSelection) {
-        Command cmd = buttonPannel_processInput(&ui->plantSelectionButtonPannel, input);
+        Command cmd = uiButtonGrid_processInput(&ui->plantSelectionButtonPannel, input);
 
         if (cmd.type != COMMAND_NONE) {
             return cmd;
         }
-
-        if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
-            ui->showPlantSelection = false;
-        }
     }
 
-    Command cmd = buttonPannel_processInput(&ui->toolSelectionButtonPannel, input);
+    Command cmd = uiButtonGrid_processInput(&ui->toolSelectionButtonPannel, input);
 
     if (cmd.type != COMMAND_NONE) {
         return cmd;
@@ -106,81 +140,97 @@ void ui_draw(UI *ui,
     const Garden *garden,
     enum GardeningTool toolSelected) {
 
-    int fontSize = uiFont.baseSize * 0.4f;
-    buttonPannel_draw(&ui->toolSelectionButtonPannel, fontSize);
+    int bpFontSize = uiFont.baseSize;
+    uiButtonGrid_draw(&ui->toolSelectionButtonPannel, bpFontSize);
 
     if (ui->showPlantSelection) {
-        buttonPannel_draw(&ui->plantSelectionButtonPannel, fontSize);
+        uiButtonGrid_draw(&ui->plantSelectionButtonPannel, bpFontSize);
     }
 
-    // draw selected tile outline
-    if (garden->tileSelected != -1) {
-        bool hasPlant = garden->tiles[garden->tileSelected].hasPlanter &&
-                        garden->tiles[garden->tileSelected].planter.hasPlant;
+    const GardenTile *tile;
+    bool tileExist = true;
+    if (garden->tileHovered != -1) {
+        tile = &garden->tiles[garden->tileHovered];
+    } else if (garden->tileSelected != -1) {
+        tile = &garden->tiles[garden->tileSelected];
+    } else {
+        tileExist = false;
+    }
 
-        int fontSize = 30;
-        int tileInfoRecPadding = 20;
-        int tileInfoRecWidth = 300;
+    int fontSize = uiFont.baseSize;
+    int tileInfoRecWidth = 250;
 
-        // Height = 2 lines of text and padding top and bottom
-        Rectangle tileInfoPos = {screenSize->x - tileInfoRecWidth,
-            0,
+    if (tileExist) {
+        Vector2 offset = {-20, 20};
+        Rectangle tbBounds = {
+            offset.x + screenSize->x - tileInfoRecWidth,
+            offset.y,
             tileInfoRecWidth,
-            tileInfoRecPadding * 2 + fontSize * 2};
+            screenSize->y - (offset.y * 2),
+        };
+        UITextBox tb;
+        uiTextBox_init(&tb, fontSize, tbBounds, (Vector2){20, 20});
 
-        if (hasPlant) {
-            // Space for 3 lines of text for plant stats
-            tileInfoPos.height += fontSize * 3;
-        } else {
-            // Space for 1 line of text for "None" (no plant)
-            tileInfoPos.height += fontSize;
-        }
-
-        DrawRectangle(tileInfoPos.x, tileInfoPos.y, tileInfoPos.width, tileInfoPos.height, GRAY);
+        DrawRectangleRec(tbBounds, GRAY);
 
         char buffer[64];
-        int fontSpacing = 0;
 
-        snprintf(buffer,
-            sizeof(buffer),
-            "Light level: %d",
-            garden->tiles[garden->tileSelected].lightLevel);
+        snprintf(buffer, sizeof(buffer), "Light level: %d", tile->lightLevel);
 
-        Vector2 textPos = {tileInfoPos.x + tileInfoRecPadding, tileInfoPos.y + tileInfoRecPadding};
+        uiTextBox_drawTextLine(&tb, buffer, BLACK);
+        uiTextBox_drawTextLine(&tb, "", BLACK); // spacing
 
-        DrawTextEx(uiFont, buffer, textPos, fontSize, fontSpacing, BLACK);
+        if (tile->hasPlanter && tile->planter.hasPlant) {
+            const Plant *plant = &tile->planter.plant;
 
-        textPos.y += fontSize;
+            uiTextBox_drawTextLine(&tb, "Plant info:", BLACK);
+            tb.cursorPosition.y += 5; // spacing
 
-        DrawTextEx(uiFont, "Plant:", textPos, fontSize, fontSpacing, BLACK);
+            char buffer[64];
 
-        textPos.y += fontSize;
+            const PlantInfo info = plant_getInfo(plant->type);
 
-        if (garden->tiles[garden->tileSelected].hasPlanter &&
-            garden->tiles[garden->tileSelected].planter.hasPlant) {
-            const Planter *selectedPlanter = &garden->tiles[garden->tileSelected].planter;
+            struct {
+                const char *label;
+                const char *value;
+            } infoArr[] = {
+                {"Scientific name", info.scientificName},
+                {"Name", info.name},
+            };
+
+            int infoLinesCount = 2;
+
+            tb.cursorPosition.x += 20;
+            for (int i = 0; i < infoLinesCount; i++) {
+                snprintf(buffer, sizeof(buffer), "%s:", infoArr[i].label);
+                uiTextBox_drawTextLine(&tb, buffer, BLACK);
+
+                snprintf(buffer, sizeof(buffer), "- %s", infoArr[i].value);
+                uiTextBox_drawTextLine(&tb, buffer, BLACK);
+            }
+            tb.cursorPosition.x -= 20;
 
             struct {
                 const char *label;
                 int value;
             } stats[] = {
-                {"Type", selectedPlanter->plant.type},
-                {"Water", selectedPlanter->plant.water},
-                {"Nutrients", selectedPlanter->plant.nutrients},
-                {"Health", selectedPlanter->plant.health},
+                {"Water", plant->water},
+                {"Nutrients", plant->nutrients},
+                {"Health", plant->health},
             };
 
             int statsCount = 3;
 
-            char buffer[64];
+            tb.cursorPosition.y += 16; // spacing
+            uiTextBox_drawTextLine(&tb, "Plant Stats:", BLACK);
+            tb.cursorPosition.y += 5; // spacing
 
+            tb.cursorPosition.x += 20;
             for (int i = 0; i < statsCount; i++) {
                 snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, stats[i].value);
-                DrawTextEx(uiFont, buffer, textPos, fontSize, 0, BLACK);
-                textPos.y += fontSize;
+                uiTextBox_drawTextLine(&tb, buffer, BLACK);
             }
-        } else {
-            DrawTextEx(uiFont, "None", textPos, fontSize, 0, BLACK);
+            tb.cursorPosition.x -= 20;
         }
     }
 

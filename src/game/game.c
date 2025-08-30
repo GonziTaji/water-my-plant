@@ -24,6 +24,7 @@ void game_init(Game *game) {
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
+    game->plantTypeSelected = 0;
 
     calculateScaleAndOffset(game);
 
@@ -88,7 +89,7 @@ void drawGarden(Game *game) {
 void drawMainMenu(Game *game) {
     ClearBackground(BLACK);
 
-    int fontSize = uiFont.baseSize * 2.0f;
+    int fontSize = uiFont.baseSize * 3.0f;
     const char *text = "Press space to start!";
     Vector2 textSize = MeasureTextEx(uiFont, text, fontSize, 0);
     Vector2 textPos = {

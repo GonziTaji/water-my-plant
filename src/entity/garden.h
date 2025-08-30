@@ -4,7 +4,7 @@
 #include "../ui/input_manager.h"
 #include "planter.h"
 
-#define GARDEN_ROWS 2
+#define GARDEN_ROWS 6
 #define GARDEN_COLS 6
 #define PLANTER_WIDTH 128
 #define PLANTER_HEIGHT 64
@@ -33,5 +33,5 @@ void garden_init(Garden *garden);
 Command garden_processInput(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime);
-bool garden_hasPlanterSelected(Garden *garden);
+bool garden_hasPlanterSelected(const Garden *garden);
 Planter *garden_getSelectedPlanter(Garden *garden);

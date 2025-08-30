@@ -91,11 +91,25 @@
    "-Iinclude",
    "-g",
    "-c",
-   "src/ui/button_pannel.c",
+   "src/ui/ui_button_grid.c",
    "-o",
-   "build/ui/button_pannel.o"
+   "build/ui/ui_button_grid.o"
   ],
-  "file": "src/ui/button_pannel.c"
+  "file": "src/ui/ui_button_grid.c"
+ },
+ {
+  "directory": "/home/yogusita/proyectos/water-my-plant",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Iinclude",
+   "-g",
+   "-c",
+   "src/ui/ui_text_box.c",
+   "-o",
+   "build/ui/ui_text_box.o"
+  ],
+  "file": "src/ui/ui_text_box.c"
  },
  {
   "directory": "/home/yogusita/proyectos/water-my-plant",
