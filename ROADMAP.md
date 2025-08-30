@@ -39,17 +39,13 @@ ______________________________________________________________________
 
 ### TODO: cosas ajenas a milestones particulares para hacer cuando me den ganas de hacerlo
 
-Mejoras técnicas:
-
-- [ ] Unificar nombres de load/unload de recursos: game->load/plant->loadTexture/ui->loadResources
-  => Quizas unificar el load/unload en un solo modulo
-
 Misc.
 
 - [ ] Estudiar plantas para tomar una funcion en particular de agua y nutrientes sobre "vida"
   => mega peludo. Va a ser una simulacion penca nomas yo creo segun tipo de planta
   => Catalogizar plantas?
-- [ ] Registrar historial de acciones recientes (cola circular) \\ quiero hacer una cola circular? o solo un journal?
+- [ ] Registrar historial de acciones recientes (cola circular) 
+  * quiero hacer una cola circular?
 
 ### ✅ Milestone: Núcleo del juego
 
@@ -77,9 +73,9 @@ Misc.
 ### ✅ Milestone: Paso del tiempo y reacción de plantas sobre el tiempo
 
 - [ ] Implementar sistema de eventos temporales (simular paso del tiempo).
-  - Reloj -> 1 minuto = 10 segundos? -> reloj analogico? -> segun ticks?
-  - Plantas actuan segun ticks o segun reloj? o reloj segun ticks de mundo?
-  - Ticks de mundo != ticks de plantas | Por cada N ticks de mundo ocurren M ticks de planta segun la planta
+  - [X] Reloj -> 1 minuto
+  - [ ] Plantas actuan segun ticks o segun reloj? o reloj segun ticks de mundo?
+  - [ ] Ticks de mundo != ticks de plantas | Por cada N ticks de mundo ocurren M ticks de planta segun la planta
 - [ ] Distintos tipos de plantas
   - Planta puede que pueda estar más o menos tiempo sin agua o sin nutrientes
     => Podría hacerse que las plantas consuman menos de cada cosa dependiendo del tipo
