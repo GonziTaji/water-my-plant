@@ -49,24 +49,22 @@ void uiButtonGrid_tranform(UIButtonGrid *bp, Vector2 newPos) {
 }
 
 Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input) {
+    Command cmd = {COMMAND_NONE};
     for (int i = 0; i < bn->buttonsCount; i++) {
-        bool isMouseOver = button_isMouseOver(&bn->buttons[i], input->worldMousePos);
-        if (isMouseOver && bn->buttons[i].status != BUTTON_STATUS_ACTIVE) {
-            bn->buttons[i].status = BUTTON_STATUS_HOVER;
+        if (button_isMouseOver(&bn->buttons[i], input->worldMousePos)) {
+            if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
+                cmd = bn->buttons[i].command;
+            }
+
+            if (bn->buttons[i].status != BUTTON_STATUS_ACTIVE) {
+                bn->buttons[i].status = BUTTON_STATUS_HOVER;
+            }
         } else if (bn->buttons[i].status == BUTTON_STATUS_HOVER) {
             bn->buttons[i].status = BUTTON_STATUS_NORMAL;
         };
     }
 
-    if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
-        for (int i = 0; i < bn->buttonsCount; i++) {
-            if (bn->buttons[i].status == BUTTON_STATUS_HOVER) {
-                return bn->buttons[i].command;
-            }
-        }
-    }
-
-    return (Command){COMMAND_NONE};
+    return cmd;
 }
 
 void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize) {

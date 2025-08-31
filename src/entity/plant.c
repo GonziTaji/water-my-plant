@@ -6,8 +6,31 @@
 
 #define PLANT_STATE_COUNT 6
 
+typedef enum {
+    WATER_LEVEL_DRY,
+    WATER_LEVEL_DAMP,
+    WATER_LEVEL_MOIST,
+    WATER_LEVEL_WET,
+    WATER_LEVEL_SATURATED,
+} WaterLevelType;
+
+typedef struct {
+} PlantPreferences;
+
 static const float PLANT_TICKS_PER_SECOND = 0.5f;
 static const float PLANT_TICK_TIME = 1.0f / PLANT_TICKS_PER_SECOND;
+
+int clamp(int min, int max, int value) {
+    if (min > value) {
+        return min;
+    }
+
+    if (max < value) {
+        return max;
+    }
+
+    return value;
+}
 
 void plant_init(Plant *p, enum PlantType type) {
     p->type = type;
@@ -18,11 +41,11 @@ void plant_init(Plant *p, enum PlantType type) {
 }
 
 void plant_irrigate(Plant *p) {
-    p->water += 30;
+    p->water += 10;
 }
 
 void plant_feed(Plant *p) {
-    p->nutrients += 20;
+    p->nutrients += 10;
 }
 
 void plant_update(Plant *plant, float deltaTime) {
@@ -34,14 +57,6 @@ void plant_update(Plant *plant, float deltaTime) {
 
         plant->nutrients -= 2;
         plant->water -= 3;
-
-        if (plant->nutrients < 0) {
-            plant->nutrients = 0;
-        }
-
-        if (plant->water < 0) {
-            plant->water = 0;
-        }
 
         if (plant->water > 100) {
             plant->health -= (plant->water - 100) / 10;
@@ -58,11 +73,11 @@ void plant_update(Plant *plant, float deltaTime) {
         } else if (plant->nutrients < 30) {
             plant->health -= (30 - plant->nutrients) / 10;
         }
-
-        if (plant->health < 0) {
-            plant->health = 0;
-        }
     }
+
+    plant->health = clamp(0, 100, plant->health);
+    plant->water = clamp(0, 100, plant->water);
+    plant->nutrients = clamp(0, 100, plant->nutrients);
 }
 
 PlantInfo plant_getInfo(enum PlantType type) {

@@ -73,8 +73,9 @@ Misc.
 ### ✅ Milestone: Paso del tiempo y reacción de plantas sobre el tiempo
 
 - [ ] Implementar sistema de eventos temporales (simular paso del tiempo).
-  - [X] Reloj -> 1 minuto
-  - [ ] Plantas actuan segun ticks o segun reloj? o reloj segun ticks de mundo?
+  - [X] Reloj
+  - [ ] Plantas actuan segun ticks
+  // La unica razon para hacer esto es para que plantas distintas se actualicen cada distintos ticks
   - [ ] Ticks de mundo != ticks de plantas | Por cada N ticks de mundo ocurren M ticks de planta segun la planta
 - [ ] Distintos tipos de plantas
   - Planta puede que pueda estar más o menos tiempo sin agua o sin nutrientes

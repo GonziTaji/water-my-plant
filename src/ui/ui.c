@@ -58,7 +58,6 @@ void ui_init(UI *ui, Vector2 *screenSize) {
             .type = BUTTON_TYPE_TEXT_LABEL,
             .content = bcontent,
             .command = (Command){COMMAND_TOOL_SELECTED, {.tool = toolIndex}},
-            // .status = toolButtonsCount == 0 ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
             .status = BUTTON_STATUS_NORMAL,
         };
 
@@ -210,6 +209,10 @@ void ui_draw(UI *ui,
             }
             tb.cursorPosition.x -= 20;
 
+            tb.cursorPosition.y += 16; // spacing
+            uiTextBox_drawTextLine(&tb, "Plant Stats:", BLACK);
+            tb.cursorPosition.y += 5; // spacing
+
             struct {
                 const char *label;
                 int value;
@@ -221,16 +224,23 @@ void ui_draw(UI *ui,
 
             int statsCount = 3;
 
-            tb.cursorPosition.y += 16; // spacing
-            uiTextBox_drawTextLine(&tb, "Plant Stats:", BLACK);
-            tb.cursorPosition.y += 5; // spacing
-
-            tb.cursorPosition.x += 20;
             for (int i = 0; i < statsCount; i++) {
-                snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, stats[i].value);
+                int statBarWitdh = 200;
+                // TODO: fix magic numbers
+                int level = (stats[i].value + 19) / 20;
+                int internalWidth = (statBarWitdh / 100) * stats[i].value;
+
+                DrawRectangleV(tb.cursorPosition, (Vector2){internalWidth, fontSize}, LIGHTGRAY);
+                DrawRectangleLines(
+                    tb.cursorPosition.x, tb.cursorPosition.y, statBarWitdh, fontSize, WHITE);
+
+                tb.cursorPosition.x += 20;
+                snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, level);
                 uiTextBox_drawTextLine(&tb, buffer, BLACK);
+                tb.cursorPosition.x -= 20;
+
+                tb.cursorPosition.y += 5;
             }
-            tb.cursorPosition.x -= 20;
         }
     }
 

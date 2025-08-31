@@ -2,6 +2,7 @@
 #include "garden.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
+#include "../utils/misc.h"
 #include "plant.h"
 #include <math.h>
 #include <raylib.h>
@@ -24,6 +25,11 @@ typedef struct {
     Vector2 left;
 } IsoRec;
 
+/// Linear interpolation
+float lerp(float start, float stop, float amount) {
+    return start + (stop - start) * amount;
+}
+
 /// `timeOfDay` is the % of the day passed (time/MAX_TIME)
 float getLightSourceHeight(float timeOfDay) {
     // 4x^2 - x
@@ -32,11 +38,6 @@ float getLightSourceHeight(float timeOfDay) {
     // x = 1 (sunset) => y = 0
     // x = 0.5 (noon) => y = 0.5
     return 4.0f * timeOfDay * -(1.0f - timeOfDay);
-}
-
-// Linear interpolation
-float lerp(float a, float b, float t) {
-    return a + (b - a) * t;
 }
 
 Vector2 getLightSourcePosition(Garden *garden) {
@@ -240,6 +241,8 @@ void garden_draw(Garden *garden) {
             drawIsoRectangleLines(garden, isoTile, 2, planterBorderColor);
         }
 
+        drawIsoRectangleLines(garden, getGardenIsoVertices(garden), 2, WHITE);
+
         Vector2 tileBase = {isoTile.bottom.x, isoTile.bottom.y};
 
         if (garden->tiles[i].hasPlanter) {
@@ -253,8 +256,6 @@ void garden_draw(Garden *garden) {
             }
         }
     }
-
-    drawIsoRectangleLines(garden, getGardenIsoVertices(garden), 2, WHITE);
 
     DrawCircle(garden->lightSourcePos.x, garden->lightSourcePos.y, LIGHT_SOURCE_RADIUS, YELLOW);
 

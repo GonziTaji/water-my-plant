@@ -8,6 +8,21 @@
    "-g",
    "-Werror",
    "-c",
+   "src/utils/misc.c",
+   "-o",
+   "build/utils/misc.o"
+  ],
+  "file": "src/utils/misc.c"
+ },
+ {
+  "directory": "/home/yogusita/proyectos/water-my-plant",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Iinclude",
+   "-g",
+   "-Werror",
+   "-c",
    "src/core/asset_manager.c",
    "-o",
    "build/core/asset_manager.o"
