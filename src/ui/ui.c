@@ -187,14 +187,12 @@ void ui_draw(UI *ui,
 
             char buffer[64];
 
-            const PlantInfo info = plant_getInfo(plant->type);
-
             struct {
                 const char *label;
                 const char *value;
             } infoArr[] = {
-                {"Scientific name", info.scientificName},
-                {"Name", info.name},
+                {"Scientific name", plant->scientificName},
+                {"Name", plant->name},
             };
 
             int infoLinesCount = 2;
@@ -217,17 +215,22 @@ void ui_draw(UI *ui,
                 const char *label;
                 int value;
             } stats[] = {
-                {"Water", plant->water},
-                {"Nutrients", plant->nutrients},
+                {"Soil Water", plant->mediumHydration},
+                {"Soil Nutrients", plant->mediumNutrition},
+                {"Water", plant->hydration},
+                {"Nutrients", plant->nutrition},
                 {"Health", plant->health},
             };
 
-            int statsCount = 3;
+            int statsCount = 5;
 
             for (int i = 0; i < statsCount; i++) {
                 int statBarWitdh = 200;
                 // TODO: fix magic numbers
-                int level = (stats[i].value + 19) / 20;
+                int level = plant_getStatLevel(stats[i].value);
+                // if (stats[i].value != 0) {
+                //     level++;
+                // }
                 int internalWidth = (statBarWitdh / 100) * stats[i].value;
 
                 DrawRectangleV(tb.cursorPosition, (Vector2){internalWidth, fontSize}, LIGHTGRAY);
@@ -235,7 +238,7 @@ void ui_draw(UI *ui,
                     tb.cursorPosition.x, tb.cursorPosition.y, statBarWitdh, fontSize, WHITE);
 
                 tb.cursorPosition.x += 20;
-                snprintf(buffer, sizeof(buffer), "%s: %d", stats[i].label, level);
+                snprintf(buffer, sizeof(buffer), "%d - %s", level, stats[i].label);
                 uiTextBox_drawTextLine(&tb, buffer, BLACK);
                 tb.cursorPosition.x -= 20;
 

@@ -10,25 +10,55 @@ enum PlantType {
     PLANT_TYPE_COUNT,
 };
 
-typedef struct {
-    // TODO: add water needs, heat/sunlight tolerance, etc
-    const char *scientificName;
-    const char *name;
-    const char *altName;
-} PlantInfo;
+typedef enum {
+    PLANT_WATER_LEVEL_DRY,
+    PLANT_WATER_LEVEL_DAMP,
+    PLANT_WATER_LEVEL_MOIST,
+    PLANT_WATER_LEVEL_WET,
+    PLANT_WATER_LEVEL_SATURATED,
+} PlantWaterLevel;
+
+typedef enum {
+    PLANT_HEALTH_LEVEL_DEAD,
+    PLANT_HEALTH_LEVEL_DYING,
+    PLANT_HEALTH_LEVEL_STRESSED,
+    PLANT_HEALTH_LEVEL_HEALTHY,
+    PLANT_HEALTH_LEVEL_THRIVING,
+} PlantHealthLevel;
+
+typedef enum {
+    PLANT_NUTRIENT_LEVEL_1,
+    PLANT_NUTRIENT_LEVEL_2,
+    PLANT_NUTRIENT_LEVEL_3,
+    PLANT_NUTRIENT_LEVEL_4,
+    PLANT_NUTRIENT_LEVEL_5,
+} PlantNutrientsLevel;
 
 typedef struct {
     enum PlantType type;
-    int water;
-    int nutrients;
+    const char *scientificName;
+    const char *name;
+    const char *altName;
+    int mediumHydration;
+    int mediumNutrition;
+    int hydration;
+    int nutrition;
     int health;
     float timeSinceLastTick;
+
+    // unused
+    int overWateredResiliece;
+    int underWateredResiliece;
+    int overNutritionResiliece;
+    int underNutritionResiliece;
+    PlantWaterLevel optimalWaterLevel;
+    PlantNutrientsLevel optimalNutrientsLevel;
 } Plant;
 
 void plant_init(Plant *p, enum PlantType type);
 void plant_irrigate(Plant *p);
 void plant_feed(Plant *p);
 void plant_update(Plant *plant, float deltaTime);
-PlantInfo plant_getInfo(enum PlantType type);
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health);
 void plant_draw(Plant *plant, Vector2 origin);
+int plant_getStatLevel(int statValue);

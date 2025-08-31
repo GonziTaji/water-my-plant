@@ -3,22 +3,30 @@
 #include "../game/constants.h"
 #include "raylib.h"
 #include <assert.h>
+#include <stdlib.h>
 
 #define PLANT_STATE_COUNT 6
 
-typedef enum {
-    WATER_LEVEL_DRY,
-    WATER_LEVEL_DAMP,
-    WATER_LEVEL_MOIST,
-    WATER_LEVEL_WET,
-    WATER_LEVEL_SATURATED,
-} WaterLevelType;
+#define PLANT_STATUS_LEVEL_COUNT 4
 
 typedef struct {
+    /// 0 - 5
+    int waterResiliece;
+    int nutrientResiliece;
+    PlantWaterLevel preferedWaterLevel;
+    PlantNutrientsLevel preferedNutrientsLevel;
 } PlantPreferences;
 
-static const float PLANT_TICKS_PER_SECOND = 0.5f;
+static const float PLANT_TICKS_PER_SECOND = 1.0f;
 static const float PLANT_TICK_TIME = 1.0f / PLANT_TICKS_PER_SECOND;
+
+int minmax(int min, int max) {
+    if (max < min) {
+        return max;
+    }
+
+    return min;
+}
 
 int clamp(int min, int max, int value) {
     if (min > value) {
@@ -32,20 +40,77 @@ int clamp(int min, int max, int value) {
     return value;
 }
 
+int plant_getStatLevel(int statValue) {
+    int x = 100 / PLANT_STATUS_LEVEL_COUNT;
+
+    // int level = ((statValue + x - 1) / x) - 1;
+    int level = statValue / x;
+    int rest = statValue % x;
+    if (rest > 0) {
+        level++;
+    }
+
+    return level;
+}
+
 void plant_init(Plant *p, enum PlantType type) {
     p->type = type;
-    p->water = 100;
-    p->nutrients = 100;
+    p->mediumHydration = 0;
+    p->mediumNutrition = 100;
+    p->hydration = 50;
+    p->nutrition = 0;
     p->health = 80;
     p->timeSinceLastTick = 0;
+
+    switch (type) {
+    case PLANT_TYPE_CRASSULA_OVATA:
+        p->scientificName = "Crassula Ovata";
+        p->name = "Jade plant";
+        p->altName = "Lucky plant";
+
+        p->overWateredResiliece = 0;
+        // succulents prefer dry "stress"
+        p->underWateredResiliece = 2;
+        p->overNutritionResiliece = 0;
+        p->underNutritionResiliece = 0;
+        p->optimalWaterLevel = PLANT_WATER_LEVEL_DRY;
+        p->optimalNutrientsLevel = PLANT_NUTRIENT_LEVEL_3;
+        break;
+
+    case PLANT_TYPE_SENECIO_ROWLEYANUS:
+        p->overWateredResiliece = 0;
+        // succulents prefer dry "stress"
+        p->underWateredResiliece = 2;
+        p->overNutritionResiliece = 0;
+        p->underNutritionResiliece = 0;
+        p->optimalWaterLevel = PLANT_WATER_LEVEL_MOIST;
+        p->optimalNutrientsLevel = PLANT_NUTRIENT_LEVEL_3;
+
+        p->scientificName = "Senecio Rowleyanus";
+        p->name = "String of pearls";
+        p->altName = "String of beads";
+        break;
+
+    case PLANT_TYPE_COUNT:
+        assert(false);
+        break;
+    }
 }
 
 void plant_irrigate(Plant *p) {
-    p->water += 10;
+    p->mediumHydration += 10;
+
+    if (p->mediumHydration >= 100) {
+        p->mediumHydration = 100;
+    }
 }
 
 void plant_feed(Plant *p) {
-    p->nutrients += 10;
+    p->mediumNutrition += 10;
+
+    if (p->mediumNutrition >= 100) {
+        p->mediumNutrition = 100;
+    }
 }
 
 void plant_update(Plant *plant, float deltaTime) {
@@ -54,54 +119,143 @@ void plant_update(Plant *plant, float deltaTime) {
     if (plant->timeSinceLastTick >= PLANT_TICK_TIME) {
         // don't set to 0 but subtract in case timer > PLANT_TICK_TIME
         plant->timeSinceLastTick -= PLANT_TICK_TIME;
+        // ------------------
+        // Health changes
 
-        plant->nutrients -= 2;
-        plant->water -= 3;
+        int hidrationLevel = plant_getStatLevel(plant->hydration);
+        int plantWaterLevelDistanceFromOptimal = plant->optimalWaterLevel - hidrationLevel;
 
-        if (plant->water > 100) {
-            plant->health -= (plant->water - 100) / 10;
-        } else if (plant->water < 30) {
-            plant->health -= (30 - plant->water) / 10;
+        int waterHealthDelta = 0;
+
+        bool waterStressedButResilient =
+            (plantWaterLevelDistanceFromOptimal < 0 && plant->underWateredResiliece > 0) ||
+            (plantWaterLevelDistanceFromOptimal > 0 && plant->overWateredResiliece > 0);
+
+        switch (abs(plantWaterLevelDistanceFromOptimal)) {
+        case 0:
+            waterHealthDelta = 5;
+            break;
+
+        case 1:
+            if (waterStressedButResilient) {
+                waterHealthDelta = 3;
+            } else {
+                waterHealthDelta = 2;
+            }
+
+            break;
+        case 2:
+            if (waterStressedButResilient) {
+                waterHealthDelta = 0;
+            } else {
+                waterHealthDelta = -1;
+            }
+
+            break;
+        case 3:
+            if (waterStressedButResilient) {
+                waterHealthDelta = -2;
+            } else {
+                waterHealthDelta = -3;
+            }
+
+            break;
+        case 4:
+            if (waterStressedButResilient) {
+                waterHealthDelta = -4;
+            } else {
+                waterHealthDelta = -6;
+            }
+            break;
         }
 
-        if (plant->nutrients > 100) {
-            plant->health -= (plant->nutrients - 100) / 10;
-        } else if (plant->nutrients > 50) {
-            plant->health += (plant->nutrients - 30) / 30;
-        } else if (plant->nutrients > 30) {
-            plant->health += (plant->nutrients - 30) / 20;
-        } else if (plant->nutrients < 30) {
-            plant->health -= (30 - plant->nutrients) / 10;
+        plant->health += waterHealthDelta;
+
+        int nutritionLevel = plant_getStatLevel(plant->nutrition);
+        int plantNutrientsLevelDistanceFromOptimal = plant->optimalNutrientsLevel - nutritionLevel;
+
+        int nutrientsHealthDelta = 0;
+
+        bool nutrientStressedButResilient =
+            (plantNutrientsLevelDistanceFromOptimal < 0 && plant->underNutritionResiliece > 0) ||
+            (plantNutrientsLevelDistanceFromOptimal > 0 && plant->overNutritionResiliece > 0);
+
+        switch (abs(plantNutrientsLevelDistanceFromOptimal)) {
+        case 0:
+            nutrientsHealthDelta = 3;
+            break;
+
+        case 1:
+            nutrientsHealthDelta = 2;
+            break;
+        case 2:
+            if (nutrientStressedButResilient) {
+                nutrientsHealthDelta = 0;
+            } else {
+                nutrientsHealthDelta = -1;
+            }
+
+            break;
+        case 3:
+            if (nutrientStressedButResilient) {
+                nutrientsHealthDelta = -2;
+            } else {
+                nutrientsHealthDelta = -3;
+            }
+
+            break;
+        case 4:
+            if (nutrientStressedButResilient) {
+                nutrientsHealthDelta = -4;
+            } else {
+                nutrientsHealthDelta = -6;
+            }
+            break;
         }
+
+        plant->health += nutrientsHealthDelta;
+        plant->nutrition -= abs(nutrientsHealthDelta * 2);
+
+        // ------------------
+        // Usage of resources
+
+        if (nutritionLevel > plant_getStatLevel(plant->mediumNutrition)) {
+            plant->nutrition -= plant->mediumNutrition / 10;
+        } else {
+            plant->nutrition += plant->mediumNutrition / 10;
+        }
+
+        if (hidrationLevel < plant_getStatLevel(plant->mediumHydration)) {
+            plant->hydration -= plant->mediumHydration / 10;
+        } else {
+            plant->hydration += plant->mediumHydration / 10;
+        }
+
+        // more water = more drainage. Eventually affected by soil type?
+        int mediumHydrationLevel = plant_getStatLevel(plant->mediumHydration);
+        switch (mediumHydrationLevel) {
+        case 4:
+            plant->mediumHydration *= 0.95f;
+            break;
+        case 3:
+            plant->mediumHydration *= 0.97f;
+            break;
+        case 2:
+        case 1:
+            plant->mediumHydration *= 0.99f;
+            break;
+        case 0:
+            break;
+        }
+
+        plant->mediumNutrition -= plant->mediumNutrition / 10 / 2;
+
+        plant->health = clamp(0, 100, plant->health);
+        plant->hydration = clamp(0, 100, plant->hydration);
+        plant->nutrition = clamp(0, 100, plant->nutrition);
+        plant->mediumHydration = clamp(0, 100, plant->mediumHydration);
+        plant->mediumNutrition = clamp(0, 100, plant->mediumNutrition);
     }
-
-    plant->health = clamp(0, 100, plant->health);
-    plant->water = clamp(0, 100, plant->water);
-    plant->nutrients = clamp(0, 100, plant->nutrients);
-}
-
-PlantInfo plant_getInfo(enum PlantType type) {
-    PlantInfo pi;
-
-    switch (type) {
-    case PLANT_TYPE_CRASSULA_OVATA:
-        pi.scientificName = "Crassula Ovata";
-        pi.name = "Jade plant";
-        pi.altName = "Lucky plant";
-        break;
-
-    case PLANT_TYPE_SENECIO_ROWLEYANUS:
-        pi.scientificName = "Senecio Rowleyanus";
-        pi.name = "String of pearls";
-        pi.altName = "String of beads";
-        break;
-
-    case PLANT_TYPE_COUNT:
-        assert(false);
-        break;
-    }
-
-    return pi;
 }
 
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {

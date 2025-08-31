@@ -2,7 +2,6 @@
 #include "garden.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
-#include "../utils/misc.h"
 #include "plant.h"
 #include <math.h>
 #include <raylib.h>
