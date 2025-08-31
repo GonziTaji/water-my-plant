@@ -10,11 +10,10 @@ typedef struct Game Game;
 typedef struct {
     UIButtonGrid toolSelectionButtonPannel;
     UIButtonGrid plantSelectionButtonPannel;
-    bool showPlantSelection;
 } UI;
 
 void ui_init(UI *ui, Vector2 *screenSize);
-Command ui_processInput(UI *ui, InputManager *input);
+Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool);
 void ui_draw(UI *ui,
     const InputManager *input,
     const Vector2 *screenSize,

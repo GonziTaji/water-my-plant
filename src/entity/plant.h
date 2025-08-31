@@ -6,8 +6,8 @@
 
 enum PlantType {
     PLANT_TYPE_CRASSULA_OVATA,     // jade
-    PLANT_TYPE_SENECIO_ROWLEYANUS, // rosario
-    PLANT_TYPE_COUNT,              // keep at the end
+    PLANT_TYPE_SENECIO_ROWLEYANUS, // string of pearls
+    PLANT_TYPE_COUNT,
 };
 
 typedef struct {

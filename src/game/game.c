@@ -20,7 +20,7 @@ void calculateScaleAndOffset(Game *game) {
 void game_init(Game *game) {
     Vector2 screenSize = {1920, 1080};
 
-    game->toolSelected = GARDENING_TOOL_NONE;
+    game->toolSelected = 0;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
@@ -30,7 +30,8 @@ void game_init(Game *game) {
 
     SetTextureFilter(game->target.texture, TEXTURE_FILTER_BILINEAR);
 
-    garden_init(&game->garden);
+    garden_init(&game->garden, screenSize);
+
     ui_init(&game->ui, &screenSize);
     keyMap_init(&game->keyMap);
 }
@@ -39,23 +40,24 @@ void game_processInput(Game *game) {
     inputManager_update(&game->input, game->scale, game->screenOffset);
 
     // One command per frame?
-    if (game->input.mouseButtonPressed == MOUSE_RIGHT_BUTTON &&
-        game->toolSelected != GARDENING_TOOL_NONE) {
-        // Now it's the only action with right click.
-        // Change this  if there's a different action like when right clicking a tile
-        game->toolSelected = GARDENING_TOOL_NONE;
+    if (game->input.mouseButtonPressed == MOUSE_RIGHT_BUTTON) {
+        command_dispatchCommand(
+            (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NONE}}, game);
         return;
     }
 
-    if (command_dispatchCommand(keyMap_processInput(&game->keyMap, &game->input), game)) {
+    Command cmd = keyMap_processInput(&game->keyMap, &game->input);
+    if (command_dispatchCommand(cmd, game)) {
         return;
     }
 
-    if (command_dispatchCommand(ui_processInput(&game->ui, &game->input), game)) {
+    cmd = ui_processInput(&game->ui, &game->input, game->toolSelected);
+    if (command_dispatchCommand(cmd, game)) {
         return;
     }
 
-    if (command_dispatchCommand(garden_processInput(&game->garden, &game->input), game)) {
+    cmd = garden_processInput(&game->garden, &game->input);
+    if (command_dispatchCommand(cmd, game)) {
         return;
     }
 }

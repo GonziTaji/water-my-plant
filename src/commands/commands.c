@@ -92,17 +92,17 @@ void command_changeTool(Game *g, enum GardeningTool tool) {
         g->toolSelected = tool;
     }
 
-    g->ui.showPlantSelection = g->toolSelected == GARDENING_TOOL_PLANT_CUTTING;
-
     UIButtonGrid *toolGrid = &g->ui.toolSelectionButtonPannel;
 
     for (int i = 0; i < toolGrid->buttonsCount; i++) {
-        if (toolGrid->buttons[i].command.type == COMMAND_TOOL_SELECTED) {
-            if (toolGrid->buttons[i].command.args.tool == tool) {
-                toolGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
-            } else if (toolGrid->buttons[i].status == BUTTON_STATUS_ACTIVE) {
-                toolGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
-            }
+        if (toolGrid->buttons[i].command.type != COMMAND_TOOL_SELECTED) {
+            continue;
+        }
+
+        if (toolGrid->buttons[i].command.args.tool == g->toolSelected) {
+            toolGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
+        } else {
+            toolGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
         }
     }
 }

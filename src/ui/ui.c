@@ -22,7 +22,6 @@ int getButtonGridFullHeight(UIButtonGrid *grid) {
 
 void ui_init(UI *ui, Vector2 *screenSize) {
     HideCursor();
-    ui->showPlantSelection = false;
 
     UIButton toolButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
     ButtonContent bcontent = (ButtonContent){.label = ""};
@@ -59,7 +58,8 @@ void ui_init(UI *ui, Vector2 *screenSize) {
             .type = BUTTON_TYPE_TEXT_LABEL,
             .content = bcontent,
             .command = (Command){COMMAND_TOOL_SELECTED, {.tool = toolIndex}},
-            .status = toolButtonsCount == 0 ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
+            // .status = toolButtonsCount == 0 ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
+            .status = BUTTON_STATUS_NORMAL,
         };
 
         toolButtonsCount++;
@@ -116,8 +116,8 @@ void ui_init(UI *ui, Vector2 *screenSize) {
     uiButtonGrid_tranform(plantGrid, plantGridPos);
 }
 
-Command ui_processInput(UI *ui, InputManager *input) {
-    if (ui->showPlantSelection) {
+Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
+    if (tool == GARDENING_TOOL_PLANT_CUTTING) {
         Command cmd = uiButtonGrid_processInput(&ui->plantSelectionButtonPannel, input);
 
         if (cmd.type != COMMAND_NONE) {
@@ -143,7 +143,7 @@ void ui_draw(UI *ui,
     int bpFontSize = uiFont.baseSize;
     uiButtonGrid_draw(&ui->toolSelectionButtonPannel, bpFontSize);
 
-    if (ui->showPlantSelection) {
+    if (toolSelected == GARDENING_TOOL_PLANT_CUTTING) {
         uiButtonGrid_draw(&ui->plantSelectionButtonPannel, bpFontSize);
     }
 
