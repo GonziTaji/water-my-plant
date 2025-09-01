@@ -39,18 +39,17 @@ typedef struct {
     const char *scientificName;
     const char *name;
     const char *altName;
-    int mediumHydration;
-    int mediumNutrition;
-    int hydration;
-    int nutrition;
-    int health;
+    float mediumHydration;
+    float mediumNutrition;
+    float hydration;
+    float nutrition;
+    float health;
     float timeSinceLastTick;
-
-    // unused
-    int overWateredResiliece;
-    int underWateredResiliece;
-    int overNutritionResiliece;
-    int underNutritionResiliece;
+    int ticksCount;
+    bool overWateredResiliece;
+    bool underWateredResiliece;
+    bool overNutritionResiliece;
+    bool underNutritionResiliece;
     PlantWaterLevel optimalWaterLevel;
     PlantNutrientsLevel optimalNutrientsLevel;
 } Plant;
@@ -61,4 +60,4 @@ void plant_feed(Plant *p);
 void plant_update(Plant *plant, float deltaTime);
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health);
 void plant_draw(Plant *plant, Vector2 origin);
-int plant_getStatLevel(int statValue);
+int plant_getStatLevel(float statValue);

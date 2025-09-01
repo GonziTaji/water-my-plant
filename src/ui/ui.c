@@ -213,7 +213,7 @@ void ui_draw(UI *ui,
 
             struct {
                 const char *label;
-                int value;
+                float value;
             } stats[] = {
                 {"Soil Water", plant->mediumHydration},
                 {"Soil Nutrients", plant->mediumNutrition},
@@ -231,7 +231,7 @@ void ui_draw(UI *ui,
                 // if (stats[i].value != 0) {
                 //     level++;
                 // }
-                int internalWidth = (statBarWitdh / 100) * stats[i].value;
+                int internalWidth = (statBarWitdh / 100) * (int)stats[i].value;
 
                 DrawRectangleV(tb.cursorPosition, (Vector2){internalWidth, fontSize}, LIGHTGRAY);
                 DrawRectangleLines(
