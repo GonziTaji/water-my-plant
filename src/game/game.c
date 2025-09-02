@@ -20,11 +20,12 @@ void calculateScaleAndOffset(Game *game) {
 void game_init(Game *game) {
     Vector2 screenSize = {1920, 1080};
 
+    game->gameplaySpeed = GAMEPLAY_SPEED_NORMAL;
     game->toolSelected = 0;
+    game->plantTypeSelected = 0;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
-    game->plantTypeSelected = 0;
 
     calculateScaleAndOffset(game);
 
@@ -32,7 +33,7 @@ void game_init(Game *game) {
 
     garden_init(&game->garden, screenSize);
 
-    ui_init(&game->ui, &screenSize);
+    ui_init(&game->ui, &screenSize, game->gameplaySpeed);
     keyMap_init(&game->keyMap);
 }
 
@@ -64,6 +65,10 @@ void game_processInput(Game *game) {
 
 void game_update(Game *game, float deltaTime) {
     calculateScaleAndOffset(game);
+
+    // 1.0, 1.5, 3.0
+    const float speedFactor = (game->gameplaySpeed * game->gameplaySpeed + 2) * 0.5f;
+    deltaTime *= speedFactor;
 
     switch (game->state) {
     case GAME_STATE_MAIN_MENU:
@@ -103,7 +108,7 @@ void drawMainMenu(Game *game) {
 }
 
 void game_draw(Game *game) {
-    // Draw scene in texture
+    // Draw in target render texture
     BeginTextureMode(game->target);
 
     switch (game->state) {
@@ -119,7 +124,7 @@ void game_draw(Game *game) {
 
     EndTextureMode();
 
-    // Draw in target render texture
+    // Draw scene in game texture
     BeginDrawing();
 
     ClearBackground(BLACK);

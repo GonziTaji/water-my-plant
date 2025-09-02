@@ -3,6 +3,7 @@
 
 #define PLANT_SPRITE_WIDTH 64
 #define PLANT_SPRITE_HEIGHT 64
+#define PLANT_STATUS_LEVEL_COUNT 5
 
 enum PlantType {
     PLANT_TYPE_CRASSULA_OVATA,     // jade

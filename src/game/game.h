@@ -20,6 +20,7 @@ typedef struct Game {
     Vector2 screenOffset;
     enum GardeningTool toolSelected;
     enum PlantType plantTypeSelected;
+    GameplaySpeed gameplaySpeed;
 } Game;
 
 void game_init(Game *game);

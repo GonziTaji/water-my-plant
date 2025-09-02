@@ -20,7 +20,7 @@ int getButtonGridFullHeight(UIButtonGrid *grid) {
             (grid->rows * grid->buttonDimensions.y));
 }
 
-void ui_init(UI *ui, Vector2 *screenSize) {
+void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
     HideCursor();
 
     UIButton toolButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
@@ -58,7 +58,6 @@ void ui_init(UI *ui, Vector2 *screenSize) {
             .type = BUTTON_TYPE_TEXT_LABEL,
             .content = bcontent,
             .command = (Command){COMMAND_TOOL_SELECTED, {.tool = toolIndex}},
-            .status = BUTTON_STATUS_NORMAL,
         };
 
         toolButtonsCount++;
@@ -113,6 +112,26 @@ void ui_init(UI *ui, Vector2 *screenSize) {
     };
 
     uiButtonGrid_tranform(plantGrid, plantGridPos);
+
+    UIButton speedSelectionButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
+
+    for (int i = 0; i < GAMEPLAY_SPEED_COUNT; i++) {
+        speedSelectionButtons[i] = (UIButton){
+            .type = BUTTON_TYPE_TEXT_LABEL,
+            .content = {.label = ">"},
+            .command = (Command){COMMAND_GAMEPLAY_CHANGE_SPEED, {.gameplaySpeed = i}},
+            .status = gameplaySpeed == i ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
+        };
+
+        uiButtonGrid_init(&ui->speedSelectionButtonPannel,
+            GAMEPLAY_SPEED_COUNT,
+            1,
+            (Vector2i){80, 30},
+            (Vector2i){4, 4},
+            (Vector2i){4, 4},
+            (Vector2i){100, 10},
+            speedSelectionButtons);
+    }
 }
 
 Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
@@ -130,6 +149,12 @@ Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
         return cmd;
     }
 
+    cmd = uiButtonGrid_processInput(&ui->speedSelectionButtonPannel, input);
+
+    if (cmd.type != COMMAND_NONE) {
+        return cmd;
+    }
+
     return (Command){COMMAND_NONE};
 }
 
@@ -141,6 +166,8 @@ void ui_draw(UI *ui,
 
     int bpFontSize = uiFont.baseSize;
     uiButtonGrid_draw(&ui->toolSelectionButtonPannel, bpFontSize);
+
+    uiButtonGrid_draw(&ui->speedSelectionButtonPannel, bpFontSize);
 
     if (toolSelected == GARDENING_TOOL_PLANT_CUTTING) {
         uiButtonGrid_draw(&ui->plantSelectionButtonPannel, bpFontSize);
@@ -228,10 +255,10 @@ void ui_draw(UI *ui,
                 int statBarWitdh = 200;
                 // TODO: fix magic numbers
                 int level = plant_getStatLevel(stats[i].value);
-                // if (stats[i].value != 0) {
-                //     level++;
-                // }
-                int internalWidth = (statBarWitdh / 100) * (int)stats[i].value;
+                int amountByLevel = (100.0f / PLANT_STATUS_LEVEL_COUNT);
+                int baseAmount = amountByLevel * level;
+                int restOfLevel = stats[i].value - baseAmount;
+                int internalWidth = (statBarWitdh / amountByLevel) * restOfLevel;
 
                 DrawRectangleV(tb.cursorPosition, (Vector2){internalWidth, fontSize}, LIGHTGRAY);
                 DrawRectangleLines(

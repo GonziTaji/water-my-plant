@@ -3,6 +3,13 @@
 
 enum GameplayMode { GAMEPLAY_MODE_NORMAL, GAMEPLAY_MODE_IRRIGATION };
 
+typedef enum {
+    GAMEPLAY_SPEED_NORMAL,
+    GAMEPLAY_SPEED_FAST,
+    GAMEPLAY_SPEED_FASTEST,
+    GAMEPLAY_SPEED_COUNT,
+} GameplaySpeed;
+
 // Move to somewhere else?
 enum GardeningTool {
     GARDENING_TOOL_NONE,

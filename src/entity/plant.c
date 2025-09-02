@@ -8,8 +8,7 @@
 #include <stdlib.h>
 
 #define PLANT_STATE_COUNT 6
-#define PLANT_STATUS_LEVEL_COUNT 5
-#define PLANT_TICKS_PER_SECOND 0.25f
+#define PLANT_TICKS_PER_SECOND 1.0f
 
 typedef struct {
     /// 0 - 5
@@ -179,22 +178,22 @@ void plant_update(Plant *plant, float deltaTime) {
                 plant->hydration = plant_getMaxValueForLevel(2);
             }
         } else if (plant->hydration < plant->mediumHydration) {
-            hydrationChange = 1;
+            hydrationChange = 2;
         } else {
-            hydrationChange = -1;
+            hydrationChange = -2;
         }
     } else if (mediumHydrationLevel == 0 && plant->hydration < plant->mediumHydration) {
         // when hydration in plant and medium are 0, and the medium is irrigated, hydration
         // should go up
         hydrationChange += 1;
     } else {
-        hydrationChange = -mediumWaterLevelDistanceFromOptimal / 2.0f;
+        hydrationChange = -mediumWaterLevelDistanceFromOptimal;
     }
 
     plant->hydration += hydrationChange * deltaTime;
 
-    // Medium hydration change based on own level
-    int hydrationLoss = 1;
+    // Medium hydration change based on own level and plant hydration change
+    float hydrationLoss = absf(hydrationChange) * 0.5f;
     // Drainage for higher hydration levels
     if (mediumHydrationLevel > 2) {
         hydrationLoss += (mediumHydrationLevel - 2);

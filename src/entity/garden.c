@@ -258,6 +258,7 @@ void garden_draw(Garden *garden) {
 
     DrawCircle(garden->lightSourcePos.x, garden->lightSourcePos.y, LIGHT_SOURCE_RADIUS, YELLOW);
 
+    // Should be in UI?
     char buffer[64];
     int hours = garden->time / 60;
     int minutes = garden->time % 60;
@@ -267,8 +268,5 @@ void garden_draw(Garden *garden) {
         hours,
         minutes,
         (int)(garden->secondsPassed * 60 / SECONDS_PER_MINUTE));
-    DrawText(buffer, 300, 0, 30, WHITE);
-
-    snprintf(buffer, 64, "Raw time: %d", garden->time);
-    DrawText(buffer, 300, 30, 30, WHITE);
+    DrawText(buffer, 400, 0, 30, WHITE);
 }

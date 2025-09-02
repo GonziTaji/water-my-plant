@@ -27,7 +27,12 @@ void command_removeFromTile(Garden *garden) {
         planter_removePlant(planter);
     }
 }
+
 void command_changePlantSelected(Game *g, enum PlantType type) {
+    if (g->toolSelected != GARDENING_TOOL_PLANT_CUTTING) {
+        return;
+    }
+
     if (g->plantTypeSelected == type) {
         return;
     }
@@ -45,6 +50,15 @@ void command_changePlantSelected(Game *g, enum PlantType type) {
             }
         }
     }
+}
+
+void command_changePlantSelectNext(Game *g) {
+    int plantSelected = g->plantTypeSelected + 1;
+    if (plantSelected == PLANT_TYPE_COUNT) {
+        plantSelected = 0;
+    }
+
+    command_changePlantSelected(g, plantSelected);
 }
 
 void command_addPlant(Garden *garden, UI *ui) {
@@ -141,6 +155,21 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
     }
 }
 
+void command_changeGameplaySpeed(Game *g, GameplaySpeed newSpeed) {
+    g->gameplaySpeed = newSpeed;
+    UIButtonGrid *speedGrid = &g->ui.speedSelectionButtonPannel;
+
+    for (int i = 0; i < speedGrid->buttonsCount; i++) {
+        if (speedGrid->buttons[i].command.type == COMMAND_GAMEPLAY_CHANGE_SPEED) {
+            if (speedGrid->buttons[i].command.args.gameplaySpeed == newSpeed) {
+                speedGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
+            } else {
+                speedGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
+            }
+        }
+    }
+}
+
 /// returns `true` if a command was executed (cmd.type is not "COMMAND_NONE"
 bool command_dispatchCommand(Command cmd, Game *g) {
     switch (cmd.type) {
@@ -154,6 +183,14 @@ bool command_dispatchCommand(Command cmd, Game *g) {
 
     case COMMAND_PLANT_TYPE_SELECTED:
         command_changePlantSelected(g, cmd.args.plantType);
+        break;
+
+    case COMMAND_PLANT_TYPE_SELECT_NEXT:
+        command_changePlantSelectNext(g);
+        break;
+
+    case COMMAND_GAMEPLAY_CHANGE_SPEED:
+        command_changeGameplaySpeed(g, cmd.args.gameplaySpeed);
         break;
 
     case COMMAND_UI_CLICKED:

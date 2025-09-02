@@ -29,6 +29,8 @@ void keyMap_init(KeyMap *keyMap) {
         keyMap, KEY_F, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}});
     registerCommand(
         keyMap, KEY_ESCAPE, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NONE}});
+
+    registerCommand(keyMap, KEY_TAB, (Command){COMMAND_PLANT_TYPE_SELECT_NEXT});
 }
 
 Command keyMap_processInput(KeyMap *keyMap, InputManager *input) {
