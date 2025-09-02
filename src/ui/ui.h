@@ -19,4 +19,5 @@ void ui_draw(UI *ui,
     const InputManager *input,
     const Vector2 *screenSize,
     const Garden *garden,
-    enum GardeningTool toolSelected);
+    enum GardeningTool toolSelected,
+    float gameplayTime);

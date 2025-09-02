@@ -21,6 +21,7 @@ typedef struct Game {
     enum GardeningTool toolSelected;
     enum PlantType plantTypeSelected;
     GameplaySpeed gameplaySpeed;
+    float inGameSeconds;
 } Game;
 
 void game_init(Game *game);

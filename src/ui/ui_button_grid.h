@@ -29,3 +29,5 @@ void uiButtonGrid_init(UIButtonGrid *bp,
 Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input);
 void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize);
 void uiButtonGrid_tranform(UIButtonGrid *bp, Vector2 newPos);
+int uiButtonGrid_getWidth(UIButtonGrid *bp);
+int uiButtonGrid_getHeight(UIButtonGrid *bp);

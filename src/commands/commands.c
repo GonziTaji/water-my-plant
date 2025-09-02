@@ -157,6 +157,7 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
 
 void command_changeGameplaySpeed(Game *g, GameplaySpeed newSpeed) {
     g->gameplaySpeed = newSpeed;
+
     UIButtonGrid *speedGrid = &g->ui.speedSelectionButtonPannel;
 
     for (int i = 0; i < speedGrid->buttonsCount; i++) {

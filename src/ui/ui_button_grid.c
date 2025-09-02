@@ -67,14 +67,20 @@ Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input) {
     return cmd;
 }
 
+int uiButtonGrid_getWidth(UIButtonGrid *bp) {
+    return (bp->cols * bp->buttonDimensions.x) + ((bp->cols - 1) * bp->buttonSpacing.x) +
+           (bp->padding.x * 2);
+}
+
+int uiButtonGrid_getHeight(UIButtonGrid *bp) {
+    return (bp->rows * bp->buttonDimensions.y) + ((bp->rows - 1) * bp->buttonSpacing.y) +
+           (bp->padding.y * 2);
+}
+
 void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize) {
-    int uiPannelWidth = (bp->cols * bp->buttonDimensions.x) +
-                        ((bp->cols - 1) * bp->buttonSpacing.x) + (bp->padding.x * 2);
 
-    int uiPannelHeight = (bp->rows * bp->buttonDimensions.y) +
-                         ((bp->rows - 1) * bp->buttonSpacing.y) + (bp->padding.y * 2);
-
-    DrawRectangle(bp->origin.x, bp->origin.y, uiPannelWidth, uiPannelHeight, BLACK);
+    DrawRectangle(
+        bp->origin.x, bp->origin.y, uiButtonGrid_getWidth(bp), uiButtonGrid_getHeight(bp), BLACK);
 
     for (int i = 0; i < bp->buttonsCount; i++) {
         Color buttonColor;

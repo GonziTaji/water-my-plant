@@ -26,13 +26,11 @@ typedef struct {
     int tilesCount;
     Vector2 lightSourcePos;
     int lightSourceLevel;
-    int time;
-    float secondsPassed;
 } Garden;
 
-void garden_init(Garden *garden, Vector2 screenSize);
+void garden_init(Garden *garden, Vector2 screenSize, float gameplayTime);
 Command garden_processInput(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
-void garden_update(Garden *garden, float deltaTime);
+void garden_update(Garden *garden, float deltaTime, float gameplayTime);
 bool garden_hasPlanterSelected(const Garden *garden);
 Planter *garden_getSelectedPlanter(Garden *garden);

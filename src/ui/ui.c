@@ -162,7 +162,8 @@ void ui_draw(UI *ui,
     const InputManager *input,
     const Vector2 *screenSize,
     const Garden *garden,
-    enum GardeningTool toolSelected) {
+    enum GardeningTool toolSelected,
+    float gameplayTime) {
 
     int bpFontSize = uiFont.baseSize;
     uiButtonGrid_draw(&ui->toolSelectionButtonPannel, bpFontSize);
@@ -273,6 +274,21 @@ void ui_draw(UI *ui,
             }
         }
     }
+
+    char buffer[64];
+    int hours = gameplayTime / 60 / 60;
+    int minutes = (int)gameplayTime / 60 % 60;
+    int seconds = (int)gameplayTime % 60;
+
+    snprintf(buffer, 64, "Time: %02d:%02d:%02d", hours, minutes, seconds);
+
+    Vector2 clockPos = {
+        ui->speedSelectionButtonPannel.origin.x + 20 +
+            uiButtonGrid_getWidth(&ui->speedSelectionButtonPannel),
+        ui->speedSelectionButtonPannel.origin.y + 5,
+    };
+
+    DrawText(buffer, clockPos.x, clockPos.y, 30, WHITE);
 
     // Draw cursor at the end
     Texture2D cursorTexture;

@@ -5,11 +5,8 @@
 #include "plant.h"
 #include <math.h>
 #include <raylib.h>
-#include <stdio.h>
 
 #define LIGHT_SOURCE_RADIUS 40
-#define MAX_TIME 1440         // minutes in a 24h day
-#define SECONDS_PER_MINUTE 10 // real seconds equivalent to a game minute
 #define TILE_WIDTH 128
 #define TILE_HEIGHT (int)(TILE_WIDTH / 2)
 
@@ -29,7 +26,7 @@ float lerp(float start, float stop, float amount) {
     return start + (stop - start) * amount;
 }
 
-/// `timeOfDay` is the % of the day passed (time/MAX_TIME)
+/// `timeOfDay` is the % of the day passed
 float getLightSourceHeight(float timeOfDay) {
     // 4x^2 - x
     // because:
@@ -39,8 +36,8 @@ float getLightSourceHeight(float timeOfDay) {
     return 4.0f * timeOfDay * -(1.0f - timeOfDay);
 }
 
-Vector2 getLightSourcePosition(Garden *garden) {
-    float timeOfDay = (float)garden->time / MAX_TIME;
+Vector2 getLightSourcePosition(Garden *garden, int gameplayTime) {
+    float timeOfDay = (float)gameplayTime / (float)SECONDS_IN_A_DAY;
     int maxHeight = 256;
 
     // position in a 1x1 universe
@@ -147,9 +144,7 @@ void updateLightLevelOfTiles(Garden *garden) {
     }
 }
 
-void garden_init(Garden *garden, Vector2 screenSize) {
-    garden->time = 0;
-    garden->secondsPassed = 0;
+void garden_init(Garden *garden, Vector2 screenSize, float gameplayTime) {
     garden->lightSourceLevel = 12;
     garden->tileSelected = 0;
     garden->tileHovered = 0;
@@ -164,7 +159,7 @@ void garden_init(Garden *garden, Vector2 screenSize) {
         garden->tiles[i].planter.hasPlant = false;
     }
 
-    garden->lightSourcePos = getLightSourcePosition(garden);
+    garden->lightSourcePos = getLightSourcePosition(garden, gameplayTime);
     updateLightLevelOfTiles(garden);
 }
 
@@ -176,34 +171,13 @@ Planter *garden_getSelectedPlanter(Garden *garden) {
     return &garden->tiles[garden->tileSelected].planter;
 }
 
-void garden_update(Garden *garden, float deltaTime) {
-    garden->secondsPassed += deltaTime;
-
-    if (garden->secondsPassed >= SECONDS_PER_MINUTE) {
-        garden->time += 1;
-        garden->secondsPassed = 0;
-
-        if (garden->time > MAX_TIME) {
-            garden->time = 0;
-        }
-
-        garden->lightSourcePos = getLightSourcePosition(garden);
-        updateLightLevelOfTiles(garden);
-    }
+void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
+    garden->lightSourcePos = getLightSourcePosition(garden, gameplayTime);
+    updateLightLevelOfTiles(garden);
 
     for (int i = 0; i < garden->tilesCount; i++) {
         if (garden->tiles[i].hasPlanter && garden->tiles[i].planter.hasPlant) {
             plant_update(&garden->tiles[i].planter.plant, deltaTime);
-        }
-    }
-
-    // to test time
-    if (IsKeyDown(KEY_T)) {
-        garden->time += 5;
-        garden->lightSourcePos = getLightSourcePosition(garden);
-        updateLightLevelOfTiles(garden);
-        if (garden->time > MAX_TIME) {
-            garden->time = 0;
         }
     }
 }
@@ -257,16 +231,4 @@ void garden_draw(Garden *garden) {
     }
 
     DrawCircle(garden->lightSourcePos.x, garden->lightSourcePos.y, LIGHT_SOURCE_RADIUS, YELLOW);
-
-    // Should be in UI?
-    char buffer[64];
-    int hours = garden->time / 60;
-    int minutes = garden->time % 60;
-    snprintf(buffer,
-        64,
-        "Time: %02d:%02d:%02d",
-        hours,
-        minutes,
-        (int)(garden->secondsPassed * 60 / SECONDS_PER_MINUTE));
-    DrawText(buffer, 400, 0, 30, WHITE);
 }

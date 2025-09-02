@@ -26,12 +26,13 @@ void game_init(Game *game) {
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
+    game->inGameSeconds = (23 * 60 * 60) + (60 * 59);
 
     calculateScaleAndOffset(game);
 
     SetTextureFilter(game->target.texture, TEXTURE_FILTER_BILINEAR);
 
-    garden_init(&game->garden, screenSize);
+    garden_init(&game->garden, screenSize, game->inGameSeconds);
 
     ui_init(&game->ui, &screenSize, game->gameplaySpeed);
     keyMap_init(&game->keyMap);
@@ -77,7 +78,13 @@ void game_update(Game *game, float deltaTime) {
         }
         break;
     case GAME_STATE_GARDEN:
-        garden_update(&game->garden, deltaTime);
+        game->inGameSeconds += RL_SECONDS_PER_GAME_MINUTE * deltaTime;
+
+        if (game->inGameSeconds > SECONDS_IN_A_DAY) {
+            game->inGameSeconds = 0;
+        }
+
+        garden_update(&game->garden, deltaTime, game->inGameSeconds);
         break;
     }
 }
@@ -87,7 +94,12 @@ void drawGarden(Game *game) {
 
     garden_draw(&game->garden);
     // UI must be at the end
-    ui_draw(&game->ui, &game->input, &game->screenSize, &game->garden, game->toolSelected);
+    ui_draw(&game->ui,
+        &game->input,
+        &game->screenSize,
+        &game->garden,
+        game->toolSelected,
+        game->inGameSeconds);
 
     // For debug
     inputManager_drawMousePos(&game->input, game->screenSize);
