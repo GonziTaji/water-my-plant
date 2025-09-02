@@ -9,7 +9,7 @@
 
 #define PLANT_STATE_COUNT 6
 #define PLANT_STATUS_LEVEL_COUNT 5
-#define PLANT_TICKS_PER_SECOND 2.0f
+#define PLANT_TICKS_PER_SECOND 0.25f
 
 typedef struct {
     /// 0 - 5
@@ -18,8 +18,6 @@ typedef struct {
     PlantWaterLevel preferedWaterLevel;
     PlantNutrientsLevel preferedNutrientsLevel;
 } PlantPreferences;
-
-// static const float PLANT_TICKS_PER_SECOND = 4.0f;
 
 int minmax(int min, int max) {
     if (max < min) {
@@ -56,7 +54,7 @@ int plant_getStatLevel(float statValue) {
     float x = 100.0f / PLANT_STATUS_LEVEL_COUNT;
 
     // int level = ((statValue + x - 1) / x) - 1;
-    int level = statValue / x;
+    int level = clampf(0, 100, statValue) / x;
     // int rest = (int)statValue % (int)x;
     // if (rest > 0) {
     //     level++;
@@ -129,125 +127,107 @@ float exponential(float initial, float rate, float x) {
 }
 
 void plant_update(Plant *plant, float deltaTime) {
-    plant->timeSinceLastTick += deltaTime;
-    // float plantTickTime = 1 / PLANT_TICKS_PER_SECOND;
+    deltaTime *= PLANT_TICKS_PER_SECOND;
 
-    if (true) {
-        // if (plant->timeSinceLastTick >= plantTickTime) {
-        // printf("PLANT TICKED\n");
-        // don't set to 0 but subtract in case timer > PLANT_TICK_TIME
-        // plant->timeSinceLastTick -= plantTickTime;
-        // to 0 while developing because it adds to
-        plant->timeSinceLastTick = 0;
+    float healthChange = 0;
 
-        float healthChange = 0;
+    const int hydrationLevel = plant_getStatLevel(plant->hydration);
+    const int optimalHydrationLevel = 2;
 
-        int hydrationLevel = plant_getStatLevel(plant->hydration);
-        int optimalHydrationLevel = 2;
+    const int hydrationLevelDistanceFromOptimal = abs(optimalHydrationLevel - hydrationLevel);
 
-        int hydrationLevelDistanceFromOptimal = abs(optimalHydrationLevel - hydrationLevel);
+    // Health change based on hydration
+    switch (hydrationLevelDistanceFromOptimal) {
+    case 0:
+        healthChange += 1;
+        break;
+    case 2:
+        healthChange -= 2;
+        break;
+    }
 
-        // Health change based on hydration
-        switch (hydrationLevelDistanceFromOptimal) {
-        case 0:
-            healthChange += 1;
-            break;
-        case 2:
-            healthChange -= 2;
-            break;
-        }
+    const int nutritionLevel = plant_getStatLevel(plant->nutrition);
+    const int optimalNutritionLevel = 2;
 
-        int nutritionLevel = plant_getStatLevel(plant->nutrition);
-        int optimalNutritionLevel = 2;
+    int nutritionLevelDistanceFromOptimal = abs(optimalNutritionLevel - nutritionLevel);
 
-        int nutritionLevelDistanceFromOptimal = abs(optimalNutritionLevel - nutritionLevel);
+    // Health change based on hydration
+    switch (nutritionLevelDistanceFromOptimal) {
+    case 0:
+        healthChange += 1;
+        break;
+    case 2:
+        healthChange -= 2;
+        break;
+    }
 
-        // Health change based on hydration
-        switch (nutritionLevelDistanceFromOptimal) {
-        case 0:
-            healthChange += 1;
-            break;
-        case 2:
-            healthChange -= 2;
-            break;
-        }
+    plant->health += healthChange * deltaTime;
 
-        plant->health += healthChange * deltaTime;
+    // Hydration change based on hydration medium
+    const int mediumHydrationLevel = plant_getStatLevel(plant->mediumHydration);
+    const int mediumWaterLevelDistanceFromOptimal = plant->optimalWaterLevel - mediumHydrationLevel;
+    float hydrationChange = 0;
 
-        // Hydration change based on hydration medium
-        int mediumHydrationLevel = plant_getStatLevel(plant->mediumHydration);
-        int mediumWaterLevelDistanceFromOptimal = plant->optimalWaterLevel - mediumHydrationLevel;
-        float hydrationChange = 0;
+    if (mediumWaterLevelDistanceFromOptimal == 0) {
+        // in favorite medium level
 
-        if (mediumWaterLevelDistanceFromOptimal == 0) {
-            // in favorite medium level
+        // if it likes saturated medium it can never be over watered
+        if (plant->optimalWaterLevel == 4) {
+            hydrationChange = 1;
 
-            // if it likes saturated medium it can never be over watered
-            if (plant->optimalWaterLevel == 4) {
-                hydrationChange = 1;
-
-                if (nutritionLevel > 2) {
-                    plant->hydration = plant_getMaxValueForLevel(2);
-                }
-            } else if (plant->hydration < plant->mediumHydration) {
-                hydrationChange = 1;
-            } else {
-                hydrationChange = -1;
+            if (nutritionLevel > 2) {
+                plant->hydration = plant_getMaxValueForLevel(2);
             }
-        } else if (mediumHydrationLevel == 0 && plant->hydration < plant->mediumHydration) {
-            // when hydration in plant and medium are 0, and the medium is irrigated, hydration
-            // should go up
-            hydrationChange += 1;
+        } else if (plant->hydration < plant->mediumHydration) {
+            hydrationChange = 1;
         } else {
-            hydrationChange = -mediumWaterLevelDistanceFromOptimal / 2.0f;
+            hydrationChange = -1;
         }
+    } else if (mediumHydrationLevel == 0 && plant->hydration < plant->mediumHydration) {
+        // when hydration in plant and medium are 0, and the medium is irrigated, hydration
+        // should go up
+        hydrationChange += 1;
+    } else {
+        hydrationChange = -mediumWaterLevelDistanceFromOptimal / 2.0f;
+    }
 
-        plant->hydration += hydrationChange * deltaTime;
+    plant->hydration += hydrationChange * deltaTime;
 
-        // Medium hydration change based on own level
-        // Constant hydration loss
-        int hydrationLoss = 1;
-        // Drainage for higher hydration levels
-        if (mediumHydrationLevel > 2) {
-            hydrationLoss += (mediumHydrationLevel - 2);
-        }
+    // Medium hydration change based on own level
+    int hydrationLoss = 1;
+    // Drainage for higher hydration levels
+    if (mediumHydrationLevel > 2) {
+        hydrationLoss += (mediumHydrationLevel - 2);
+    }
 
-        plant->mediumHydration -= hydrationLoss * deltaTime;
+    plant->mediumHydration -= hydrationLoss * deltaTime;
 
-        // Hydration change based on hydration medium
-        float nutritionChange = 0;
-        int mediumNutritionLevel = plant_getStatLevel(plant->mediumHydration);
+    // Hydration change based on hydration medium
+    float nutritionChange = 0;
+    const int mediumNutritionLevel = plant_getStatLevel(plant->mediumNutrition);
+    const int healthLevel = plant_getStatLevel(plant->health);
 
-        // TODO: consume nutrients based on how healthy it is
+    if (plant->mediumNutrition == 0) {
+        nutritionChange = -healthLevel * 0.5f;
+    } else {
         // less healthy => less nutrients consumed
-        int healthLevel = plant_getStatLevel(plant->health);
+        float mediumNutrientLevelFactor = (mediumNutritionLevel) * 0.5f;
 
-        int mediumNutrientLevelFactor = (mediumNutritionLevel - 2) * 0.5;
-
-        int healthLevelFactor = (healthLevel / 2.0f) + 1;
-        if (mediumNutrientLevelFactor <= 0) {
-            healthLevelFactor *= -1;
-        }
+        int healthLevelFactor = (healthLevel * 0.5f) + 1;
 
         nutritionChange = healthLevelFactor + mediumNutrientLevelFactor;
-
-        // cannot consume more than available
-        if (nutritionChange > 0) {
-            nutritionChange = minmax(nutritionChange, plant->mediumNutrition);
-        }
-
-        plant->nutrition += nutritionChange * deltaTime;
-
-        // constant for now
-        plant->mediumNutrition -= absf(nutritionChange) * 2 * deltaTime;
-
-        // clamp stat values
-        plant->health = clampf(0, 100, plant->health);
-        plant->hydration = clampf(0, 100, plant->hydration);
-        plant->nutrition = clampf(0, 100, plant->nutrition);
-        plant->mediumHydration = clampf(0, 100, plant->mediumHydration);
-        plant->mediumNutrition = clampf(0, 100, plant->mediumNutrition);
+        nutritionChange = minmax(nutritionChange, plant->mediumNutrition);
     }
+
+    plant->nutrition += nutritionChange * deltaTime;
+    plant->mediumNutrition -= absf(nutritionChange) * 0.5f * deltaTime;
+
+    // clamp stat values
+    plant->health = clampf(0, 100, plant->health);
+    plant->hydration = clampf(0, 100, plant->hydration);
+    plant->nutrition = clampf(0, 100, plant->nutrition);
+    plant->mediumHydration = clampf(0, 100, plant->mediumHydration);
+    plant->mediumNutrition = clampf(0, 100, plant->mediumNutrition);
 }
 
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
