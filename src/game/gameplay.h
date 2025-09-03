@@ -1,8 +1,8 @@
 
 #pragma once
 
-#define SECONDS_IN_A_DAY 86400        // seconds in a 24h day - 24*60*60
-#define RL_SECONDS_PER_GAME_MINUTE 10 // real seconds equivalent to a game minute
+#define SECONDS_IN_A_DAY 86400            // seconds in a 24h day - 24*60*60
+#define GAME_SECONDS_PER_RL_SECONDS 20.0f // game seconds equivalent to a real second
 
 enum GameplayMode { GAMEPLAY_MODE_NORMAL, GAMEPLAY_MODE_IRRIGATION };
 

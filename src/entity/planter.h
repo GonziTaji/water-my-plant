@@ -3,15 +3,25 @@
 #include "plant.h"
 #include <raylib.h>
 
+typedef enum {
+    PLANTER_TYPE_NORMAL,
+    PLANTER_TYPE_2_X_2,
+    PLANTER_TYPE_COUNT,
+} PlanterType;
+
 typedef struct {
+    PlanterType type;
+    bool alive;
     bool hasPlant;
     Plant plant;
-    // Depende del tipo de planter, usado para renderizar la planta. TBD
-    int height;
+    Vector2 dimensions;
+    Vector2 origin;
+    /// to align bottom of plant sprite to planter soil
+    int plantBasePosY;
 } Planter;
 
-void planter_loadTextures();
-void planter_init(Planter *planter);
+Vector2 planter_getDimensions(PlanterType planterType);
+void planter_init(Planter *planter, PlanterType type, Vector2 origin);
 void planter_addPlant(Planter *planter, enum PlantType type);
 void planter_removePlant(Planter *planter);
 void planter_draw(Planter *planter, Vector2 origin);

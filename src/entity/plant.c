@@ -46,7 +46,7 @@ int plant_getMaxValueForLevel(int level) {
     int pointsPerLevel = 100.0f / PLANT_STATUS_LEVEL_COUNT;
 
     // level at 1 point to be next level
-    return (pointsPerLevel * level) + level - 1;
+    return (pointsPerLevel * (level + 1)) - 1;
 }
 
 int plant_getStatLevel(float statValue) {
@@ -64,10 +64,10 @@ int plant_getStatLevel(float statValue) {
 
 void plant_init(Plant *p, enum PlantType type) {
     p->type = type;
-    p->mediumHydration = 40;
+    p->mediumHydration = 0;
     p->mediumNutrition = 0;
-    p->hydration = 40;
-    p->nutrition = 0;
+    p->hydration = plant_getMaxValueForLevel(2);
+    p->nutrition = plant_getMaxValueForLevel(2);
     p->health = 80;
     p->timeSinceLastTick = 0;
     p->ticksCount = 0;

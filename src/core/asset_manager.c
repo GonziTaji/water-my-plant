@@ -1,4 +1,4 @@
-
+#include "asset_manager.h"
 #include <raylib.h>
 
 Texture2D plantAtlas;

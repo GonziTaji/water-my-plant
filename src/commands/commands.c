@@ -4,13 +4,47 @@
 #include "../game/game.h"
 #include <assert.h>
 
-void command_addPlanter(Garden *garden) {
-    if (garden->tileSelected == -1 && garden->tiles[garden->tileSelected].hasPlanter) {
-        return;
+void command_addPlanter(Garden *garden, PlanterType planterType) {
+    Vector2 dimensions = planter_getDimensions(planterType);
+    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, garden->tileSelected);
+    Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
+
+    bool planterFits = true;
+
+    // zero coords
+    for (int x = origin.x; x < end.x; x++) {
+        for (int y = origin.y; y < end.y; y++) {
+            int index = garden_getPlanterIndexFromCoords(garden, x, y);
+
+            if (garden->tiles[index].planterIndex != -1) {
+                planterFits = false;
+                break;
+            }
+        }
+
+        if (planterFits == false) {
+            break;
+        }
     }
 
-    garden->tiles[garden->tileSelected].hasPlanter = true;
-    planter_init(garden_getSelectedPlanter(garden));
+    if (planterFits) {
+        int planterIndex;
+        for (planterIndex = 0; planterIndex < GARDEN_MAX_TILES; planterIndex++) {
+            if (!garden->planters[planterIndex].alive) {
+                break;
+            }
+        }
+
+        planter_init(&garden->planters[planterIndex], planterType, origin);
+
+        for (int x = origin.x; x < end.x; x++) {
+            for (int y = origin.y; y < end.y; y++) {
+                int tileIndex = garden_getPlanterIndexFromCoords(garden, x, y);
+
+                garden->tiles[tileIndex].planterIndex = planterIndex;
+            }
+        }
+    }
 }
 
 void command_removeFromTile(Garden *garden) {
@@ -18,13 +52,33 @@ void command_removeFromTile(Garden *garden) {
         return;
     }
 
-    Planter *planter = garden_getSelectedPlanter(garden);
+    int planterIndex = garden->tiles[garden->tileSelected].planterIndex;
 
-    if (!planter->hasPlant) {
-        garden->tiles[garden->tileSelected].hasPlanter = false;
+    if (planterIndex == -1) {
+        // nothing to do
         return;
-    } else {
-        planter_removePlant(planter);
+    }
+
+    Planter *planter = &garden->planters[planterIndex];
+
+    if (planter->alive == true) {
+        if (planter->hasPlant) {
+            planter_removePlant(planter);
+        } else {
+            planter->alive = false;
+
+            Vector2 end = (Vector2){
+                planter->origin.x + planter->dimensions.x,
+                planter->origin.y + planter->dimensions.y,
+            };
+
+            for (int x = planter->origin.x; x < end.x; x++) {
+                for (int y = planter->origin.y; y < end.y; y++) {
+                    int tileIndex = garden_getPlanterIndexFromCoords(garden, x, y);
+                    garden->tiles[tileIndex].planterIndex = -1;
+                }
+            }
+        }
     }
 }
 
@@ -43,7 +97,7 @@ void command_changePlantSelected(Game *g, enum PlantType type) {
 
     for (int i = 0; i < plantGrid->buttonsCount; i++) {
         if (plantGrid->buttons[i].command.type == COMMAND_PLANT_TYPE_SELECTED) {
-            if (plantGrid->buttons[i].command.args.plantType == type) {
+            if (plantGrid->buttons[i].command.args.plantTypeSelected == type) {
                 plantGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
             } else {
                 plantGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
@@ -72,7 +126,7 @@ void command_addPlant(Garden *garden, UI *ui) {
     enum PlantType type;
     for (int i = 0; i < ui->plantSelectionButtonPannel.buttonsCount; i++) {
         if (ui->plantSelectionButtonPannel.buttons[i].status == BUTTON_STATUS_ACTIVE) {
-            type = ui->plantSelectionButtonPannel.buttons[i].command.args.plantType;
+            type = ui->plantSelectionButtonPannel.buttons[i].command.args.plantTypeSelected;
         }
     }
 
@@ -121,10 +175,10 @@ void command_changeTool(Game *g, enum GardeningTool tool) {
     }
 }
 
-void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelected) {
+void command_tileClicked(Game *game, int tileIndex) {
     game->garden.tileSelected = tileIndex;
 
-    switch (toolSelected) {
+    switch (game->toolSelected) {
     case GARDENING_TOOL_IRRIGATOR:
         command_irrigate(&game->garden);
         break;
@@ -134,7 +188,7 @@ void command_tileClicked(Game *game, int tileIndex, enum GardeningTool toolSelec
         break;
 
     case GARDENING_TOOL_PLANTER:
-        command_addPlanter(&game->garden);
+        command_addPlanter(&game->garden, game->planterTypeSelected);
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
@@ -175,7 +229,7 @@ void command_changeGameplaySpeed(Game *g, GameplaySpeed newSpeed) {
 bool command_dispatchCommand(Command cmd, Game *g) {
     switch (cmd.type) {
     case COMMAND_TILE_CLICKED:
-        command_tileClicked(g, cmd.args.tileIndex, g->toolSelected);
+        command_tileClicked(g, cmd.args.tileIndex);
         break;
 
     case COMMAND_TOOL_SELECTED:
@@ -183,7 +237,7 @@ bool command_dispatchCommand(Command cmd, Game *g) {
         break;
 
     case COMMAND_PLANT_TYPE_SELECTED:
-        command_changePlantSelected(g, cmd.args.plantType);
+        command_changePlantSelected(g, cmd.args.plantTypeSelected);
         break;
 
     case COMMAND_PLANT_TYPE_SELECT_NEXT:

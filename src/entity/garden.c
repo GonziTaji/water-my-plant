@@ -81,14 +81,14 @@ Vector2 screenCoordsToGridCoords(Garden *garden, float x, float y) {
 }
 
 bool isValidGridCoords(Garden *garden, int x, int y) {
-    if (x < 0 || y < 0 || x >= garden->tileCols || y >= garden->tileCols) {
+    if (x < 0 || y < 0 || x >= garden->tileCols || y >= garden->tileRows) {
         return false;
     }
 
     return true;
 }
 
-Vector2 getPlanterCoordsFromIndex(Garden *garden, int i) {
+Vector2 garden_getPlanterCoordsFromIndex(Garden *garden, int i) {
     return (Vector2){
         i % garden->tileCols,
         (int)(i / garden->tileCols),
@@ -96,7 +96,7 @@ Vector2 getPlanterCoordsFromIndex(Garden *garden, int i) {
 }
 
 /** Returns -1 if the coords are not a valid cell of the grid */
-int getPlanterIndexFromCoords(Garden *garden, int x, int y) {
+int garden_getPlanterIndexFromCoords(Garden *garden, int x, int y) {
     if (!isValidGridCoords(garden, x, y)) {
         return -1;
     }
@@ -116,7 +116,7 @@ IsoRec getGardenIsoVertices(Garden *garden) {
 }
 
 IsoRec getPlanterIsoVertices(Garden *garden, int planterIndex) {
-    Vector2 coords = getPlanterCoordsFromIndex(garden, planterIndex);
+    Vector2 coords = garden_getPlanterCoordsFromIndex(garden, planterIndex);
 
     IsoRec isoRec = {
         gridCoordsToWorldCoords(garden, coords.x, coords.y),
@@ -137,7 +137,7 @@ void updateLightLevelOfTiles(Garden *garden) {
         screenCoordsToGridCoords(garden, garden->lightSourcePos.x, garden->lightSourcePos.y);
 
     for (int i = 0; i < garden->tilesCount; i++) {
-        Vector2 tileCoords = getPlanterCoordsFromIndex(garden, i);
+        Vector2 tileCoords = garden_getPlanterCoordsFromIndex(garden, i);
 
         float distance = distanceBetweenPoints(tileCoords, lightSourceInGrid);
         garden->tiles[i].lightLevel = garden->lightSourceLevel - distance;
@@ -148,15 +148,23 @@ void garden_init(Garden *garden, Vector2 screenSize, float gameplayTime) {
     garden->lightSourceLevel = 12;
     garden->tileSelected = 0;
     garden->tileHovered = 0;
-    garden->tileCols = 10;
+    garden->tileCols = 7;
     garden->tileRows = 10;
     garden->tilesCount = garden->tileCols * garden->tileRows;
     garden->origin.x = screenSize.x / 2;
-    garden->origin.y = 200;
+    garden->origin.y = 100;
+
+    for (int i = 0; i < GARDEN_MAX_TILES; i++) {
+        garden->planters[i] = (Planter){
+            .type = PLANTER_TYPE_COUNT, // use a specific type to "zero" the value?
+            .alive = false,
+            .hasPlant = false,
+            .dimensions = (Vector2){0, 0},
+        };
+    }
 
     for (int i = 0; i < garden->tilesCount; i++) {
-        garden->tiles[i].hasPlanter = false;
-        garden->tiles[i].planter.hasPlant = false;
+        garden->tiles[i].planterIndex = -1;
     }
 
     garden->lightSourcePos = getLightSourcePosition(garden, gameplayTime);
@@ -164,11 +172,12 @@ void garden_init(Garden *garden, Vector2 screenSize, float gameplayTime) {
 }
 
 bool garden_hasPlanterSelected(const Garden *garden) {
-    return garden->tileSelected != -1 && garden->tiles[garden->tileSelected].hasPlanter;
+    return garden->tileSelected != -1 && garden->tiles[garden->tileSelected].planterIndex != -1;
 }
 
 Planter *garden_getSelectedPlanter(Garden *garden) {
-    return &garden->tiles[garden->tileSelected].planter;
+    int planterIndex = garden->tiles[garden->tileSelected].planterIndex;
+    return &garden->planters[planterIndex];
 }
 
 void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
@@ -176,8 +185,8 @@ void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
     updateLightLevelOfTiles(garden);
 
     for (int i = 0; i < garden->tilesCount; i++) {
-        if (garden->tiles[i].hasPlanter && garden->tiles[i].planter.hasPlant) {
-            plant_update(&garden->tiles[i].planter.plant, deltaTime);
+        if (garden->planters[i].alive && garden->planters[i].hasPlant) {
+            plant_update(&garden->planters[i].plant, deltaTime);
         }
     }
 }
@@ -186,12 +195,15 @@ Command garden_processInput(Garden *garden, InputManager *input) {
     Vector2 *mousePos = &input->worldMousePos;
     Vector2 cellHoveredCoords = screenCoordsToGridCoords(garden, mousePos->x, mousePos->y);
     int cellHoveredIndex =
-        getPlanterIndexFromCoords(garden, cellHoveredCoords.x, cellHoveredCoords.y);
+        garden_getPlanterIndexFromCoords(garden, cellHoveredCoords.x, cellHoveredCoords.y);
 
     garden->tileHovered = cellHoveredIndex;
 
     if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
-        return (Command){COMMAND_TILE_CLICKED, {.tileIndex = cellHoveredIndex}};
+        return (Command){
+            COMMAND_TILE_CLICKED,
+            {.tileIndex = cellHoveredIndex},
+        };
     }
 
     return (Command){COMMAND_NONE};
@@ -214,19 +226,26 @@ void garden_draw(Garden *garden) {
             drawIsoRectangleLines(garden, isoTile, 2, planterBorderColor);
         }
 
+        // TODO: this is shown over the plants for some reason
         drawIsoRectangleLines(garden, getGardenIsoVertices(garden), 2, WHITE);
+    }
 
-        Vector2 tileBase = {isoTile.bottom.x, isoTile.bottom.y};
+    for (int i = 0; i < GARDEN_MAX_TILES; i++) {
+        if (garden->planters[i].alive) {
+            Planter *planter = &garden->planters[i];
 
-        if (garden->tiles[i].hasPlanter) {
-            Planter *planter = &garden->tiles[i].planter;
+            IsoRec isoTile = getPlanterIsoVertices(garden,
+                garden_getPlanterIndexFromCoords(garden, planter->origin.x, planter->origin.y));
 
-            planter_draw(&garden->tiles[i].planter, tileBase);
+            Vector2 isoTileBase = (Vector2){isoTile.bottom.x, isoTile.bottom.y};
+
+            planter_draw(planter, isoTileBase);
 
             if (planter->hasPlant) {
-                Vector2 plantOrigin = {tileBase.x, tileBase.y - (planter->height * WORLD_SCALE)};
+                Vector2 plantOrigin = {
+                    isoTileBase.x, isoTileBase.y - (planter->plantBasePosY * WORLD_SCALE)};
                 plant_draw(&planter->plant, plantOrigin);
-            }
+            };
         }
     }
 

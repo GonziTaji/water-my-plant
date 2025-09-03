@@ -1,6 +1,5 @@
 #include "ui.h"
 #include "../core/asset_manager.h"
-#include "../entity/planter.h"
 #include "button.h"
 #include "input_manager.h"
 #include "raylib.h"
@@ -90,7 +89,7 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
         plantSelectionButtons[i] = (UIButton){
             .type = BUTTON_TYPE_SPRITE,
             .content = (ButtonContent){.icon = {plantAtlas, plant_getSpriteSourceRect(i, 100)}},
-            .command = (Command){COMMAND_PLANT_TYPE_SELECTED, {.plantType = i}},
+            .command = (Command){COMMAND_PLANT_TYPE_SELECTED, {.plantTypeSelected = i}},
             .status = i == 0 ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
         };
     }
@@ -174,12 +173,15 @@ void ui_draw(UI *ui,
         uiButtonGrid_draw(&ui->plantSelectionButtonPannel, bpFontSize);
     }
 
-    const GardenTile *tile;
+    // const GardenTile *tile;
     bool tileExist = true;
+    int tileIndex;
+
     if (garden->tileHovered != -1) {
-        tile = &garden->tiles[garden->tileHovered];
+        tileIndex = garden->tileHovered;
     } else if (garden->tileSelected != -1) {
-        tile = &garden->tiles[garden->tileSelected];
+        tileIndex = garden->tileHovered;
+
     } else {
         tileExist = false;
     }
@@ -188,6 +190,10 @@ void ui_draw(UI *ui,
     int tileInfoRecWidth = 250;
 
     if (tileExist) {
+        int lightLevel = garden->tiles[tileIndex].lightLevel;
+        int planterIndex = garden->tiles[tileIndex].planterIndex;
+        const Planter *planter = &garden->planters[planterIndex];
+
         Vector2 offset = {-20, 20};
         Rectangle tbBounds = {
             offset.x + screenSize->x - tileInfoRecWidth,
@@ -195,6 +201,7 @@ void ui_draw(UI *ui,
             tileInfoRecWidth,
             screenSize->y - (offset.y * 2),
         };
+
         UITextBox tb;
         uiTextBox_init(&tb, fontSize, tbBounds, (Vector2){20, 20});
 
@@ -202,13 +209,13 @@ void ui_draw(UI *ui,
 
         char buffer[64];
 
-        snprintf(buffer, sizeof(buffer), "Light level: %d", tile->lightLevel);
+        snprintf(buffer, sizeof(buffer), "Light level: %d", lightLevel);
 
         uiTextBox_drawTextLine(&tb, buffer, BLACK);
         uiTextBox_drawTextLine(&tb, "", BLACK); // spacing
 
-        if (tile->hasPlanter && tile->planter.hasPlant) {
-            const Plant *plant = &tile->planter.plant;
+        if (planter->alive && planter->hasPlant) {
+            const Plant *plant = &planter->plant;
 
             uiTextBox_drawTextLine(&tb, "Plant info:", BLACK);
             tb.cursorPosition.y += 5; // spacing

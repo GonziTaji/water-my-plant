@@ -21,12 +21,13 @@ void game_init(Game *game) {
     Vector2 screenSize = {1920, 1080};
 
     game->gameplaySpeed = GAMEPLAY_SPEED_NORMAL;
-    game->toolSelected = 0;
-    game->plantTypeSelected = 0;
+    game->toolSelected = GARDENING_TOOL_NONE;
+    game->plantTypeSelected = PLANT_TYPE_CRASSULA_OVATA;
+    game->planterTypeSelected = PLANTER_TYPE_2_X_2;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
-    game->inGameSeconds = (23 * 60 * 60) + (60 * 59);
+    game->inGameSeconds = 0; // (23 * 60 * 60) + (60 * 59);
 
     calculateScaleAndOffset(game);
 
@@ -78,7 +79,7 @@ void game_update(Game *game, float deltaTime) {
         }
         break;
     case GAME_STATE_GARDEN:
-        game->inGameSeconds += RL_SECONDS_PER_GAME_MINUTE * deltaTime;
+        game->inGameSeconds += GAME_SECONDS_PER_RL_SECONDS * deltaTime;
 
         if (game->inGameSeconds > SECONDS_IN_A_DAY) {
             game->inGameSeconds = 0;

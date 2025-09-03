@@ -17,10 +17,10 @@ enum COMMAND_TYPE {
 };
 
 typedef union {
-    enum PlantType plantType;
-    int tileIndex;
     enum GardeningTool tool;
     GameplaySpeed gameplaySpeed;
+    int tileIndex;
+    enum PlantType plantTypeSelected;
 } CommandArgs;
 
 typedef struct {
