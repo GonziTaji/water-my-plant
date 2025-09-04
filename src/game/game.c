@@ -142,8 +142,8 @@ void game_draw(Game *game) {
 
     ClearBackground(BLACK);
 
-    Rectangle source = {
-        0.0f, 0.0f, (float)game->target.texture.width, (float)-game->target.texture.height};
+    Rectangle source
+        = {0.0f, 0.0f, (float)game->target.texture.width, (float)-game->target.texture.height};
 
     Rectangle dest = {game->screenOffset.x,
         game->screenOffset.y,

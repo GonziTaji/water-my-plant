@@ -37,5 +37,6 @@ void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime, float gameplayTime);
 bool garden_hasPlanterSelected(const Garden *garden);
 Planter *garden_getSelectedPlanter(Garden *garden);
-Vector2 garden_getPlanterCoordsFromIndex(Garden *garden, int i);
-int garden_getPlanterIndexFromCoords(Garden *garden, int x, int y);
+Vector2 garden_getPlanterCoordsFromIndex(const Garden *garden, int i);
+int garden_getPlanterIndexFromCoords(Garden *garden, float x, float y);
+bool garden_isValidGridCoords(Garden *garden, float x, float y);

@@ -9,7 +9,7 @@ Vector2 planter_getDimensions(PlanterType planterType) {
         return (Vector2){1, 1};
 
     case PLANTER_TYPE_2_X_2:
-        return (Vector2){2, 2};
+        return (Vector2){2, 3};
 
     case PLANTER_TYPE_COUNT:
         return (Vector2){1, 1};

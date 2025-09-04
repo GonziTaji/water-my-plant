@@ -14,6 +14,12 @@ void command_addPlanter(Garden *garden, PlanterType planterType) {
     // zero coords
     for (int x = origin.x; x < end.x; x++) {
         for (int y = origin.y; y < end.y; y++) {
+            // could be outside
+            if (!garden_isValidGridCoords(garden, x, y)) {
+                planterFits = false;
+                break;
+            }
+
             int index = garden_getPlanterIndexFromCoords(garden, x, y);
 
             if (garden->tiles[index].planterIndex != -1) {

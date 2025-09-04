@@ -10,13 +10,13 @@
 #include <stdio.h>
 
 int getButtonGridFullWidth(UIButtonGrid *grid) {
-    return ((grid->padding.x * 2) + ((grid->cols - 1) * grid->buttonSpacing.x) +
-            (grid->cols * grid->buttonDimensions.x));
+    return ((grid->padding.x * 2) + ((grid->cols - 1) * grid->buttonSpacing.x)
+            + (grid->cols * grid->buttonDimensions.x));
 }
 
 int getButtonGridFullHeight(UIButtonGrid *grid) {
-    return ((grid->padding.y * 2) + ((grid->rows - 1) * grid->buttonSpacing.y) +
-            (grid->rows * grid->buttonDimensions.y));
+    return ((grid->padding.y * 2) + ((grid->rows - 1) * grid->buttonSpacing.y)
+            + (grid->rows * grid->buttonDimensions.y));
 }
 
 void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
@@ -174,22 +174,30 @@ void ui_draw(UI *ui,
     }
 
     // const GardenTile *tile;
-    bool tileExist = true;
-    int tileIndex;
+    int tileIndex = -1;
 
     if (garden->tileHovered != -1) {
         tileIndex = garden->tileHovered;
     } else if (garden->tileSelected != -1) {
         tileIndex = garden->tileHovered;
-
-    } else {
-        tileExist = false;
     }
 
     int fontSize = uiFont.baseSize;
     int tileInfoRecWidth = 250;
 
-    if (tileExist) {
+    char buffer[64];
+
+    if (tileIndex != -1) {
+        Vector2 tileCoords = garden_getPlanterCoordsFromIndex(garden, tileIndex);
+
+        snprintf(buffer,
+            sizeof(buffer),
+            "Tile selected: X, Y = %d, %d",
+            (int)tileCoords.x,
+            (int)tileCoords.y);
+
+        DrawTextEx(uiFont, buffer, (Vector2){100, 300}, fontSize, 0, WHITE);
+
         int lightLevel = garden->tiles[tileIndex].lightLevel;
         int planterIndex = garden->tiles[tileIndex].planterIndex;
         const Planter *planter = &garden->planters[planterIndex];
@@ -207,8 +215,6 @@ void ui_draw(UI *ui,
 
         DrawRectangleRec(tbBounds, GRAY);
 
-        char buffer[64];
-
         snprintf(buffer, sizeof(buffer), "Light level: %d", lightLevel);
 
         uiTextBox_drawTextLine(&tb, buffer, BLACK);
@@ -219,8 +225,6 @@ void ui_draw(UI *ui,
 
             uiTextBox_drawTextLine(&tb, "Plant info:", BLACK);
             tb.cursorPosition.y += 5; // spacing
-
-            char buffer[64];
 
             struct {
                 const char *label;
@@ -282,16 +286,15 @@ void ui_draw(UI *ui,
         }
     }
 
-    char buffer[64];
     int hours = gameplayTime / 60 / 60;
     int minutes = (int)gameplayTime / 60 % 60;
     int seconds = (int)gameplayTime % 60;
 
-    snprintf(buffer, 64, "Time: %02d:%02d:%02d", hours, minutes, seconds);
+    snprintf(buffer, sizeof(buffer), "Time: %02d:%02d:%02d", hours, minutes, seconds);
 
     Vector2 clockPos = {
-        ui->speedSelectionButtonPannel.origin.x + 20 +
-            uiButtonGrid_getWidth(&ui->speedSelectionButtonPannel),
+        ui->speedSelectionButtonPannel.origin.x + 20
+            + uiButtonGrid_getWidth(&ui->speedSelectionButtonPannel),
         ui->speedSelectionButtonPannel.origin.y + 5,
     };
 
