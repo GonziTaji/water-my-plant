@@ -5,6 +5,10 @@
 #include <assert.h>
 
 void command_addPlanter(Garden *garden, PlanterType planterType) {
+    if (garden_hasPlanterSelected(garden)) {
+        return;
+    }
+
     Vector2 dimensions = planter_getDimensions(planterType);
     Vector2 origin = garden_getPlanterCoordsFromIndex(garden, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};

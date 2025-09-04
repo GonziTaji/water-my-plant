@@ -15,10 +15,10 @@ typedef struct {
 } RectVertices;
 
 typedef struct {
+    Vector2 left;
     Vector2 top;
     Vector2 right;
     Vector2 bottom;
-    Vector2 left;
 } IsoRec;
 
 /// Linear interpolation
@@ -65,18 +65,21 @@ Vector2 getLightSourcePosition(Garden *garden, int gameplayTime) {
 
 Vector2 gridCoordsToWorldCoords(const Garden *garden, float x, float y) {
     return (Vector2){
-        garden->origin.x + ((x - y) * TILE_WIDTH * WORLD_SCALE / 2.0f),
-        garden->origin.y + ((x + y) * TILE_HEIGHT * WORLD_SCALE / 2.0f),
+        garden->origin.x + ((x + y) * TILE_WIDTH * WORLD_SCALE / 2.0f),
+        garden->origin.y + ((y - x) * TILE_HEIGHT * WORLD_SCALE / 2.0f),
     };
 }
 
-Vector2 screenCoordsToGridCoords(Garden *garden, float x, float y) {
-    float gardenX = (x - garden->origin.x) / WORLD_SCALE;
-    float gardenY = (y - garden->origin.y) / WORLD_SCALE;
+Vector2 screenCoordsToGridCoords(const Garden *garden, float x, float y) {
+    const float TW = TILE_WIDTH * WORLD_SCALE;
+    const float TH = TILE_HEIGHT * WORLD_SCALE;
+
+    const float dx = x - garden->origin.x;
+    const float dy = y - garden->origin.y;
 
     return (Vector2){
-        (gardenX / (TILE_WIDTH / 2.0f) + gardenY / (TILE_HEIGHT / 2.0f)) / 2.0f,
-        (gardenY / (TILE_HEIGHT / 2.0f) - gardenX / (TILE_WIDTH / 2.0f)) / 2.0f,
+        (dx / TW) - (dy / TH),
+        (dx / TW) + (dy / TH),
     };
 }
 
@@ -161,11 +164,14 @@ void garden_init(Garden *garden, Vector2 screenSize, float gameplayTime) {
     garden->lightSourceLevel = 12;
     garden->tileSelected = 0;
     garden->tileHovered = 0;
-    garden->tileCols = 7;
-    garden->tileRows = 10;
+    garden->tileCols = 10;
+    garden->tileRows = 7;
     garden->tilesCount = garden->tileCols * garden->tileRows;
-    garden->origin.x = screenSize.x / 2;
-    garden->origin.y = 100;
+
+    IsoRec gardenIsoRec = getGardenIsoVertices(garden);
+
+    garden->origin.x = (screenSize.x - gardenIsoRec.right.x - gardenIsoRec.left.x) / 2;
+    garden->origin.y = (screenSize.y - gardenIsoRec.bottom.y - gardenIsoRec.top.y) / 2;
 
     for (int i = 0; i < GARDEN_MAX_TILES; i++) {
         garden->planters[i] = (Planter){
