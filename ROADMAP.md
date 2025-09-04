@@ -41,9 +41,6 @@ ______________________________________________________________________
 
 Misc.
 
-- [ ] Estudiar plantas para tomar una funcion en particular de agua y nutrientes sobre "vida"
-  => mega peludo. Va a ser una simulacion penca nomas yo creo segun tipo de planta
-  => Catalogizar plantas?
 - [ ] Registrar historial de acciones recientes (cola circular) 
   * quiero hacer una cola circular?
 
@@ -70,7 +67,28 @@ Misc.
 - [X] No de-seleccionar planter cuando se clickea la UI
   => Esto lo hacemos procesando el click en la UI primero y "usando" el click para que en el garden no se procese
 
+### Milestone: Seleccion de maceteros distintos con distintos tamaños (sin propiedades particulares por ahora)
+
+- [X] Tipos de maceteros con distintas dimensiones (1x1, 1x3, 4x2, etc)
+- [ ] Seleccion de tipos de maceteros
+- [ ] Que tile hover muestre el espacio entero que usará el macetero
+- [ ] Que macetero de MxN acepter M*N plantas - para probar concepto
+  - [ ] mostrar N plantas en un macetero
+  - [ ] que un macetero > 1x1 tenga tiles en donde se puede plantar, y en donde no
+    macetero grande ten
+
+### Milestone: UI a la sims/RCT
+
+- [ ] Zoom y movimiento del garden (con limites para que no se salga de la pantalla)
+- [ ] Giro del jardin (deseable x1000 pero pajero)
+
+
 ### ✅ Milestone: Paso del tiempo y reacción de plantas sobre el tiempo
+
+Aquí me sobrecompliqué y en terminos de gameplay no agrega nada la complejidad que hay.
+Evaluar un sistema más como minecraft, o simplemente más sencillo.
+
+Pensando en que la planta cada cierto tiempo se actualiza, más que en cada frame se actualice "* deltatime"
 
 - [ ] Implementar sistema de eventos temporales (simular paso del tiempo).
   - [X] Reloj
@@ -83,7 +101,7 @@ Misc.
     => Por cada tick de planta baja X candidad de nutrientes y agua
     => Dependiendo de la planta, estar sin agua por X cantidad de ticks puede bajar mucho o poco la salud
 
-### ✅ Milestone: Evolución y ambiente
+### ✅ Milestone: Evolución y ambiente - depende de [Paso del tiempo...](#milestone-paso-del-tiempo-y-reacción-de-plantas-sobre-el-tiempo)
 
 - [ ] Añadir sistema de luz solar y temperatura.
   => Agregar zonas con mayor o menor luz (parte del struct grid probablemente)
@@ -113,6 +131,7 @@ Misc.
 - [ ] Agregar música de fondo.
 - [ ] Agregar indicadores de estados (`saludable`, `marchita`, `muerta`, etc. segun indice de salud).
 - [ ] Agregar zoom/movimiento de garden
+- [ ] Agregar texturas para bordes y/o fondos de elementos de la UI
 
 ### ✅ Milestone: Configuraciones de usuario
 
