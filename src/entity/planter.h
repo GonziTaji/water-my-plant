@@ -24,4 +24,4 @@ Vector2 planter_getDimensions(PlanterType planterType);
 void planter_init(Planter *planter, PlanterType type, Vector2 origin);
 void planter_addPlant(Planter *planter, enum PlantType type);
 void planter_removePlant(Planter *planter);
-void planter_draw(Planter *planter, Vector2 origin);
+void planter_draw(Planter *planter, Vector2 origin, float scale);

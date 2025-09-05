@@ -60,5 +60,5 @@ void plant_irrigate(Plant *p);
 void plant_feed(Plant *p);
 void plant_update(Plant *plant, float deltaTime);
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health);
-void plant_draw(Plant *plant, Vector2 origin);
+void plant_draw(Plant *plant, Vector2 origin, float scale);
 int plant_getStatLevel(float statValue);

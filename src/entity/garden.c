@@ -2,6 +2,7 @@
 #include "garden.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
+#include "../utils/utils.h"
 #include "plant.h"
 #include <assert.h>
 #include <math.h>
@@ -11,6 +12,10 @@
 #define LIGHT_SOURCE_RADIUS 40
 #define TILE_WIDTH 128
 #define TILE_HEIGHT (int)(TILE_WIDTH / 2)
+#define GARDEN_SCALE_INITIAL 1.0f
+#define GARDEN_SCALE_STEP 0.4f
+#define GARDEN_SCALE_MIN GARDEN_SCALE_INITIAL - (1 * GARDEN_SCALE_STEP)
+#define GARDEN_SCALE_MAX GARDEN_SCALE_INITIAL + (4 * GARDEN_SCALE_STEP)
 
 typedef enum {
     GARDEN_ROTATION_INITIAL,
@@ -21,6 +26,7 @@ typedef enum {
 } GardenRotation;
 
 GardenRotation gardenRotation = GARDEN_ROTATION_INITIAL;
+float gardenScale = GARDEN_SCALE_INITIAL;
 
 typedef struct {
     Vector2 vertices[4];
@@ -32,11 +38,6 @@ typedef struct {
     Vector2 right;
     Vector2 bottom;
 } IsoRec;
-
-typedef struct PlantWithOrigin {
-    Plant *plant;
-    Vector2 origin;
-} PlantWithOrigin;
 
 /// Linear interpolation
 float lerp(float start, float stop, float amount) {
@@ -108,14 +109,14 @@ Vector2 gridCoordsToWorldCoords(const Garden *garden, float x, float y) {
     }
 
     return (Vector2){
-        garden->origin.x + (sumX * TILE_WIDTH * WORLD_SCALE / 2.0f),
-        garden->origin.y + (sumY * TILE_HEIGHT * WORLD_SCALE / 2.0f),
+        garden->origin.x + (sumX * TILE_WIDTH * gardenScale / 2.0f),
+        garden->origin.y + (sumY * TILE_HEIGHT * gardenScale / 2.0f),
     };
 }
 
 Vector2 screenCoordsToGridCoords(const Garden *garden, float x, float y) {
-    const float TW = TILE_WIDTH * WORLD_SCALE;
-    const float TH = TILE_HEIGHT * WORLD_SCALE;
+    const float TW = TILE_WIDTH * gardenScale;
+    const float TH = TILE_HEIGHT * gardenScale;
 
     const float dx = x - garden->origin.x;
     const float dy = y - garden->origin.y;
@@ -320,15 +321,39 @@ void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
     }
 }
 
+void resetGardenScale(Garden *garden) {
+    gardenScale = GARDEN_SCALE_INITIAL;
+    updateOriginToScreenCenter(garden);
+}
+
+void scaleGarden(Garden *garden, float amount) {
+    gardenScale = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, gardenScale + amount);
+    updateOriginToScreenCenter(garden);
+    updateOriginToScreenCenter(garden);
+}
+
+/// rotates garden clockwise
+void rotateGarden(Garden *garden) {
+    gardenRotation++;
+
+    if (gardenRotation == GARDEN_ROTATION_COUNT) {
+        gardenRotation = 0;
+    }
+
+    updateOriginToScreenCenter(garden);
+}
+
 Command garden_processInput(Garden *garden, InputManager *input) {
+    if (input->keyPressed == KEY_EQUAL) {
+        scaleGarden(garden, GARDEN_SCALE_STEP);
+    } else if (input->keyPressed == KEY_MINUS) {
+        scaleGarden(garden, -GARDEN_SCALE_STEP);
+    } else if (input->keyPressed == KEY_ZERO) {
+        resetGardenScale(garden);
+    }
+
     if (input->keyPressed == KEY_ONE) {
-        gardenRotation++;
-
-        if (gardenRotation == GARDEN_ROTATION_COUNT) {
-            gardenRotation = 0;
-        }
-
-        updateOriginToScreenCenter(garden);
+        rotateGarden(garden);
     }
 
     Vector2 *mousePos = &input->worldMousePos;
@@ -366,11 +391,11 @@ void garden_draw(Garden *garden) {
         }
     }
 
-    // TODO: this is shown over the plants for some reason
     drawIsoRectangleLines(garden, getGardenIsoVertices(garden), 2, WHITE);
 
     int plantsCount = 0;
-    PlantWithOrigin plantsToDraw[garden->tilesCount];
+    Plant *plantsToDraw[garden->tilesCount];
+    Vector2 plantsOrigins[garden->tilesCount];
 
     for (int i = 0; i < garden->tilesCount; i++) {
         if (garden->planters[i].alive) {
@@ -382,15 +407,14 @@ void garden_draw(Garden *garden) {
 
             Vector2 isoTileBase = (Vector2){isoTile.bottom.x, isoTile.bottom.y};
 
-            planter_draw(planter, isoTileBase);
+            planter_draw(planter, isoTileBase, gardenScale);
 
             if (planter->hasPlant) {
-                Vector2 plantOrigin = {
+                plantsToDraw[plantsCount] = &planter->plant;
+                plantsOrigins[plantsCount] = (Vector2){
                     isoTileBase.x,
-                    isoTileBase.y - (planter->plantBasePosY * WORLD_SCALE),
+                    isoTileBase.y - (planter->plantBasePosY * gardenScale),
                 };
-
-                plantsToDraw[plantsCount] = (PlantWithOrigin){&planter->plant, plantOrigin};
                 plantsCount++;
             };
         }
@@ -398,8 +422,11 @@ void garden_draw(Garden *garden) {
 
     // Draw plants after planters. Maybe use origin's Y base to order in case there's a high planter
     for (int i = 0; i < plantsCount; i++) {
-        plant_draw(plantsToDraw[i].plant, plantsToDraw[i].origin);
+        plant_draw(plantsToDraw[i], plantsOrigins[i], gardenScale);
     }
 
-    DrawCircle(garden->lightSourcePos.x, garden->lightSourcePos.y, LIGHT_SOURCE_RADIUS, YELLOW);
+    DrawCircle(garden->lightSourcePos.x,
+        garden->lightSourcePos.y,
+        LIGHT_SOURCE_RADIUS * gardenScale,
+        YELLOW);
 }

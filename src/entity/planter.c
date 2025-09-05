@@ -39,14 +39,14 @@ void planter_removePlant(Planter *planter) {
     planter->hasPlant = false;
 }
 
-void planter_draw(Planter *planter, Vector2 origin) {
+void planter_draw(Planter *planter, Vector2 origin, float scale) {
     Rectangle source = {0, 0, planterTexture.width, planterTexture.height};
 
     Rectangle dest = {
         origin.x,
         origin.y,
-        64 * WORLD_SCALE,
-        64 * WORLD_SCALE,
+        64 * scale,
+        64 * scale,
     };
 
     Vector2 pivot = {dest.width / 2, dest.height};

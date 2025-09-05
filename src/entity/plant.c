@@ -2,6 +2,7 @@
 #include "plant.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
+#include "../utils/utils.h"
 #include "raylib.h"
 #include <assert.h>
 #include <math.h>
@@ -26,18 +27,6 @@ int minmax(int min, int max) {
     return min;
 }
 
-float clampf(float min, float max, float value) {
-    if (min > value) {
-        return min;
-    }
-
-    if (max < value) {
-        return max;
-    }
-
-    return value;
-}
-
 float absf(float f) {
     return f > 0 ? f : -f;
 }
@@ -53,7 +42,7 @@ int plant_getStatLevel(float statValue) {
     float x = 100.0f / PLANT_STATUS_LEVEL_COUNT;
 
     // int level = ((statValue + x - 1) / x) - 1;
-    int level = clampf(0, 100, statValue) / x;
+    int level = utils_clampf(0, 100, statValue) / x;
     // int rest = (int)statValue % (int)x;
     // if (rest > 0) {
     //     level++;
@@ -222,11 +211,11 @@ void plant_update(Plant *plant, float deltaTime) {
     plant->mediumNutrition -= absf(nutritionChange) * 0.5f * deltaTime;
 
     // clamp stat values
-    plant->health = clampf(0, 100, plant->health);
-    plant->hydration = clampf(0, 100, plant->hydration);
-    plant->nutrition = clampf(0, 100, plant->nutrition);
-    plant->mediumHydration = clampf(0, 100, plant->mediumHydration);
-    plant->mediumNutrition = clampf(0, 100, plant->mediumNutrition);
+    plant->health = utils_clampf(0, 100, plant->health);
+    plant->hydration = utils_clampf(0, 100, plant->hydration);
+    plant->nutrition = utils_clampf(0, 100, plant->nutrition);
+    plant->mediumHydration = utils_clampf(0, 100, plant->mediumHydration);
+    plant->mediumNutrition = utils_clampf(0, 100, plant->mediumNutrition);
 }
 
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
@@ -280,14 +269,14 @@ Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
 }
 
 /// The plant is drawn with the center of its base at the origin
-void plant_draw(Plant *plant, Vector2 origin) {
+void plant_draw(Plant *plant, Vector2 origin, float scale) {
     Rectangle source = plant_getSpriteSourceRect(plant->type, plant->health);
 
     Rectangle dest = {
         origin.x,
         origin.y,
-        source.width * WORLD_SCALE,
-        source.height * WORLD_SCALE,
+        source.width * scale,
+        source.height * scale,
     };
 
     Vector2 pivot = {dest.width / 2, dest.height};

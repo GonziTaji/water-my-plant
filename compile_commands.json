@@ -208,5 +208,20 @@
    "build/entity/garden.o"
   ],
   "file": "src/entity/garden.c"
+ },
+ {
+  "directory": "/home/yogusita/proyectos/water-my-plant",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Iinclude",
+   "-g",
+   "-Werror",
+   "-c",
+   "src/utils/utils.c",
+   "-o",
+   "build/utils/utils.o"
+  ],
+  "file": "src/utils/utils.c"
  }
 ]
