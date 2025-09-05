@@ -23,7 +23,7 @@ void game_init(Game *game) {
     game->gameplaySpeed = GAMEPLAY_SPEED_NORMAL;
     game->toolSelected = GARDENING_TOOL_NONE;
     game->plantTypeSelected = PLANT_TYPE_CRASSULA_OVATA;
-    game->planterTypeSelected = PLANTER_TYPE_2_X_2;
+    game->planterTypeSelected = PLANTER_TYPE_NORMAL;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
@@ -33,7 +33,7 @@ void game_init(Game *game) {
 
     SetTextureFilter(game->target.texture, TEXTURE_FILTER_BILINEAR);
 
-    garden_init(&game->garden, screenSize, game->inGameSeconds);
+    garden_init(&game->garden, &game->screenSize, game->inGameSeconds);
 
     ui_init(&game->ui, &screenSize, game->gameplaySpeed);
     keyMap_init(&game->keyMap);

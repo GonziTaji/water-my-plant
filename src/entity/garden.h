@@ -18,6 +18,7 @@ typedef struct {
 
 typedef struct {
     Vector2 origin;
+    Vector2 *screenSize;
     int tileCols;
     int tileRows;
     GardenTile tiles[GARDEN_MAX_TILES];
@@ -31,7 +32,7 @@ typedef struct {
     int lightSourceLevel;
 } Garden;
 
-void garden_init(Garden *garden, Vector2 screenSize, float gameplayTime);
+void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime);
 Command garden_processInput(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden);
 void garden_update(Garden *garden, float deltaTime, float gameplayTime);
