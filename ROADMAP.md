@@ -79,8 +79,10 @@ Misc.
 
 ### Milestone: UI a la sims/RCT
 
-- [ ] Zoom y movimiento del garden (con limites para que no se salga de la pantalla)
-- [ ] Giro del jardin (deseable x1000 pero pajero)
+- [X] Zoom y movimiento del garden (con limites para que no se salga de la pantalla)
+  - [X] Zoom
+  - [ ] Movimiento
+- [X] Giro del jardin (deseable x1000 pero pajero)
 
 
 ### ✅ Milestone: Paso del tiempo y reacción de plantas sobre el tiempo
