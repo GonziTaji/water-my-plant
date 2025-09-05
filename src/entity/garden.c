@@ -265,24 +265,36 @@ void updateLightLevelOfTiles(Garden *garden) {
     }
 }
 
-void updateOriginToScreenCenter(Garden *garden) {
+void updateGardenOrigin(Garden *garden) {
     garden->origin = (Vector2){0, 0};
-    IsoRec gardenIsoRec = getGardenIsoVertices(garden);
 
-    garden->origin.x = (garden->screenSize->x - gardenIsoRec.right.x - gardenIsoRec.left.x) / 2;
-    garden->origin.y = (garden->screenSize->y - gardenIsoRec.bottom.y - gardenIsoRec.top.y) / 2;
+    IsoRec target;
+
+    // TODO: if moved (as in, not centered, update based on scale)
+    if (gardenScale == GARDEN_SCALE_INITIAL) {
+        target = getGardenIsoVertices(garden);
+    } else if (garden->tileHovered != -1) {
+        target = getPlanterIsoVertices(garden, garden->tileHovered);
+    } else if (garden->tileSelected != -1) {
+        target = getPlanterIsoVertices(garden, garden->tileSelected);
+    } else {
+        target = getGardenIsoVertices(garden);
+    }
+
+    garden->origin.x = (garden->screenSize->x - target.right.x - target.left.x) / 2;
+    garden->origin.y = (garden->screenSize->y - target.bottom.y - target.top.y) / 2;
 }
 
 void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
     garden->screenSize = screenSize;
     garden->lightSourceLevel = 12;
-    garden->tileSelected = 0;
-    garden->tileHovered = 0;
+    garden->tileSelected = -1;
+    garden->tileHovered = -1;
     garden->tileCols = 10;
     garden->tileRows = 7;
     garden->tilesCount = garden->tileCols * garden->tileRows;
 
-    updateOriginToScreenCenter(garden);
+    updateGardenOrigin(garden);
 
     for (int i = 0; i < GARDEN_MAX_TILES; i++) {
         garden->planters[i] = (Planter){
@@ -323,13 +335,12 @@ void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
 
 void resetGardenScale(Garden *garden) {
     gardenScale = GARDEN_SCALE_INITIAL;
-    updateOriginToScreenCenter(garden);
+    updateGardenOrigin(garden);
 }
 
 void scaleGarden(Garden *garden, float amount) {
     gardenScale = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, gardenScale + amount);
-    updateOriginToScreenCenter(garden);
-    updateOriginToScreenCenter(garden);
+    updateGardenOrigin(garden);
 }
 
 /// rotates garden clockwise
@@ -340,7 +351,7 @@ void rotateGarden(Garden *garden) {
         gardenRotation = 0;
     }
 
-    updateOriginToScreenCenter(garden);
+    updateGardenOrigin(garden);
 }
 
 Command garden_processInput(Garden *garden, InputManager *input) {
@@ -354,6 +365,24 @@ Command garden_processInput(Garden *garden, InputManager *input) {
 
     if (input->keyPressed == KEY_ONE) {
         rotateGarden(garden);
+    }
+
+    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+        garden->origin.x -= input->worldMouseDelta.x;
+        garden->origin.y -= input->worldMouseDelta.y;
+
+        IsoRec gardenIsoRec = getGardenIsoVertices(garden);
+        int isoRecWidth = gardenIsoRec.right.x - gardenIsoRec.left.x;
+
+        int startLimitX = -isoRecWidth + (4 * TILE_WIDTH * gardenScale);
+        int endLimitX = garden->screenSize->x - (4 * TILE_WIDTH * gardenScale);
+        int startLimitY
+            = gardenIsoRec.left.y - gardenIsoRec.bottom.y + (4 * TILE_HEIGHT * gardenScale);
+        int endLimitY = garden->screenSize->y - (gardenIsoRec.top.y - gardenIsoRec.left.y)
+                      - (4 * TILE_HEIGHT * gardenScale);
+
+        garden->origin.x = utils_clampf(startLimitX, endLimitX, garden->origin.x);
+        garden->origin.y = utils_clampf(startLimitY, endLimitY, garden->origin.y);
     }
 
     Vector2 *mousePos = &input->worldMousePos;
