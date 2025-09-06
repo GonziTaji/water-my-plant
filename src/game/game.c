@@ -22,11 +22,14 @@ void game_init(Game *game) {
 
     game->gameplaySpeed = GAMEPLAY_SPEED_NORMAL;
     game->toolSelected = GARDENING_TOOL_NONE;
-    game->toolVariantSelected = 0;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
     game->inGameSeconds = 0; // (23 * 60 * 60) + (60 * 59);
+
+    for (int i = 0; i < GARDENING_TOOL_COUNT; i++) {
+        game->toolVariantsSelection[i] = 0;
+    }
 
     calculateScaleAndOffset(game);
 
@@ -85,7 +88,11 @@ void game_update(Game *game, float deltaTime) {
 void drawGarden(Game *game) {
     ClearBackground((Color){185, 131, 131, 100});
 
-    garden_draw(&game->garden);
+    garden_draw(&game->garden, game->toolSelected, game->toolVariantsSelection[game->toolSelected]);
+
+    // For debug
+    inputManager_drawMousePos(&game->input, game->screenSize);
+
     // UI must be at the end
     ui_draw(&game->ui,
         &game->input,
@@ -93,9 +100,6 @@ void drawGarden(Game *game) {
         &game->garden,
         game->toolSelected,
         game->inGameSeconds);
-
-    // For debug
-    inputManager_drawMousePos(&game->input, game->screenSize);
 }
 
 void drawMainMenu(Game *game) {

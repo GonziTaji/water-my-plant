@@ -70,8 +70,8 @@ Misc.
 ### Milestone: Seleccion de maceteros distintos con distintos tamaños (sin propiedades particulares por ahora)
 
 - [X] Tipos de maceteros con distintas dimensiones (1x1, 1x3, 4x2, etc)
-- [ ] Seleccion de tipos de maceteros
-- [ ] Que tile hover muestre el espacio entero que usará el macetero
+- [X] Seleccion de tipos de maceteros
+- [X] Que tile hover muestre el espacio entero que usará el macetero
 - [ ] Que macetero de MxN acepter M*N plantas - para probar concepto
   - [ ] mostrar N plantas en un macetero
   - [ ] que un macetero > 1x1 tenga tiles en donde se puede plantar, y en donde no
@@ -83,6 +83,9 @@ Misc.
   - [X] Zoom
   - [X] Movimiento
 - [X] Giro del jardin (deseable x1000 pero pajero)
+- [ ] Giro de macetero con tecla y giro automatico al girar vista
+
+- [ ] DO
 
 
 ### ✅ Milestone: Paso del tiempo y reacción de plantas sobre el tiempo

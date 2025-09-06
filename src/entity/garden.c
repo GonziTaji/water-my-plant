@@ -210,12 +210,12 @@ void rotateIsoRec(IsoRec *isoRec) {
     }
 }
 
-IsoRec getGardenIsoVertices(Garden *garden) {
+IsoRec toIsoRec(const Garden *garden, Rectangle rec) {
     IsoRec isoRec = {
-        gridCoordsToWorldCoords(garden, 0, 0),
-        gridCoordsToWorldCoords(garden, garden->tileCols, 0),
-        gridCoordsToWorldCoords(garden, garden->tileCols, garden->tileRows),
-        gridCoordsToWorldCoords(garden, 0, garden->tileRows),
+        gridCoordsToWorldCoords(garden, rec.x, rec.y),
+        gridCoordsToWorldCoords(garden, rec.x + rec.width, rec.y),
+        gridCoordsToWorldCoords(garden, rec.x + rec.width, rec.y + rec.height),
+        gridCoordsToWorldCoords(garden, rec.x, rec.y + rec.height),
     };
 
     rotateIsoRec(&isoRec);
@@ -223,38 +223,39 @@ IsoRec getGardenIsoVertices(Garden *garden) {
     return isoRec;
 }
 
+IsoRec getGardenIsoVertices(Garden *garden) {
+    return toIsoRec(garden, (Rectangle){0, 0, garden->tileCols, garden->tileRows});
+}
+
+/// If a planter with size NxM is hovered, it's whole area is hovered
+IsoRec getHoveredIsoVertices(const Garden *garden, int tileIndex, PlanterType planterTypeSelected) {
+    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, tileIndex);
+    Vector2 dimensions = planter_getDimensions(planterTypeSelected);
+
+    Rectangle rec = {origin.x, origin.y, dimensions.x, dimensions.y};
+
+    return toIsoRec(garden, rec);
+}
+
 IsoRec getPlanterIsoVertices(const Garden *garden, int tileIndex) {
     int planterIndex = garden->tiles[tileIndex].planterIndex;
-
-    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, tileIndex);
-    Vector2 size;
-
     const Planter *p = &garden->planters[planterIndex];
 
-    if (p->alive) {
-        size = planter_getDimensions(p->type);
-    } else {
-        size = (Vector2){1, 1};
-    }
-
-    if (planterIndex != -1 && p->alive) {
-        size.x = p->dimensions.x;
-        size.y = p->dimensions.y;
-
-        origin.x = p->origin.x;
-        origin.y = p->origin.y;
-    }
-
-    IsoRec isoRec = {
-        gridCoordsToWorldCoords(garden, origin.x, origin.y),
-        gridCoordsToWorldCoords(garden, origin.x + size.x, origin.y),
-        gridCoordsToWorldCoords(garden, origin.x + size.x, origin.y + size.y),
-        gridCoordsToWorldCoords(garden, origin.x, origin.y + size.y),
+    Rectangle rec = {
+        p->origin.x,
+        p->origin.y,
+        p->dimensions.x,
+        p->dimensions.y,
     };
 
-    rotateIsoRec(&isoRec);
+    return toIsoRec(garden, rec);
+}
 
-    return isoRec;
+IsoRec getTileIsoVertices(const Garden *garden, int tileIndex) {
+    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, tileIndex);
+    Rectangle rec = {origin.x, origin.y, 1, 1};
+
+    return toIsoRec(garden, rec);
 }
 
 float distanceBetweenPoints(Vector2 p1, Vector2 p2) {
@@ -282,9 +283,9 @@ void updateGardenOrigin(Garden *garden) {
     if (gardenScale == GARDEN_SCALE_INITIAL) {
         target = getGardenIsoVertices(garden);
     } else if (garden->tileHovered != -1) {
-        target = getPlanterIsoVertices(garden, garden->tileHovered);
+        target = getTileIsoVertices(garden, garden->tileHovered);
     } else if (garden->tileSelected != -1) {
-        target = getPlanterIsoVertices(garden, garden->tileSelected);
+        target = getTileIsoVertices(garden, garden->tileSelected);
     } else {
         target = getGardenIsoVertices(garden);
     }
@@ -417,10 +418,21 @@ void drawIsoRectangleLines(Garden *garden, IsoRec isoRec, int lineWidth, Color c
     DrawLineEx(isoRec.right, isoRec.top, 2, color);
 }
 
-void garden_draw(Garden *garden) {
+void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVariantSelected) {
     for (int i = 0; i < garden->tilesCount; i++) {
         if (garden->tileSelected == i || garden->tileHovered == i) {
-            IsoRec isoTile = getPlanterIsoVertices(garden, i);
+            IsoRec isoTile;
+
+            int planterIndex = garden->tiles[i].planterIndex;
+            bool alive = garden->planters[planterIndex].alive;
+
+            if (alive) {
+                isoTile = getPlanterIsoVertices(garden, i);
+            } else if (garden->tileHovered == i && toolSelected == GARDENING_TOOL_PLANTER) {
+                isoTile = getHoveredIsoVertices(garden, i, toolVariantSelected);
+            } else {
+                isoTile = getTileIsoVertices(garden, i);
+            }
 
             Color planterBorderColor = garden->tileHovered == i ? BROWN : DARKBROWN;
 

@@ -93,12 +93,13 @@ void command_removeFromTile(Garden *garden) {
 }
 
 void command_toolVariantSelected(Game *g, int variant) {
-    g->toolVariantSelected = variant;
+    g->toolVariantsSelection[g->toolSelected] = variant;
     ui_syncToolVariantPanelToSelection(&g->ui, g->toolSelected, variant);
 }
 
 void command_toolVariantSelectNext(Game *g) {
-    int nextVariant = g->toolVariantSelected + 1;
+    int nextVariant = g->toolVariantsSelection[g->toolSelected] + 1;
+    // change to a utils function to get the variant count based on tool?
     if (nextVariant == uiButtonGrid_getButtonsCount(&g->ui.toolVariantButtonPannel)) {
         nextVariant = 0;
     }
@@ -113,7 +114,7 @@ void command_addPlant(Game *g) {
         return;
     }
 
-    planter_addPlant(planter, g->toolVariantSelected);
+    planter_addPlant(planter, g->toolVariantsSelection[g->toolSelected]);
 }
 
 void command_irrigate(Garden *garden) {
@@ -145,8 +146,7 @@ void command_changeTool(Game *g, enum GardeningTool tool) {
 
     g->ui.toolSelectionButtonPannel.activeButtonIndex = g->toolSelected;
 
-    // TODO: save selection for each variant type to persist previous selection
-    ui_syncToolVariantPanelToSelection(&g->ui, tool, 0);
+    ui_syncToolVariantPanelToSelection(&g->ui, tool, g->toolVariantsSelection[tool]);
 }
 
 void command_tileClicked(Game *game, int tileIndex) {
@@ -162,7 +162,7 @@ void command_tileClicked(Game *game, int tileIndex) {
         break;
 
     case GARDENING_TOOL_PLANTER:
-        command_addPlanter(&game->garden, game->toolVariantSelected);
+        command_addPlanter(&game->garden, game->toolVariantsSelection[game->toolSelected]);
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
