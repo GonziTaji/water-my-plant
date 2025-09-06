@@ -8,7 +8,7 @@ Vector2 planter_getDimensions(PlanterType planterType) {
     case PLANTER_TYPE_NORMAL:
         return (Vector2){1, 1};
 
-    case PLANTER_TYPE_2_X_2:
+    case PLANTER_TYPE_2_X_3:
         return (Vector2){2, 3};
 
     case PLANTER_TYPE_COUNT:
@@ -19,6 +19,7 @@ Vector2 planter_getDimensions(PlanterType planterType) {
 }
 
 void planter_init(Planter *planter, PlanterType type, Vector2 origin) {
+    planter->type = type;
     planter->alive = true;
     planter->hasPlant = false;
     planter->origin = origin;

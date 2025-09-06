@@ -15,19 +15,22 @@ typedef struct {
     Vector2i buttonDimensions, buttonSpacing, padding, origin;
     // buttons
     UIButton buttons[UI_BUTTON_PANNEL_MAX_BUTTONS];
-    int buttonsCount;
+    int hoveredButtonIndex;
+    int activeButtonIndex;
 } UIButtonGrid;
 
+int uiButtonGrid_getFullWidth(UIButtonGrid *grid);
+int uiButtonGrid_getButtonsCount(UIButtonGrid *grid);
+int uiButtonGrid_getFullHeight(UIButtonGrid *grid);
+void uiButtonGrid_updateDimensions(UIButtonGrid *bp, int cols, int rows);
 void uiButtonGrid_init(UIButtonGrid *bp,
     int cols,
     int rows,
     Vector2i buttonDimensions,
     Vector2i buttonSpacing,
     Vector2i padding,
-    Vector2i origin,
-    UIButton buttons[UI_BUTTON_PANNEL_MAX_BUTTONS]);
+    Vector2i origin);
 Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input);
 void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize);
-void uiButtonGrid_tranform(UIButtonGrid *bp, Vector2 newPos);
 int uiButtonGrid_getWidth(UIButtonGrid *bp);
 int uiButtonGrid_getHeight(UIButtonGrid *bp);

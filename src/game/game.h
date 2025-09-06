@@ -19,8 +19,7 @@ typedef struct Game {
     float scale;
     Vector2 screenOffset;
     enum GardeningTool toolSelected;
-    enum PlantType plantTypeSelected;
-    PlanterType planterTypeSelected;
+    int toolVariantSelected;
     GameplaySpeed gameplaySpeed;
     float inGameSeconds;
 } Game;

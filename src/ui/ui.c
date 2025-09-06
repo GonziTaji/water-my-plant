@@ -9,25 +9,94 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-int getButtonGridFullWidth(UIButtonGrid *grid) {
-    return ((grid->padding.x * 2) + ((grid->cols - 1) * grid->buttonSpacing.x)
-            + (grid->cols * grid->buttonDimensions.x));
-}
+void ui_syncToolVariantPanelToSelection(
+    UI *ui, enum GardeningTool toolSelected, int toolVariantSelected) {
 
-int getButtonGridFullHeight(UIButtonGrid *grid) {
-    return ((grid->padding.y * 2) + ((grid->rows - 1) * grid->buttonSpacing.y)
-            + (grid->rows * grid->buttonDimensions.y));
+    UIButtonGrid *variantGrid = &ui->toolVariantButtonPannel;
+
+    int maxVariants;
+    Texture2D variantTexture;
+    Rectangle variantTextureSourceRec;
+
+    switch (toolSelected) {
+    case GARDENING_TOOL_TRASH_BIN:
+    case GARDENING_TOOL_NONE:
+    case GARDENING_TOOL_IRRIGATOR:
+    case GARDENING_TOOL_NUTRIENTS:
+    case GARDENING_TOOL_COUNT:
+        ui->showToolVariantPanel = false;
+        return;
+
+    case GARDENING_TOOL_PLANTER:
+        maxVariants = PLANTER_TYPE_COUNT;
+        variantTexture = planterTexture;
+        variantTextureSourceRec = (Rectangle){0, 0, planterTexture.width, planterTexture.height};
+        break;
+
+    case GARDENING_TOOL_PLANT_CUTTING:
+        maxVariants = PLANT_TYPE_COUNT;
+        variantTexture = plantAtlas;
+        variantTextureSourceRec = plant_getSpriteSourceRect(toolVariantSelected, 100);
+        break;
+    }
+
+    ui->showToolVariantPanel = true;
+
+    variantGrid->cols = maxVariants;
+    variantGrid->rows = 1;
+
+    for (int i = 0; i < maxVariants; i++) {
+        variantGrid->buttons[i].content = (ButtonContent){
+            .icon = {variantTexture, variantTextureSourceRec},
+        };
+
+        if (i == toolVariantSelected) {
+            variantGrid->activeButtonIndex = i;
+        }
+    }
+
+    UIButtonGrid *toolButtonGrid = &ui->toolSelectionButtonPannel;
+    float toolVariantGridWidth = uiButtonGrid_getFullWidth(variantGrid);
+    float toolVariantGridHeight = uiButtonGrid_getFullHeight(variantGrid);
+    float toolGridWidth = uiButtonGrid_getFullWidth(toolButtonGrid);
+
+    variantGrid->origin = (Vector2i){
+        toolButtonGrid->origin.x + (toolGridWidth / 2) - (toolVariantGridWidth / 2),
+        toolButtonGrid->origin.y - toolVariantGridHeight - 20,
+    };
 }
 
 void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
     HideCursor();
 
-    UIButton toolButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
-    ButtonContent bcontent = (ButtonContent){.label = ""};
-    int toolButtonsCount = 0;
+    UIButtonGrid *toolGrid = &ui->toolSelectionButtonPannel;
 
-    for (int toolIndex = 0; toolIndex < GARDENING_TOOL_COUNT; toolIndex++) {
-        switch (toolIndex) {
+    uiButtonGrid_init(toolGrid,
+        GARDENING_TOOL_COUNT,
+        1,
+        (Vector2i){160, 80},
+        (Vector2i){4, 4},
+        (Vector2i){4, 4},
+        (Vector2i){0, 0});
+
+    float toolGridWidth = uiButtonGrid_getFullWidth(toolGrid);
+    float toolGridHeight = uiButtonGrid_getFullHeight(toolGrid);
+
+    toolGrid->origin = (Vector2i){
+        (screenSize->x - toolGridWidth) / 2,
+        screenSize->y - (toolGridHeight + 20),
+    };
+
+    ButtonContent bcontent = (ButtonContent){.label = ""};
+
+    int buttonsCount = uiButtonGrid_getButtonsCount(toolGrid);
+
+    for (int i = 0; i < buttonsCount; i++) {
+        switch (i) {
+        case GARDENING_TOOL_NONE:
+            bcontent.label = "None";
+            break;
+
         case GARDENING_TOOL_IRRIGATOR:
             bcontent.label = "[W]ater";
             break;
@@ -48,94 +117,63 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
             bcontent.label = "[R]emove";
             break;
 
-        case GARDENING_TOOL_NONE:
         case GARDENING_TOOL_COUNT:
             continue;
         }
 
-        toolButtons[toolButtonsCount] = (UIButton){
+        toolGrid->buttons[i] = (UIButton){
             .type = BUTTON_TYPE_TEXT_LABEL,
             .content = bcontent,
-            .command = (Command){COMMAND_TOOL_SELECTED, {.tool = toolIndex}},
-        };
-
-        toolButtonsCount++;
-    }
-
-    uiButtonGrid_init(&ui->toolSelectionButtonPannel,
-        toolButtonsCount,
-        1,
-        (Vector2i){160, 80},
-        (Vector2i){4, 4},
-        (Vector2i){4, 4},
-        (Vector2i){0, 0},
-        toolButtons);
-
-    UIButtonGrid *toolGrid = &ui->toolSelectionButtonPannel;
-
-    float toolGridWidth = getButtonGridFullWidth(toolGrid);
-    float toolGridHeight = getButtonGridFullHeight(toolGrid);
-
-    Vector2 toolGridPos = {
-        (screenSize->x - toolGridWidth) / 2,
-        screenSize->y - (toolGridHeight + 20),
-    };
-
-    uiButtonGrid_tranform(toolGrid, toolGridPos);
-
-    UIButton plantSelectionButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
-
-    for (int i = 0; i < PLANT_TYPE_COUNT; i++) {
-        plantSelectionButtons[i] = (UIButton){
-            .type = BUTTON_TYPE_SPRITE,
-            .content = (ButtonContent){.icon = {plantAtlas, plant_getSpriteSourceRect(i, 100)}},
-            .command = (Command){COMMAND_PLANT_TYPE_SELECTED, {.plantTypeSelected = i}},
-            .status = i == 0 ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
+            .command = (Command){COMMAND_TOOL_SELECTED, {.selection = i}},
         };
     }
 
-    uiButtonGrid_init(&ui->plantSelectionButtonPannel,
-        PLANT_TYPE_COUNT,
+    uiButtonGrid_init(&ui->speedSelectionButtonPannel,
+        GAMEPLAY_SPEED_COUNT,
         1,
+        (Vector2i){80, 30},
+        (Vector2i){4, 4},
+        (Vector2i){4, 4},
+        (Vector2i){100, 10});
+
+    ui->speedSelectionButtonPannel.activeButtonIndex = gameplaySpeed;
+
+    for (int i = 0; i < GAMEPLAY_SPEED_COUNT; i++) {
+        ui->speedSelectionButtonPannel.buttons[i] = (UIButton){
+            .type = BUTTON_TYPE_TEXT_LABEL,
+            .content = {.label = ">"},
+            .command = (Command){COMMAND_GAMEPLAY_CHANGE_SPEED, {.selection = i}},
+        };
+
+        if (i == gameplaySpeed) {
+            ui->speedSelectionButtonPannel.activeButtonIndex = i;
+        }
+    }
+
+    // If the UI is always initialized with no tool selected, we don't need this
+    // ui_syncToolVariantPanelToSelection()
+
+    uiButtonGrid_init(&ui->toolVariantButtonPannel,
+        0,
+        0,
         (Vector2i){80, 80},
         (Vector2i){4, 4},
         (Vector2i){4, 4},
-        (Vector2i){0, 0},
-        plantSelectionButtons);
+        (Vector2i){0, 10});
 
-    UIButtonGrid *plantGrid = &ui->plantSelectionButtonPannel;
-
-    Vector2 plantGridPos = (Vector2){
-        (screenSize->x - getButtonGridFullWidth(plantGrid)) / 2,
-        toolGrid->origin.y - (getButtonGridFullHeight(plantGrid) + 20),
-    };
-
-    uiButtonGrid_tranform(plantGrid, plantGridPos);
-
-    UIButton speedSelectionButtons[UI_BUTTON_PANNEL_MAX_BUTTONS];
-
-    for (int i = 0; i < GAMEPLAY_SPEED_COUNT; i++) {
-        speedSelectionButtons[i] = (UIButton){
-            .type = BUTTON_TYPE_TEXT_LABEL,
-            .content = {.label = ">"},
-            .command = (Command){COMMAND_GAMEPLAY_CHANGE_SPEED, {.gameplaySpeed = i}},
-            .status = gameplaySpeed == i ? BUTTON_STATUS_ACTIVE : BUTTON_STATUS_NORMAL,
+    // commands for tool variation are always the same, at least for now
+    for (int i = 0; i < UI_BUTTON_PANNEL_MAX_BUTTONS; i++) {
+        ui->toolVariantButtonPannel.buttons[i].type = BUTTON_TYPE_SPRITE;
+        ui->toolVariantButtonPannel.buttons[i].command = (Command){
+            COMMAND_TOOL_VARIANT_SELECTED,
+            {.selection = i},
         };
-
-        uiButtonGrid_init(&ui->speedSelectionButtonPannel,
-            GAMEPLAY_SPEED_COUNT,
-            1,
-            (Vector2i){80, 30},
-            (Vector2i){4, 4},
-            (Vector2i){4, 4},
-            (Vector2i){100, 10},
-            speedSelectionButtons);
     }
 }
 
 Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
     if (tool == GARDENING_TOOL_PLANT_CUTTING) {
-        Command cmd = uiButtonGrid_processInput(&ui->plantSelectionButtonPannel, input);
+        Command cmd = uiButtonGrid_processInput(&ui->toolVariantButtonPannel, input);
 
         if (cmd.type != COMMAND_NONE) {
             return cmd;
@@ -166,11 +204,10 @@ void ui_draw(UI *ui,
 
     int bpFontSize = uiFont.baseSize;
     uiButtonGrid_draw(&ui->toolSelectionButtonPannel, bpFontSize);
-
     uiButtonGrid_draw(&ui->speedSelectionButtonPannel, bpFontSize);
 
-    if (toolSelected == GARDENING_TOOL_PLANT_CUTTING) {
-        uiButtonGrid_draw(&ui->plantSelectionButtonPannel, bpFontSize);
+    if (ui->showToolVariantPanel) {
+        uiButtonGrid_draw(&ui->toolVariantButtonPannel, bpFontSize);
     }
 
     // const GardenTile *tile;
@@ -212,8 +249,6 @@ void ui_draw(UI *ui,
 
         UITextBox tb;
         uiTextBox_init(&tb, fontSize, tbBounds, (Vector2){20, 20});
-
-        // DrawRectangleRec(tbBounds, GRAY);
 
         snprintf(buffer, sizeof(buffer), "Light level: %d", lightLevel);
 
@@ -325,18 +360,8 @@ void ui_draw(UI *ui,
         cursorTexture = cursorTexture_plant;
         cursorExtraTexture = plantAtlas;
 
-        // Maybe get the selected plant from function params?
-        UIButton *btn;
-
-        for (int i = 0; ui->plantSelectionButtonPannel.buttonsCount; i++) {
-            btn = &ui->plantSelectionButtonPannel.buttons[i];
-
-            if (btn->status == BUTTON_STATUS_ACTIVE) {
-                cursorExtraSourceRec
-                    = plant_getSpriteSourceRect(btn->command.args.plantTypeSelected, 100);
-                break;
-            }
-        }
+        int variantSelection = ui->toolVariantButtonPannel.activeButtonIndex;
+        cursorExtraSourceRec = plant_getSpriteSourceRect(variantSelection, 100);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:

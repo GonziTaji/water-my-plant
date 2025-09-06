@@ -5,7 +5,7 @@
 
 typedef enum {
     PLANTER_TYPE_NORMAL,
-    PLANTER_TYPE_2_X_2,
+    PLANTER_TYPE_2_X_3,
     PLANTER_TYPE_COUNT,
 } PlanterType;
 

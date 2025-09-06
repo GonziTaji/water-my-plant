@@ -22,8 +22,7 @@ void game_init(Game *game) {
 
     game->gameplaySpeed = GAMEPLAY_SPEED_NORMAL;
     game->toolSelected = GARDENING_TOOL_NONE;
-    game->plantTypeSelected = PLANT_TYPE_CRASSULA_OVATA;
-    game->planterTypeSelected = PLANTER_TYPE_NORMAL;
+    game->toolVariantSelected = 0;
     game->screenSize = screenSize;
     game->target = LoadRenderTexture(screenSize.x, screenSize.y);
     game->state = GAME_STATE_MAIN_MENU;
@@ -41,13 +40,6 @@ void game_init(Game *game) {
 
 void game_processInput(Game *game) {
     inputManager_update(&game->input, game->scale, game->screenOffset);
-
-    // One command per frame?
-    if (game->input.mouseButtonPressed == MOUSE_RIGHT_BUTTON) {
-        command_dispatchCommand(
-            (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NONE}}, game);
-        return;
-    }
 
     Command cmd = keyMap_processInput(&game->keyMap, &game->input);
     if (command_dispatchCommand(cmd, game)) {

@@ -92,55 +92,28 @@ void command_removeFromTile(Garden *garden) {
     }
 }
 
-void command_changePlantSelected(Game *g, enum PlantType type) {
-    if (g->toolSelected != GARDENING_TOOL_PLANT_CUTTING) {
-        return;
-    }
-
-    if (g->plantTypeSelected == type) {
-        return;
-    }
-
-    g->plantTypeSelected = type;
-
-    UIButtonGrid *plantGrid = &g->ui.plantSelectionButtonPannel;
-
-    for (int i = 0; i < plantGrid->buttonsCount; i++) {
-        if (plantGrid->buttons[i].command.type == COMMAND_PLANT_TYPE_SELECTED) {
-            if (plantGrid->buttons[i].command.args.plantTypeSelected == type) {
-                plantGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
-            } else {
-                plantGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
-            }
-        }
-    }
+void command_toolVariantSelected(Game *g, int variant) {
+    g->toolVariantSelected = variant;
+    ui_syncToolVariantPanelToSelection(&g->ui, g->toolSelected, variant);
 }
 
-void command_changePlantSelectNext(Game *g) {
-    int plantSelected = g->plantTypeSelected + 1;
-    if (plantSelected == PLANT_TYPE_COUNT) {
-        plantSelected = 0;
+void command_toolVariantSelectNext(Game *g) {
+    int nextVariant = g->toolVariantSelected + 1;
+    if (nextVariant == uiButtonGrid_getButtonsCount(&g->ui.toolVariantButtonPannel)) {
+        nextVariant = 0;
     }
 
-    command_changePlantSelected(g, plantSelected);
+    command_toolVariantSelected(g, nextVariant);
 }
 
-void command_addPlant(Garden *garden, UI *ui) {
-    Planter *planter = garden_getSelectedPlanter(garden);
+void command_addPlant(Game *g) {
+    Planter *planter = garden_getSelectedPlanter(&g->garden);
 
-    if (!garden_hasPlanterSelected(garden) || planter->hasPlant) {
+    if (!garden_hasPlanterSelected(&g->garden) || planter->hasPlant) {
         return;
     }
 
-    // save in memory somewhere?
-    enum PlantType type;
-    for (int i = 0; i < ui->plantSelectionButtonPannel.buttonsCount; i++) {
-        if (ui->plantSelectionButtonPannel.buttons[i].status == BUTTON_STATUS_ACTIVE) {
-            type = ui->plantSelectionButtonPannel.buttons[i].command.args.plantTypeSelected;
-        }
-    }
-
-    planter_addPlant(planter, type);
+    planter_addPlant(planter, g->toolVariantSelected);
 }
 
 void command_irrigate(Garden *garden) {
@@ -170,19 +143,10 @@ void command_changeTool(Game *g, enum GardeningTool tool) {
         g->toolSelected = tool;
     }
 
-    UIButtonGrid *toolGrid = &g->ui.toolSelectionButtonPannel;
+    g->ui.toolSelectionButtonPannel.activeButtonIndex = g->toolSelected;
 
-    for (int i = 0; i < toolGrid->buttonsCount; i++) {
-        if (toolGrid->buttons[i].command.type != COMMAND_TOOL_SELECTED) {
-            continue;
-        }
-
-        if (toolGrid->buttons[i].command.args.tool == g->toolSelected) {
-            toolGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
-        } else {
-            toolGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
-        }
-    }
+    // TODO: save selection for each variant type to persist previous selection
+    ui_syncToolVariantPanelToSelection(&g->ui, tool, 0);
 }
 
 void command_tileClicked(Game *game, int tileIndex) {
@@ -198,11 +162,11 @@ void command_tileClicked(Game *game, int tileIndex) {
         break;
 
     case GARDENING_TOOL_PLANTER:
-        command_addPlanter(&game->garden, game->planterTypeSelected);
+        command_addPlanter(&game->garden, game->toolVariantSelected);
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
-        command_addPlant(&game->garden, &game->ui);
+        command_addPlant(game);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:
@@ -221,41 +185,30 @@ void command_tileClicked(Game *game, int tileIndex) {
 
 void command_changeGameplaySpeed(Game *g, GameplaySpeed newSpeed) {
     g->gameplaySpeed = newSpeed;
-
-    UIButtonGrid *speedGrid = &g->ui.speedSelectionButtonPannel;
-
-    for (int i = 0; i < speedGrid->buttonsCount; i++) {
-        if (speedGrid->buttons[i].command.type == COMMAND_GAMEPLAY_CHANGE_SPEED) {
-            if (speedGrid->buttons[i].command.args.gameplaySpeed == newSpeed) {
-                speedGrid->buttons[i].status = BUTTON_STATUS_ACTIVE;
-            } else {
-                speedGrid->buttons[i].status = BUTTON_STATUS_NORMAL;
-            }
-        }
-    }
+    g->ui.speedSelectionButtonPannel.activeButtonIndex = newSpeed;
 }
 
 /// returns `true` if a command was executed (cmd.type is not "COMMAND_NONE"
 bool command_dispatchCommand(Command cmd, Game *g) {
     switch (cmd.type) {
     case COMMAND_TILE_CLICKED:
-        command_tileClicked(g, cmd.args.tileIndex);
+        command_tileClicked(g, cmd.args.selection);
         break;
 
     case COMMAND_TOOL_SELECTED:
-        command_changeTool(g, cmd.args.tool);
+        command_changeTool(g, cmd.args.selection);
         break;
 
-    case COMMAND_PLANT_TYPE_SELECTED:
-        command_changePlantSelected(g, cmd.args.plantTypeSelected);
+    case COMMAND_TOOL_VARIANT_SELECTED:
+        command_toolVariantSelected(g, cmd.args.selection);
         break;
 
-    case COMMAND_PLANT_TYPE_SELECT_NEXT:
-        command_changePlantSelectNext(g);
+    case COMMAND_TOOL_VARIANT_SELECT_NEXT:
+        command_toolVariantSelectNext(g);
         break;
 
     case COMMAND_GAMEPLAY_CHANGE_SPEED:
-        command_changeGameplaySpeed(g, cmd.args.gameplaySpeed);
+        command_changeGameplaySpeed(g, cmd.args.selection);
         break;
 
     case COMMAND_UI_CLICKED:

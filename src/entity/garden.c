@@ -2,8 +2,10 @@
 #include "garden.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
+#include "../game/gameplay.h"
 #include "../utils/utils.h"
 #include "plant.h"
+#include "planter.h"
 #include <assert.h>
 #include <math.h>
 #include <raylib.h>
@@ -222,12 +224,18 @@ IsoRec getGardenIsoVertices(Garden *garden) {
 }
 
 IsoRec getPlanterIsoVertices(const Garden *garden, int tileIndex) {
-    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, tileIndex);
-    Vector2 size = {1, 1};
-
     int planterIndex = garden->tiles[tileIndex].planterIndex;
 
+    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, tileIndex);
+    Vector2 size;
+
     const Planter *p = &garden->planters[planterIndex];
+
+    if (p->alive) {
+        size = planter_getDimensions(p->type);
+    } else {
+        size = (Vector2){1, 1};
+    }
 
     if (planterIndex != -1 && p->alive) {
         size.x = p->dimensions.x;
@@ -395,7 +403,7 @@ Command garden_processInput(Garden *garden, InputManager *input) {
     if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
         return (Command){
             COMMAND_TILE_CLICKED,
-            {.tileIndex = cellHoveredIndex},
+            {.selection = cellHoveredIndex},
         };
     }
 

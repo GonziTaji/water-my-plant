@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../entity/plant.h"
-#include "../game/gameplay.h"
-
+#include <stdbool.h>
 typedef struct Game Game;
 
 enum COMMAND_TYPE {
@@ -11,16 +9,14 @@ enum COMMAND_TYPE {
     COMMAND_UI_CLICKED,
     COMMAND_TILE_CLICKED,
     COMMAND_TOOL_SELECTED,
-    COMMAND_PLANT_TYPE_SELECTED,
-    COMMAND_PLANT_TYPE_SELECT_NEXT,
+    COMMAND_TOOL_VARIANT_SELECTED,
+    COMMAND_TOOL_VARIANT_SELECT_NEXT,
     COMMAND_GAMEPLAY_CHANGE_SPEED,
 };
 
+// used to have more members and will probably will have more members eventually
 typedef union {
-    enum GardeningTool tool;
-    GameplaySpeed gameplaySpeed;
-    int tileIndex;
-    enum PlantType plantTypeSelected;
+    int selection;
 } CommandArgs;
 
 typedef struct {

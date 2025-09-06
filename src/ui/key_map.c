@@ -1,4 +1,5 @@
 #include "key_map.h"
+#include "../game/gameplay.h"
 #include "input_manager.h"
 #include <raylib.h>
 #include <stdio.h>
@@ -17,20 +18,44 @@ void registerCommand(KeyMap *keyMap, int key, Command cmd) {
 void keyMap_init(KeyMap *keyMap) {
     keyMap->registeredCommandsCount = 0;
 
-    registerCommand(
-        keyMap, KEY_M, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANTER}});
-    registerCommand(
-        keyMap, KEY_A, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_PLANT_CUTTING}});
-    registerCommand(
-        keyMap, KEY_R, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_TRASH_BIN}});
-    registerCommand(
-        keyMap, KEY_W, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_IRRIGATOR}});
-    registerCommand(
-        keyMap, KEY_F, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NUTRIENTS}});
-    registerCommand(
-        keyMap, KEY_ESCAPE, (Command){COMMAND_TOOL_SELECTED, {.tool = GARDENING_TOOL_NONE}});
+    registerCommand(keyMap,
+        KEY_M,
+        (Command){
+            COMMAND_TOOL_SELECTED,
+            {.selection = GARDENING_TOOL_PLANTER},
+        });
+    registerCommand(keyMap,
+        KEY_A,
+        (Command){
+            COMMAND_TOOL_SELECTED,
+            {.selection = GARDENING_TOOL_PLANT_CUTTING},
+        });
+    registerCommand(keyMap,
+        KEY_R,
+        (Command){
+            COMMAND_TOOL_SELECTED,
+            {.selection = GARDENING_TOOL_TRASH_BIN},
+        });
+    registerCommand(keyMap,
+        KEY_W,
+        (Command){
+            COMMAND_TOOL_SELECTED,
+            {.selection = GARDENING_TOOL_IRRIGATOR},
+        });
+    registerCommand(keyMap,
+        KEY_F,
+        (Command){
+            COMMAND_TOOL_SELECTED,
+            {.selection = GARDENING_TOOL_NUTRIENTS},
+        });
+    registerCommand(keyMap,
+        KEY_ESCAPE,
+        (Command){
+            COMMAND_TOOL_SELECTED,
+            {.selection = GARDENING_TOOL_NONE},
+        });
 
-    registerCommand(keyMap, KEY_TAB, (Command){COMMAND_PLANT_TYPE_SELECT_NEXT});
+    registerCommand(keyMap, KEY_TAB, (Command){COMMAND_TOOL_VARIANT_SELECT_NEXT});
 }
 
 Command keyMap_processInput(KeyMap *keyMap, InputManager *input) {
@@ -38,6 +63,11 @@ Command keyMap_processInput(KeyMap *keyMap, InputManager *input) {
         if (input->keyPressed == keyMap->registeredCommands[i].key) {
             return keyMap->registeredCommands[i].command;
         }
+    }
+
+    // Mouse global binds. Make a map if this grows or it's configurable
+    if (input->mouseButtonPressed == MOUSE_RIGHT_BUTTON) {
+        return (Command){COMMAND_TOOL_SELECTED, {.selection = GARDENING_TOOL_NONE}};
     }
 
     return (Command){COMMAND_NONE};

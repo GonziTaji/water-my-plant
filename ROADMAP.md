@@ -81,7 +81,7 @@ Misc.
 
 - [X] Zoom y movimiento del garden (con limites para que no se salga de la pantalla)
   - [X] Zoom
-  - [ ] Movimiento
+  - [X] Movimiento
 - [X] Giro del jardin (deseable x1000 pero pajero)
 
 

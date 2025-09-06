@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../entity/garden.h"
+#include "../commands/commands.h"
+#include "input_manager.h"
 
 #define INPUT_MAP_CAPACITY 16
 
