@@ -1,4 +1,3 @@
-
 #include "garden.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
@@ -15,20 +14,6 @@
 #define TILE_WIDTH 128
 #define TILE_HEIGHT (int)(TILE_WIDTH / 2)
 #define GARDEN_SCALE_INITIAL 1.0f
-#define GARDEN_SCALE_STEP 0.4f
-#define GARDEN_SCALE_MIN GARDEN_SCALE_INITIAL - (1 * GARDEN_SCALE_STEP)
-#define GARDEN_SCALE_MAX GARDEN_SCALE_INITIAL + (4 * GARDEN_SCALE_STEP)
-
-typedef enum {
-    GARDEN_ROTATION_INITIAL,
-    GARDEN_ROTATION_90,
-    GARDEN_ROTATION_180,
-    GARDEN_ROTATION_270,
-    GARDEN_ROTATION_COUNT,
-} GardenRotation;
-
-GardenRotation gardenRotation = GARDEN_ROTATION_INITIAL;
-float gardenScale = GARDEN_SCALE_INITIAL;
 
 typedef struct {
     Vector2 vertices[4];
@@ -88,37 +73,37 @@ Vector2 gridCoordsToWorldCoords(const Garden *garden, float x, float y) {
     int sumY = 0;
 
     // TODO: refactor in some way? ugly
-    switch (gardenRotation) {
-    case GARDEN_ROTATION_INITIAL:
+    switch (garden->rotation) {
+    case ROTATION_0:
         sumX = +x + y;
         sumY = -x + y;
         break;
-    case GARDEN_ROTATION_90:
+    case ROTATION_90:
         sumX = +x - y;
         sumY = +x + y;
         break;
-    case GARDEN_ROTATION_180:
+    case ROTATION_180:
         sumX = -x - y;
         sumY = +x - y;
         break;
-    case GARDEN_ROTATION_270:
+    case ROTATION_270:
         sumX = -x + y;
         sumY = -x - y;
         break;
-    case GARDEN_ROTATION_COUNT:
+    case ROTATION_COUNT:
         // Handle in some way? give rotation initial vector?
         break;
     }
 
     return (Vector2){
-        garden->origin.x + (sumX * TILE_WIDTH * gardenScale / 2.0f),
-        garden->origin.y + (sumY * TILE_HEIGHT * gardenScale / 2.0f),
+        garden->origin.x + (sumX * TILE_WIDTH * garden->scale / 2.0f),
+        garden->origin.y + (sumY * TILE_HEIGHT * garden->scale / 2.0f),
     };
 }
 
 Vector2 screenCoordsToGridCoords(const Garden *garden, float x, float y) {
-    const float TW = TILE_WIDTH * gardenScale;
-    const float TH = TILE_HEIGHT * gardenScale;
+    const float TW = TILE_WIDTH * garden->scale;
+    const float TH = TILE_HEIGHT * garden->scale;
 
     const float dx = x - garden->origin.x;
     const float dy = y - garden->origin.y;
@@ -126,24 +111,24 @@ Vector2 screenCoordsToGridCoords(const Garden *garden, float x, float y) {
     Vector2 gridCoords = {};
 
     // TODO: refactor in some way? ugly
-    switch (gardenRotation) {
-    case GARDEN_ROTATION_INITIAL:
+    switch (garden->rotation) {
+    case ROTATION_0:
         gridCoords.x = +(dx / TW) - (dy / TH);
         gridCoords.y = +(dx / TW) + (dy / TH);
         break;
-    case GARDEN_ROTATION_90:
+    case ROTATION_90:
         gridCoords.x = +(dx / TW) + (dy / TH);
         gridCoords.y = -(dx / TW) + (dy / TH);
         break;
-    case GARDEN_ROTATION_180:
+    case ROTATION_180:
         gridCoords.x = -(dx / TW) + (dy / TH);
         gridCoords.y = -(dx / TW) - (dy / TH);
         break;
-    case GARDEN_ROTATION_270:
+    case ROTATION_270:
         gridCoords.x = -(dx / TW) - (dy / TH);
         gridCoords.y = +(dx / TW) - (dy / TH);
         break;
-    case GARDEN_ROTATION_COUNT:
+    case ROTATION_COUNT:
         // Handle in some way? give rotation initial vector?
         assert(false);
         break;
@@ -160,7 +145,7 @@ bool garden_isValidGridCoords(Garden *garden, float x, float y) {
     return true;
 }
 
-Vector2 garden_getPlanterCoordsFromIndex(const Garden *garden, int i) {
+Vector2 garden_getTileCoordsFromIndex(const Garden *garden, int i) {
     return (Vector2){
         i % garden->tileCols,
         (int)(i / garden->tileCols),
@@ -168,7 +153,7 @@ Vector2 garden_getPlanterCoordsFromIndex(const Garden *garden, int i) {
 }
 
 /** Returns -1 if the coords are not a valid cell of the grid */
-int garden_getPlanterIndexFromCoords(Garden *garden, float x, float y) {
+int garden_getTileIndexFromCoords(Garden *garden, float x, float y) {
     if (!garden_isValidGridCoords(garden, x, y)) {
         return -1;
     }
@@ -177,7 +162,7 @@ int garden_getPlanterIndexFromCoords(Garden *garden, float x, float y) {
 }
 
 /// Relabels each vertice depending on the rotation of the view
-void rotateIsoRec(IsoRec *isoRec) {
+void rotateIsoRec(IsoRec *isoRec, Rotation rotation) {
     Vector2 source[4] = {
         isoRec->left,
         isoRec->top,
@@ -186,10 +171,10 @@ void rotateIsoRec(IsoRec *isoRec) {
     };
 
     int rotatedIndex;
-    for (int i = 0; i < GARDEN_ROTATION_COUNT; i++) {
-        rotatedIndex = i + gardenRotation;
+    for (int i = 0; i < ROTATION_COUNT; i++) {
+        rotatedIndex = i + rotation;
 
-        if (rotatedIndex >= GARDEN_ROTATION_COUNT) {
+        if (rotatedIndex >= ROTATION_COUNT) {
             rotatedIndex -= 4;
         }
 
@@ -218,44 +203,52 @@ IsoRec toIsoRec(const Garden *garden, Rectangle rec) {
         gridCoordsToWorldCoords(garden, rec.x, rec.y + rec.height),
     };
 
-    rotateIsoRec(&isoRec);
-
     return isoRec;
 }
 
 IsoRec getGardenIsoVertices(Garden *garden) {
-    return toIsoRec(garden, (Rectangle){0, 0, garden->tileCols, garden->tileRows});
+    IsoRec isoRec = toIsoRec(garden, (Rectangle){0, 0, garden->tileCols, garden->tileRows});
+    rotateIsoRec(&isoRec, garden->rotation);
+
+    return isoRec;
 }
 
 /// If a planter with size NxM is hovered, it's whole area is hovered
 IsoRec getHoveredIsoVertices(const Garden *garden, int tileIndex, PlanterType planterTypeSelected) {
-    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, tileIndex);
-    Vector2 dimensions = planter_getDimensions(planterTypeSelected);
+    Vector2 origin = garden_getTileCoordsFromIndex(garden, tileIndex);
+    Vector2 dimensions = planter_getDimensions(planterTypeSelected, garden->selectionRotation);
 
-    Rectangle rec = {origin.x, origin.y, dimensions.x, dimensions.y};
+    Rectangle rec = (Rectangle){
+        origin.x,
+        origin.y,
+        dimensions.x,
+        dimensions.y,
+    };
 
-    return toIsoRec(garden, rec);
+    IsoRec isoRec = toIsoRec(garden, rec);
+    rotateIsoRec(&isoRec, garden->rotation);
+
+    return isoRec;
 }
 
 IsoRec getPlanterIsoVertices(const Garden *garden, int tileIndex) {
     int planterIndex = garden->tiles[tileIndex].planterIndex;
     const Planter *p = &garden->planters[planterIndex];
 
-    Rectangle rec = {
-        p->origin.x,
-        p->origin.y,
-        p->dimensions.x,
-        p->dimensions.y,
-    };
+    IsoRec isoRec = toIsoRec(garden, p->bounds);
+    rotateIsoRec(&isoRec, garden->rotation);
 
-    return toIsoRec(garden, rec);
+    return isoRec;
 }
 
 IsoRec getTileIsoVertices(const Garden *garden, int tileIndex) {
-    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, tileIndex);
+    Vector2 origin = garden_getTileCoordsFromIndex(garden, tileIndex);
     Rectangle rec = {origin.x, origin.y, 1, 1};
 
-    return toIsoRec(garden, rec);
+    IsoRec isoRec = toIsoRec(garden, rec);
+    rotateIsoRec(&isoRec, garden->rotation);
+
+    return isoRec;
 }
 
 float distanceBetweenPoints(Vector2 p1, Vector2 p2) {
@@ -267,7 +260,7 @@ void updateLightLevelOfTiles(Garden *garden) {
         = screenCoordsToGridCoords(garden, garden->lightSourcePos.x, garden->lightSourcePos.y);
 
     for (int i = 0; i < garden->tilesCount; i++) {
-        Vector2 tileCoords = garden_getPlanterCoordsFromIndex(garden, i);
+        Vector2 tileCoords = garden_getTileCoordsFromIndex(garden, i);
 
         float distance = distanceBetweenPoints(tileCoords, lightSourceInGrid);
         garden->tiles[i].lightLevel = garden->lightSourceLevel - distance;
@@ -280,7 +273,7 @@ void updateGardenOrigin(Garden *garden) {
     IsoRec target;
 
     // TODO: if moved (as in, not centered, update based on scale)
-    if (gardenScale == GARDEN_SCALE_INITIAL) {
+    if (garden->scale == GARDEN_SCALE_INITIAL) {
         target = getGardenIsoVertices(garden);
     } else if (garden->tileHovered != -1) {
         target = getTileIsoVertices(garden, garden->tileHovered);
@@ -302,6 +295,9 @@ void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
     garden->tileCols = 10;
     garden->tileRows = 7;
     garden->tilesCount = garden->tileCols * garden->tileRows;
+    garden->rotation = ROTATION_0;
+    garden->selectionRotation = ROTATION_0;
+    garden->scale = GARDEN_SCALE_INITIAL;
 
     updateGardenOrigin(garden);
 
@@ -310,7 +306,7 @@ void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
             .type = PLANTER_TYPE_COUNT, // use a specific type to "zero" the value?
             .alive = false,
             .hasPlant = false,
-            .dimensions = (Vector2){0, 0},
+            .bounds = (Rectangle){0, 0, 0, 0},
         };
     }
 
@@ -343,21 +339,21 @@ void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
 }
 
 void resetGardenScale(Garden *garden) {
-    gardenScale = GARDEN_SCALE_INITIAL;
+    garden->scale = GARDEN_SCALE_INITIAL;
     updateGardenOrigin(garden);
 }
 
 void scaleGarden(Garden *garden, float amount) {
-    gardenScale = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, gardenScale + amount);
+    garden->scale = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->scale + amount);
     updateGardenOrigin(garden);
 }
 
 /// rotates garden clockwise
 void rotateGarden(Garden *garden) {
-    gardenRotation++;
+    garden->rotation++;
 
-    if (gardenRotation == GARDEN_ROTATION_COUNT) {
-        gardenRotation = 0;
+    if (garden->rotation == ROTATION_COUNT) {
+        garden->rotation = 0;
     }
 
     updateGardenOrigin(garden);
@@ -376,6 +372,14 @@ Command garden_processInput(Garden *garden, InputManager *input) {
         rotateGarden(garden);
     }
 
+    if (input->keyPressed == KEY_T) {
+        garden->selectionRotation++;
+
+        if (garden->selectionRotation == ROTATION_COUNT) {
+            garden->selectionRotation = 0;
+        }
+    }
+
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
         garden->origin.x -= input->worldMouseDelta.x;
         garden->origin.y -= input->worldMouseDelta.y;
@@ -383,12 +387,12 @@ Command garden_processInput(Garden *garden, InputManager *input) {
         IsoRec gardenIsoRec = getGardenIsoVertices(garden);
         int isoRecWidth = gardenIsoRec.right.x - gardenIsoRec.left.x;
 
-        int startLimitX = -isoRecWidth + (4 * TILE_WIDTH * gardenScale);
-        int endLimitX = garden->screenSize->x - (4 * TILE_WIDTH * gardenScale);
+        int startLimitX = -isoRecWidth + (4 * TILE_WIDTH * garden->scale);
+        int endLimitX = garden->screenSize->x - (4 * TILE_WIDTH * garden->scale);
         int startLimitY
-            = gardenIsoRec.left.y - gardenIsoRec.bottom.y + (4 * TILE_HEIGHT * gardenScale);
+            = gardenIsoRec.left.y - gardenIsoRec.bottom.y + (4 * TILE_HEIGHT * garden->scale);
         int endLimitY = garden->screenSize->y - (gardenIsoRec.top.y - gardenIsoRec.left.y)
-                      - (4 * TILE_HEIGHT * gardenScale);
+                      - (4 * TILE_HEIGHT * garden->scale);
 
         garden->origin.x = utils_clampf(startLimitX, endLimitX, garden->origin.x);
         garden->origin.y = utils_clampf(startLimitY, endLimitY, garden->origin.y);
@@ -397,7 +401,7 @@ Command garden_processInput(Garden *garden, InputManager *input) {
     Vector2 *mousePos = &input->worldMousePos;
     Vector2 cellHoveredCoords = screenCoordsToGridCoords(garden, mousePos->x, mousePos->y);
     int cellHoveredIndex
-        = garden_getPlanterIndexFromCoords(garden, cellHoveredCoords.x, cellHoveredCoords.y);
+        = garden_getTileIndexFromCoords(garden, cellHoveredCoords.x, cellHoveredCoords.y);
 
     garden->tileHovered = cellHoveredIndex;
 
@@ -430,6 +434,12 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                 isoTile = getPlanterIsoVertices(garden, i);
             } else if (garden->tileHovered == i && toolSelected == GARDENING_TOOL_PLANTER) {
                 isoTile = getHoveredIsoVertices(garden, i, toolVariantSelected);
+                Vector2 isoTileBase = (Vector2){isoTile.bottom.x, isoTile.bottom.y};
+                Planter p;
+                Vector2 gridCoords = garden_getTileCoordsFromIndex(garden, i);
+                Vector2 origin = gridCoordsToWorldCoords(garden, gridCoords.x, gridCoords.y);
+                planter_init(&p, toolVariantSelected, origin, garden->selectionRotation);
+                planter_draw(&p, isoTileBase, garden->scale);
             } else {
                 isoTile = getTileIsoVertices(garden, i);
             }
@@ -451,18 +461,18 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             Planter *planter = &garden->planters[i];
 
             int isoTileIndex
-                = garden_getPlanterIndexFromCoords(garden, planter->origin.x, planter->origin.y);
+                = garden_getTileIndexFromCoords(garden, planter->bounds.x, planter->bounds.y);
             IsoRec isoTile = getPlanterIsoVertices(garden, isoTileIndex);
 
             Vector2 isoTileBase = (Vector2){isoTile.bottom.x, isoTile.bottom.y};
 
-            planter_draw(planter, isoTileBase, gardenScale);
+            planter_draw(planter, isoTileBase, garden->scale);
 
             if (planter->hasPlant) {
                 plantsToDraw[plantsCount] = &planter->plant;
                 plantsOrigins[plantsCount] = (Vector2){
                     isoTileBase.x,
-                    isoTileBase.y - (planter->plantBasePosY * gardenScale),
+                    isoTileBase.y - (planter->plantBasePosY * garden->scale),
                 };
                 plantsCount++;
             };
@@ -471,11 +481,11 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
     // Draw plants after planters. Maybe use origin's Y base to order in case there's a high planter
     for (int i = 0; i < plantsCount; i++) {
-        plant_draw(plantsToDraw[i], plantsOrigins[i], gardenScale);
+        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->scale);
     }
 
     DrawCircle(garden->lightSourcePos.x,
         garden->lightSourcePos.y,
-        LIGHT_SOURCE_RADIUS * gardenScale,
+        LIGHT_SOURCE_RADIUS * garden->scale,
         YELLOW);
 }

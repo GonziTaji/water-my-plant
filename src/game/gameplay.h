@@ -13,6 +13,14 @@ typedef enum {
     GAMEPLAY_SPEED_COUNT,
 } GameplaySpeed;
 
+typedef enum {
+    ROTATION_0,
+    ROTATION_90,
+    ROTATION_180,
+    ROTATION_270,
+    ROTATION_COUNT,
+} Rotation;
+
 // Move to somewhere else?
 enum GardeningTool {
     GARDENING_TOOL_NONE,

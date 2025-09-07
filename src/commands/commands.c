@@ -9,8 +9,8 @@ void command_addPlanter(Garden *garden, PlanterType planterType) {
         return;
     }
 
-    Vector2 dimensions = planter_getDimensions(planterType);
-    Vector2 origin = garden_getPlanterCoordsFromIndex(garden, garden->tileSelected);
+    Vector2 dimensions = planter_getDimensions(planterType, garden->selectionRotation);
+    Vector2 origin = garden_getTileCoordsFromIndex(garden, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
 
     bool planterFits = true;
@@ -24,7 +24,7 @@ void command_addPlanter(Garden *garden, PlanterType planterType) {
                 break;
             }
 
-            int index = garden_getPlanterIndexFromCoords(garden, x, y);
+            int index = garden_getTileIndexFromCoords(garden, x, y);
 
             if (garden->tiles[index].planterIndex != -1) {
                 planterFits = false;
@@ -45,11 +45,13 @@ void command_addPlanter(Garden *garden, PlanterType planterType) {
             }
         }
 
-        planter_init(&garden->planters[planterIndex], planterType, origin);
+        Planter *p = &garden->planters[planterIndex];
 
-        for (int x = origin.x; x < end.x; x++) {
-            for (int y = origin.y; y < end.y; y++) {
-                int tileIndex = garden_getPlanterIndexFromCoords(garden, x, y);
+        planter_init(p, planterType, origin, garden->selectionRotation);
+
+        for (int x = p->bounds.x; x < end.x; x++) {
+            for (int y = p->bounds.y; y < end.y; y++) {
+                int tileIndex = garden_getTileIndexFromCoords(garden, x, y);
 
                 garden->tiles[tileIndex].planterIndex = planterIndex;
             }
@@ -78,13 +80,13 @@ void command_removeFromTile(Garden *garden) {
             planter->alive = false;
 
             Vector2 end = (Vector2){
-                planter->origin.x + planter->dimensions.x,
-                planter->origin.y + planter->dimensions.y,
+                planter->bounds.x + planter->bounds.width,
+                planter->bounds.y + planter->bounds.height,
             };
 
-            for (int x = planter->origin.x; x < end.x; x++) {
-                for (int y = planter->origin.y; y < end.y; y++) {
-                    int tileIndex = garden_getPlanterIndexFromCoords(garden, x, y);
+            for (int x = planter->bounds.x; x < end.x; x++) {
+                for (int y = planter->bounds.y; y < end.y; y++) {
+                    int tileIndex = garden_getTileIndexFromCoords(garden, x, y);
                     garden->tiles[tileIndex].planterIndex = -1;
                 }
             }

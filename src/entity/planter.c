@@ -1,30 +1,50 @@
 #include "planter.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
+#include "../utils/utils.h"
 #include <raylib.h>
 
-Vector2 planter_getDimensions(PlanterType planterType) {
+Vector2 planter_getDimensions(PlanterType planterType, Rotation rotation) {
+    Vector2 d = (Vector2){0, 0};
+
     switch (planterType) {
     case PLANTER_TYPE_NORMAL:
-        return (Vector2){1, 1};
+        d = (Vector2){1, 1};
+        break;
 
     case PLANTER_TYPE_2_X_3:
-        return (Vector2){2, 3};
+        d = (Vector2){2, 3};
+        break;
 
     case PLANTER_TYPE_COUNT:
-        return (Vector2){1, 1};
+        d = (Vector2){1, 1};
+        break;
     }
 
-    return (Vector2){0, 0};
+    if (rotation == ROTATION_90 || rotation == ROTATION_270) {
+        float aux = d.x;
+        d.x = d.y;
+        d.y = aux;
+    }
+
+    return d;
 }
 
-void planter_init(Planter *planter, PlanterType type, Vector2 origin) {
+void planter_init(Planter *planter, PlanterType type, Vector2 origin, Rotation rotation) {
     planter->type = type;
     planter->alive = true;
     planter->hasPlant = false;
-    planter->origin = origin;
-    planter->dimensions = planter_getDimensions(type);
+    planter->rotation = rotation;
     planter->plantBasePosY = 48;
+
+    Vector2 dimensions = planter_getDimensions(type, rotation);
+
+    planter->bounds = (Rectangle){
+        origin.x,
+        origin.y,
+        dimensions.x,
+        dimensions.y,
+    };
 }
 
 void planter_addPlant(Planter *planter, enum PlantType type) {

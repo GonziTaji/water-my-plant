@@ -225,7 +225,7 @@ void ui_draw(UI *ui,
     char buffer[64];
 
     if (tileIndex != -1) {
-        Vector2 tileCoords = garden_getPlanterCoordsFromIndex(garden, tileIndex);
+        Vector2 tileCoords = garden_getTileCoordsFromIndex(garden, tileIndex);
 
         snprintf(buffer,
             sizeof(buffer),
