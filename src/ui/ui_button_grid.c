@@ -121,6 +121,21 @@ void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize) {
                 bounds.height,
             };
 
+            if (bp->buttons[i].content.icon.sourceRect.width
+                > bp->buttons[i].content.icon.sourceRect.height) {
+
+                dest.height = dest.width * bp->buttons[i].content.icon.sourceRect.height
+                            / bp->buttons[i].content.icon.sourceRect.width;
+
+            } else {
+                dest.width = dest.height * bp->buttons[i].content.icon.sourceRect.width
+                           / bp->buttons[i].content.icon.sourceRect.height;
+            }
+
+            // center sprite in button
+            dest.x = bounds.x + (bounds.width - dest.width) / 2.0f;
+            dest.y = bounds.y + (bounds.height - dest.height) / 2.0f;
+
             // Vector2 pivot = {dest.width / 2, dest.height};
             Vector2 pivot = {0, 0};
 

@@ -11,9 +11,6 @@
 #include <stddef.h>
 
 #define LIGHT_SOURCE_RADIUS 40
-#define TILE_WIDTH 128
-#define TILE_HEIGHT (int)(TILE_WIDTH / 2)
-#define GARDEN_SCALE_INITIAL 1.0f
 
 typedef struct {
     Vector2 vertices[4];
@@ -214,9 +211,14 @@ IsoRec getGardenIsoVertices(Garden *garden) {
 }
 
 /// If a planter with size NxM is hovered, it's whole area is hovered
-IsoRec getHoveredIsoVertices(const Garden *garden, int tileIndex, PlanterType planterTypeSelected) {
+IsoRec getHoveredIsoVertices(
+    const Garden *garden, int tileIndex, enum GardeningTool tool, int toolVariant) {
     Vector2 origin = garden_getTileCoordsFromIndex(garden, tileIndex);
-    Vector2 dimensions = planter_getDimensions(planterTypeSelected, garden->selectionRotation);
+    Vector2 dimensions = {1, 1};
+
+    if (tool == GARDENING_TOOL_PLANTER) {
+        dimensions = planter_getDimensions(toolVariant, garden->selectionRotation);
+    }
 
     Rectangle rec = (Rectangle){
         origin.x,
@@ -344,19 +346,12 @@ void resetGardenScale(Garden *garden) {
 }
 
 void scaleGarden(Garden *garden, float amount) {
-    garden->scale = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->scale + amount);
-    updateGardenOrigin(garden);
-}
+    float newScale = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->scale + amount);
 
-/// rotates garden clockwise
-void rotateGarden(Garden *garden) {
-    garden->rotation++;
-
-    if (garden->rotation == ROTATION_COUNT) {
-        garden->rotation = 0;
+    if (newScale != garden->scale) {
+        garden->scale = newScale;
+        updateGardenOrigin(garden);
     }
-
-    updateGardenOrigin(garden);
 }
 
 Command garden_processInput(Garden *garden, InputManager *input) {
@@ -368,8 +363,16 @@ Command garden_processInput(Garden *garden, InputManager *input) {
         resetGardenScale(garden);
     }
 
+    float mouseWheelMove = GetMouseWheelMove();
+    if (mouseWheelMove > 0) {
+        scaleGarden(garden, GARDEN_SCALE_STEP);
+    } else if (mouseWheelMove < 0) {
+        scaleGarden(garden, -GARDEN_SCALE_STEP);
+    }
+
     if (input->keyPressed == KEY_ONE) {
-        rotateGarden(garden);
+        garden->rotation = utils_rotate(garden->rotation, 1);
+        updateGardenOrigin(garden);
     }
 
     if (input->keyPressed == KEY_T) {
@@ -432,14 +435,8 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
             if (alive) {
                 isoTile = getPlanterIsoVertices(garden, i);
-            } else if (garden->tileHovered == i && toolSelected == GARDENING_TOOL_PLANTER) {
-                isoTile = getHoveredIsoVertices(garden, i, toolVariantSelected);
-                Vector2 isoTileBase = (Vector2){isoTile.bottom.x, isoTile.bottom.y};
-                Planter p;
-                Vector2 gridCoords = garden_getTileCoordsFromIndex(garden, i);
-                Vector2 origin = gridCoordsToWorldCoords(garden, gridCoords.x, gridCoords.y);
-                planter_init(&p, toolVariantSelected, origin, garden->selectionRotation);
-                planter_draw(&p, isoTileBase, garden->scale);
+            } else if (garden->tileHovered == i) {
+                isoTile = getHoveredIsoVertices(garden, i, toolSelected, toolVariantSelected);
             } else {
                 isoTile = getTileIsoVertices(garden, i);
             }
@@ -464,15 +461,15 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                 = garden_getTileIndexFromCoords(garden, planter->bounds.x, planter->bounds.y);
             IsoRec isoTile = getPlanterIsoVertices(garden, isoTileIndex);
 
-            Vector2 isoTileBase = (Vector2){isoTile.bottom.x, isoTile.bottom.y};
+            Vector2 isoTileOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
 
-            planter_draw(planter, isoTileBase, garden->scale);
+            planter_draw(planter, isoTileOrigin, garden->scale, garden->rotation, WHITE);
 
             if (planter->hasPlant) {
                 plantsToDraw[plantsCount] = &planter->plant;
                 plantsOrigins[plantsCount] = (Vector2){
-                    isoTileBase.x,
-                    isoTileBase.y - (planter->plantBasePosY * garden->scale),
+                    isoTile.bottom.x,
+                    isoTile.bottom.y - (planter->plantBasePosY * garden->scale),
                 };
                 plantsCount++;
             };
@@ -481,7 +478,49 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
     // Draw plants after planters. Maybe use origin's Y base to order in case there's a high planter
     for (int i = 0; i < plantsCount; i++) {
-        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->scale);
+        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->scale, WHITE);
+    }
+
+    // Draw selection indicator at the end
+    if (garden->tileHovered != -1) {
+        int i = garden->tileHovered;
+        IsoRec isoTile;
+
+        if (toolSelected == GARDENING_TOOL_PLANTER) {
+            isoTile = getHoveredIsoVertices(garden, i, toolSelected, toolVariantSelected);
+            Vector2 isoTileOrigin = (Vector2){
+                isoTile.left.x,
+                isoTile.top.y,
+            };
+            Planter p;
+            Vector2 gridCoords = garden_getTileCoordsFromIndex(garden, i);
+            Vector2 origin = gridCoordsToWorldCoords(garden, gridCoords.x, gridCoords.y);
+            planter_init(&p, toolVariantSelected, origin, garden->selectionRotation);
+            planter_draw(
+                &p, isoTileOrigin, garden->scale, garden->rotation, (Color){255, 255, 255, 200});
+        } else {
+            isoTile = getTileIsoVertices(garden, i);
+        }
+
+        if (toolSelected == GARDENING_TOOL_PLANT_CUTTING) {
+            int planterIndex = garden->tiles[i].planterIndex;
+            bool alive = garden->planters[planterIndex].alive;
+            float plantBasePosY;
+
+            if (alive) {
+                plantBasePosY = garden->planters[planterIndex].plantBasePosY * garden->scale;
+            } else {
+                plantBasePosY = TILE_HEIGHT * garden->scale / 2.0f;
+            }
+
+            Vector2 isoTileBase = (Vector2){
+                isoTile.bottom.x,
+                isoTile.bottom.y - plantBasePosY,
+            };
+            Plant plant = {.health = 100};
+            plant_init(&plant, toolVariantSelected);
+            plant_draw(&plant, isoTileBase, garden->scale, (Color){255, 255, 255, 200});
+        }
     }
 
     DrawCircle(garden->lightSourcePos.x,

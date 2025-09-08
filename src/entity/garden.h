@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../commands/commands.h"
+#include "../game/constants.h"
 #include "../game/gameplay.h"
 #include "../ui/input_manager.h"
 #include "planter.h"
@@ -9,9 +10,10 @@
 #define GARDEN_MAX_COLS 20
 #define GARDEN_MAX_ROWS 20
 #define GARDEN_MAX_TILES (GARDEN_MAX_COLS * GARDEN_MAX_ROWS)
+#define GARDEN_SCALE_INITIAL (1.0f * WORLD_SCALE)
 #define GARDEN_SCALE_STEP 0.4f
-#define GARDEN_SCALE_MIN GARDEN_SCALE_INITIAL - (1 * GARDEN_SCALE_STEP)
-#define GARDEN_SCALE_MAX GARDEN_SCALE_INITIAL + (4 * GARDEN_SCALE_STEP)
+#define GARDEN_SCALE_MIN GARDEN_SCALE_INITIAL - (2 * GARDEN_SCALE_STEP)
+#define GARDEN_SCALE_MAX GARDEN_SCALE_INITIAL + (5 * GARDEN_SCALE_STEP)
 
 // TODO: maybe export to it's own file
 // Maybe don't use this lol

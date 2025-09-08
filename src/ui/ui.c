@@ -9,6 +9,25 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+Rectangle getToolVariantSpriteSourceRec(enum GardeningTool tool, int toolVariant) {
+    switch (tool) {
+    case GARDENING_TOOL_TRASH_BIN:
+    case GARDENING_TOOL_NONE:
+    case GARDENING_TOOL_IRRIGATOR:
+    case GARDENING_TOOL_NUTRIENTS:
+    case GARDENING_TOOL_COUNT:
+        return (Rectangle){};
+
+    case GARDENING_TOOL_PLANTER:
+        return planter_getSpriteSourceRec(toolVariant, ROTATION_0, ROTATION_0);
+
+    case GARDENING_TOOL_PLANT_CUTTING:
+        return plant_getSpriteSourceRect(toolVariant, 100);
+    }
+
+    return (Rectangle){};
+}
+
 void ui_syncToolVariantPanelToSelection(
     UI *ui, enum GardeningTool toolSelected, int toolVariantSelected) {
 
@@ -16,7 +35,6 @@ void ui_syncToolVariantPanelToSelection(
 
     int maxVariants;
     Texture2D variantTexture;
-    Rectangle variantTextureSourceRec;
 
     switch (toolSelected) {
     case GARDENING_TOOL_TRASH_BIN:
@@ -29,14 +47,12 @@ void ui_syncToolVariantPanelToSelection(
 
     case GARDENING_TOOL_PLANTER:
         maxVariants = PLANTER_TYPE_COUNT;
-        variantTexture = planterTexture;
-        variantTextureSourceRec = (Rectangle){0, 0, planterTexture.width, planterTexture.height};
+        variantTexture = planterAtlas;
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
         maxVariants = PLANT_TYPE_COUNT;
         variantTexture = plantAtlas;
-        variantTextureSourceRec = plant_getSpriteSourceRect(toolVariantSelected, 100);
         break;
     }
 
@@ -47,7 +63,7 @@ void ui_syncToolVariantPanelToSelection(
 
     for (int i = 0; i < maxVariants; i++) {
         variantGrid->buttons[i].content = (ButtonContent){
-            .icon = {variantTexture, variantTextureSourceRec},
+            .icon = {variantTexture, getToolVariantSpriteSourceRec(toolSelected, i)},
         };
 
         if (i == toolVariantSelected) {
@@ -156,7 +172,7 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
     uiButtonGrid_init(&ui->toolVariantButtonPannel,
         0,
         0,
-        (Vector2i){80, 80},
+        (Vector2i){160, 80},
         (Vector2i){4, 4},
         (Vector2i){4, 4},
         (Vector2i){0, 10});
@@ -352,8 +368,8 @@ void ui_draw(UI *ui,
 
     case GARDENING_TOOL_PLANTER:
         cursorTexture = cursorTexture_planter;
-        cursorExtraTexture = planterTexture;
-        cursorExtraSourceRec = (Rectangle){0, 0, planterTexture.width, planterTexture.height};
+        cursorExtraTexture = planterAtlas;
+        cursorExtraSourceRec = (Rectangle){0, 0, planterAtlas.width, planterAtlas.height};
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
@@ -384,8 +400,10 @@ void ui_draw(UI *ui,
         DrawTexturePro(cursorExtraTexture,
             cursorExtraSourceRec,
             (Rectangle){
-                mp.x + 10,
-                mp.y + 10,
+                0,
+                0,
+                // mp.x + 10,
+                // mp.y + 10,
                 cursorExtraSourceRec.width / 2,
                 cursorExtraSourceRec.height / 2,
             },

@@ -6,7 +6,8 @@
 
 typedef enum {
     PLANTER_TYPE_NORMAL,
-    PLANTER_TYPE_2_X_3,
+    PLANTER_TYPE_1x2,
+    PLANTER_TYPE_2x2,
     PLANTER_TYPE_COUNT,
 } PlanterType;
 
@@ -25,4 +26,6 @@ Vector2 planter_getDimensions(PlanterType planterType, Rotation rotation);
 void planter_init(Planter *planter, PlanterType type, Vector2 origin, Rotation rotation);
 void planter_addPlant(Planter *planter, enum PlantType type);
 void planter_removePlant(Planter *planter);
-void planter_draw(Planter *planter, Vector2 origin, float scale);
+Rectangle planter_getSpriteSourceRec(
+    PlanterType type, Rotation planterRotation, Rotation viewRotation);
+void planter_draw(Planter *planter, Vector2 origin, float scale, Rotation rotation, Color color);

@@ -218,24 +218,20 @@ void plant_update(Plant *plant, float deltaTime) {
     plant->mediumNutrition = utils_clampf(0, 100, plant->mediumNutrition);
 }
 
-Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
-    int spriteWidth;
-    int spriteHeight;
-    // Position in the sprite atlas
-    int spriteOriginX;
-    int spriteOriginY;
+Vector2 getSpriteDimensions(enum PlantType type) {
+    const int unit = 32;
+    Vector2 dimensions = (Vector2){0, 0};
 
     switch (type) {
     case PLANT_TYPE_CRASSULA_OVATA:
-        spriteWidth = 64;
-        spriteHeight = 64;
-        spriteOriginY = 0;
+
+        dimensions.x = unit;
+        dimensions.y = unit;
         break;
 
     case PLANT_TYPE_SENECIO_ROWLEYANUS:
-        spriteWidth = 64;
-        spriteHeight = 64;
-        spriteOriginY = 0;
+        dimensions.x = unit;
+        dimensions.y = 2 * unit;
         break;
 
     case PLANT_TYPE_COUNT:
@@ -243,6 +239,25 @@ Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
         break;
     }
 
+    return dimensions;
+}
+
+Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
+    Vector2 dimensions = getSpriteDimensions(type);
+    Vector2 origin = {0, 0};
+    // Position in the sprite atlas
+
+    for (int i = 0; i < type; i++) {
+        if (i == type) {
+            break;
+        }
+
+        Vector2 d = getSpriteDimensions(i);
+
+        origin.y += d.y;
+    }
+
+    // use enum?
     int spriteIndex;
     if (health > 70) {
         spriteIndex = 0;
@@ -258,18 +273,18 @@ Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
         spriteIndex = 5;
     }
 
-    spriteOriginX = spriteIndex * spriteWidth;
+    origin.x = spriteIndex * dimensions.x;
 
     return (Rectangle){
-        spriteOriginX,
-        spriteOriginY,
-        spriteWidth,
-        spriteHeight,
+        origin.x,
+        origin.y,
+        dimensions.x,
+        dimensions.y,
     };
 }
 
 /// The plant is drawn with the center of its base at the origin
-void plant_draw(Plant *plant, Vector2 origin, float scale) {
+void plant_draw(Plant *plant, Vector2 origin, float scale, Color color) {
     Rectangle source = plant_getSpriteSourceRect(plant->type, plant->health);
 
     Rectangle dest = {
@@ -281,5 +296,5 @@ void plant_draw(Plant *plant, Vector2 origin, float scale) {
 
     Vector2 pivot = {dest.width / 2, dest.height};
 
-    DrawTexturePro(plantAtlas, source, dest, pivot, 0, WHITE);
+    DrawTexturePro(plantAtlas, source, dest, pivot, 0, color);
 }

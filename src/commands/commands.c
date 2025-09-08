@@ -2,6 +2,7 @@
 #include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../game/game.h"
+#include "../utils/utils.h"
 #include <assert.h>
 
 void command_addPlanter(Garden *garden, PlanterType planterType) {
@@ -9,7 +10,8 @@ void command_addPlanter(Garden *garden, PlanterType planterType) {
         return;
     }
 
-    Vector2 dimensions = planter_getDimensions(planterType, garden->selectionRotation);
+    Rotation rotation = utils_rotate(garden->rotation, garden->selectionRotation);
+    Vector2 dimensions = planter_getDimensions(planterType, rotation);
     Vector2 origin = garden_getTileCoordsFromIndex(garden, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
 

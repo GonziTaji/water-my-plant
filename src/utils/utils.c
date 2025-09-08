@@ -29,3 +29,8 @@ Rectangle utils_getRotatedRec(Rectangle rec, Rotation rotation) {
         return rec;
     }
 }
+
+Rotation utils_rotate(Rotation initialRotation, int steps) {
+    Rotation steppedRotation = initialRotation + steps;
+    return steppedRotation % ROTATION_COUNT;
+}

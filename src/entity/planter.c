@@ -12,8 +12,12 @@ Vector2 planter_getDimensions(PlanterType planterType, Rotation rotation) {
         d = (Vector2){1, 1};
         break;
 
-    case PLANTER_TYPE_2_X_3:
-        d = (Vector2){2, 3};
+    case PLANTER_TYPE_1x2:
+        d = (Vector2){1, 2};
+        break;
+
+    case PLANTER_TYPE_2x2:
+        d = (Vector2){2, 2};
         break;
 
     case PLANTER_TYPE_COUNT:
@@ -35,7 +39,8 @@ void planter_init(Planter *planter, PlanterType type, Vector2 origin, Rotation r
     planter->alive = true;
     planter->hasPlant = false;
     planter->rotation = rotation;
-    planter->plantBasePosY = 48;
+    // TODO: based on type
+    planter->plantBasePosY = 24;
 
     Vector2 dimensions = planter_getDimensions(type, rotation);
 
@@ -60,18 +65,58 @@ void planter_removePlant(Planter *planter) {
     planter->hasPlant = false;
 }
 
-void planter_draw(Planter *planter, Vector2 origin, float scale) {
-    Rectangle source = {0, 0, planterTexture.width, planterTexture.height};
+Rectangle planter_getSpriteSourceRec(
+    PlanterType type, Rotation planterRotation, Rotation viewRotation) {
+
+    Rotation finalRotation = utils_rotate(planterRotation, viewRotation);
+    Vector2 planterDimensions = planter_getDimensions(type, finalRotation);
+
+    Vector2 spriteDimensions = (Vector2){
+        (planterDimensions.x + planterDimensions.y) * TILE_WIDTH / 2,
+        (planterDimensions.x + planterDimensions.y) * TILE_HEIGHT / 2,
+    };
+
+    float planterOriginY = 0;
+
+    for (int i = 0; i < PLANTER_TYPE_COUNT; i++) {
+        if (i == type) {
+            break;
+        }
+
+        Vector2 d = planter_getDimensions(i, viewRotation);
+
+        planterOriginY += (d.x + d.y) * TILE_HEIGHT / 2;
+    }
+
+    Vector2 spriteOrigin = (Vector2){
+        finalRotation * spriteDimensions.x,
+        planterOriginY,
+    };
+
+    Rectangle source = {
+        spriteOrigin.x,
+        spriteOrigin.y,
+        spriteDimensions.x,
+        spriteDimensions.y,
+    };
+
+    return source;
+}
+
+void planter_draw(
+    Planter *planter, Vector2 origin, float scale, Rotation viewRotation, Color color) {
+    Rectangle source = planter_getSpriteSourceRec(planter->type, planter->rotation, viewRotation);
 
     Rectangle dest = {
         origin.x,
         origin.y,
-        64 * scale,
-        64 * scale,
+        source.width * scale,
+        source.height * scale,
     };
 
-    Vector2 pivot = {dest.width / 2, dest.height};
+    Vector2 pivot = {0, 0};
 
     // TODO: sprite based on type
-    DrawTexturePro(planterTexture, source, dest, pivot, 0, WHITE);
+    DrawTexturePro(planterAtlas, source, dest, pivot, 0, color);
+    // DrawRectangleLinesEx(dest, 2, BLACK);
 }
