@@ -23,7 +23,8 @@ typedef struct {
 } GardenTile;
 
 typedef struct {
-    Vector2 origin;
+    Camera2D camera;
+    // TODO: use camera.target?
     Vector2 *screenSize;
     int tileCols;
     int tileRows;
@@ -36,10 +37,7 @@ typedef struct {
     Planter planters[GARDEN_MAX_TILES];
     Vector2 lightSourcePos;
     int lightSourceLevel;
-    Rotation rotation;
     Rotation selectionRotation;
-    float scale;
-
 } Garden;
 
 void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime);
@@ -48,6 +46,3 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 void garden_update(Garden *garden, float deltaTime, float gameplayTime);
 bool garden_hasPlanterSelected(const Garden *garden);
 Planter *garden_getSelectedPlanter(Garden *garden);
-Vector2 garden_getTileCoordsFromIndex(const Garden *garden, int i);
-int garden_getTileIndexFromCoords(Garden *garden, float x, float y);
-bool garden_isValidGridCoords(Garden *garden, float x, float y);

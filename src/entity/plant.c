@@ -53,6 +53,7 @@ int plant_getStatLevel(float statValue) {
 
 void plant_init(Plant *p, enum PlantType type) {
     p->type = type;
+    p->exists = true;
     p->mediumHydration = 0;
     p->mediumNutrition = 0;
     p->hydration = plant_getMaxValueForLevel(2);
@@ -231,7 +232,7 @@ Vector2 getSpriteDimensions(enum PlantType type) {
 
     case PLANT_TYPE_SENECIO_ROWLEYANUS:
         dimensions.x = unit;
-        dimensions.y = 2 * unit;
+        dimensions.y = (int)(1.5 * unit);
         break;
 
     case PLANT_TYPE_COUNT:

@@ -72,14 +72,15 @@ Misc.
 - [X] Tipos de maceteros con distintas dimensiones (1x1, 1x3, 4x2, etc)
 - [X] Seleccion de tipos de maceteros
 - [X] Que tile hover muestre el espacio entero que usará el macetero
-- [ ] Sprite atlas para maceteros con vista de cada angulo y mostrar el sprite correspondiente segun rotacion
-- [ ] Que macetero de MxN acepter M*N plantas - para probar concepto
-  - [ ] mostrar N plantas en un macetero
+- [X] Sprite atlas para maceteros con vista de cada angulo y mostrar el sprite correspondiente segun rotacion
+- [X] Que macetero de MxN acepter M*N plantas - para probar concepto
+  - [X] mostrar N plantas en un macetero
   - [ ] que un macetero > 1x1 tenga tiles en donde se puede plantar, y en donde no
-    macetero grande ten
 
 ### Milestone: UI a la sims/RCT
 
+- [ ] Orden de dibujado de plantas y maceteros
+- [ ] Permitir mover maceteros;
 - [X] Zoom y movimiento del garden (con limites para que no se salga de la pantalla)
   - [X] Zoom
   - [X] Movimiento

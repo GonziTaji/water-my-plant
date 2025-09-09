@@ -22,7 +22,7 @@ void assetManager_loadAssets() {
     gardenTexture = LoadTexture("resources/assets/floor.png");
     SetTextureFilter(gardenTexture, TEXTURE_FILTER_BILINEAR);
 
-    planterAtlas = LoadTexture("resources/assets/planter-1x2.png");
+    planterAtlas = LoadTexture("resources/assets/planters.png");
 
     cursorTexture_1 = LoadTexture("resources/assets/cursor_1.png");
     cursorTexture_water = LoadTexture("resources/assets/cursor_water.png");

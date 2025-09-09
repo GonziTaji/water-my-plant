@@ -37,6 +37,7 @@ typedef enum {
 
 typedef struct {
     enum PlantType type;
+    bool exists;
     const char *scientificName;
     const char *name;
     const char *altName;

@@ -34,13 +34,22 @@ Vector2 planter_getDimensions(PlanterType planterType, Rotation rotation) {
     return d;
 }
 
+int planter_getPlantCount(const Planter *planter) {
+    return planter->bounds.height * planter->bounds.width;
+}
+
+void planter_empty(Planter *planter) {
+    planter->type = 0;
+    planter->exists = false;
+    planter->rotation = 0;
+    planter->plantBasePosY = 0;
+    planter->bounds = (Rectangle){0, 0, 0, 0};
+}
+
 void planter_init(Planter *planter, PlanterType type, Vector2 origin, Rotation rotation) {
     planter->type = type;
-    planter->alive = true;
-    planter->hasPlant = false;
+    planter->exists = true;
     planter->rotation = rotation;
-    // TODO: based on type
-    planter->plantBasePosY = 24;
 
     Vector2 dimensions = planter_getDimensions(type, rotation);
 
@@ -50,19 +59,68 @@ void planter_init(Planter *planter, PlanterType type, Vector2 origin, Rotation r
         dimensions.x,
         dimensions.y,
     };
+
+    const int plantsCount = planter_getPlantCount(planter);
+
+    for (int i = 0; i < plantsCount; i++) {
+        planter->plants[i].exists = false;
+    }
+
+    switch (type) {
+    case PLANTER_TYPE_NORMAL:
+        planter->plantBasePosY = 24;
+        break;
+    case PLANTER_TYPE_1x2:
+        planter->plantBasePosY = 18;
+        break;
+    case PLANTER_TYPE_2x2:
+        planter->plantBasePosY = 18;
+        break;
+    case PLANTER_TYPE_COUNT:
+        break;
+    }
 }
 
-void planter_addPlant(Planter *planter, enum PlantType type) {
-    if (planter->hasPlant) {
+int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 coords) {
+    int plantX = coords.x - planter->bounds.x;
+    int plantY = coords.y - planter->bounds.y;
+
+    int plantIndex = utils_grid_getTileIndexFromCoords(
+        planter->bounds.width, planter->bounds.height, plantX, plantY);
+
+    return plantIndex;
+}
+
+Vector2 planter_getPlantCoords(Planter *planter, Camera2D *camera, int plantIndex) {
+    Rotation planterRotation = utils_rotate(planter->rotation, camera->rotation);
+    Rectangle rotatedPlanterRec = utils_getRotatedRec(planter->bounds, planterRotation);
+
+    Vector2 coords = utils_grid_getCoordsFromTileIndex(planter->bounds.width, plantIndex);
+    coords.x += rotatedPlanterRec.x;
+    coords.y += rotatedPlanterRec.y;
+
+    return coords;
+}
+
+Vector2 planter_getPlantWorldPos(Planter *planter, Camera2D *camera, int plantIndex) {
+    Vector2 plantCoords = planter_getPlantCoords(planter, camera, plantIndex);
+    Rectangle plantBounds = (Rectangle){plantCoords.x, plantCoords.y, 1, 1};
+
+    IsoRec isoRec = utils_toIsoRec(camera, plantBounds);
+    utils_rotateIsoRec(&isoRec, camera->rotation);
+
+    return (Vector2){
+        isoRec.bottom.x,
+        isoRec.bottom.y - (planter->plantBasePosY * camera->zoom),
+    };
+}
+
+void planter_addPlant(Planter *planter, int index, enum PlantType type) {
+    if (planter->plants[index].exists) {
         return;
     }
 
-    plant_init(&planter->plant, type);
-    planter->hasPlant = true;
-}
-
-void planter_removePlant(Planter *planter) {
-    planter->hasPlant = false;
+    plant_init(&planter->plants[index], type);
 }
 
 Rectangle planter_getSpriteSourceRec(

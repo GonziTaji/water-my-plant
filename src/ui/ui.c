@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "../core/asset_manager.h"
+#include "../utils/utils.h"
 #include "button.h"
 #include "input_manager.h"
 #include "raylib.h"
@@ -241,7 +242,7 @@ void ui_draw(UI *ui,
     char buffer[64];
 
     if (tileIndex != -1) {
-        Vector2 tileCoords = garden_getTileCoordsFromIndex(garden, tileIndex);
+        Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileCols, tileIndex);
 
         snprintf(buffer,
             sizeof(buffer),
@@ -271,68 +272,74 @@ void ui_draw(UI *ui,
         uiTextBox_drawTextLine(&tb, buffer, BLACK);
         uiTextBox_drawTextLine(&tb, "", BLACK); // spacing
 
-        if (planter->alive && planter->hasPlant) {
-            const Plant *plant = &planter->plant;
+        if (planter->exists) {
+            // how to deal with const? I really don't want to have two functions and have one
+            // returning a readonly plant and one returning a mutable plant pointer
+            int plantIndex = planter_getPlantIndexFromGridCoords((Planter *)planter, tileCoords);
+            const Plant *plant = &planter->plants[plantIndex];
 
-            uiTextBox_drawTextLine(&tb, "Plant info:", BLACK);
-            tb.cursorPosition.y += 5; // spacing
+            if (plant->exists) {
+                uiTextBox_drawTextLine(&tb, "Plant info:", BLACK);
+                tb.cursorPosition.y += 5; // spacing
 
-            struct {
-                const char *label;
-                const char *value;
-            } infoArr[] = {
-                {"Scientific name", plant->scientificName},
-                {"Name", plant->name},
-            };
+                struct {
+                    const char *label;
+                    const char *value;
+                } infoArr[] = {
+                    {"Scientific name", plant->scientificName},
+                    {"Name", plant->name},
+                };
 
-            int infoLinesCount = 2;
-
-            tb.cursorPosition.x += 20;
-            for (int i = 0; i < infoLinesCount; i++) {
-                snprintf(buffer, sizeof(buffer), "%s:", infoArr[i].label);
-                uiTextBox_drawTextLine(&tb, buffer, BLACK);
-
-                snprintf(buffer, sizeof(buffer), "- %s", infoArr[i].value);
-                uiTextBox_drawTextLine(&tb, buffer, BLACK);
-            }
-            tb.cursorPosition.x -= 20;
-
-            tb.cursorPosition.y += 16; // spacing
-            uiTextBox_drawTextLine(&tb, "Plant Stats:", BLACK);
-            tb.cursorPosition.y += 5; // spacing
-
-            struct {
-                const char *label;
-                float value;
-            } stats[] = {
-                {"Soil Water", plant->mediumHydration},
-                {"Soil Nutrients", plant->mediumNutrition},
-                {"Water", plant->hydration},
-                {"Nutrients", plant->nutrition},
-                {"Health", plant->health},
-            };
-
-            int statsCount = 5;
-
-            for (int i = 0; i < statsCount; i++) {
-                int statBarWitdh = 200;
-                // TODO: fix magic numbers
-                int level = plant_getStatLevel(stats[i].value);
-                int amountByLevel = (100.0f / PLANT_STATUS_LEVEL_COUNT);
-                int baseAmount = amountByLevel * level;
-                int restOfLevel = stats[i].value - baseAmount;
-                int internalWidth = (statBarWitdh / amountByLevel) * restOfLevel;
-
-                DrawRectangleV(tb.cursorPosition, (Vector2){internalWidth, fontSize}, LIGHTGRAY);
-                DrawRectangleLines(
-                    tb.cursorPosition.x, tb.cursorPosition.y, statBarWitdh, fontSize, WHITE);
+                int infoLinesCount = 2;
 
                 tb.cursorPosition.x += 20;
-                snprintf(buffer, sizeof(buffer), "%d - %s", level, stats[i].label);
-                uiTextBox_drawTextLine(&tb, buffer, BLACK);
+                for (int i = 0; i < infoLinesCount; i++) {
+                    snprintf(buffer, sizeof(buffer), "%s:", infoArr[i].label);
+                    uiTextBox_drawTextLine(&tb, buffer, BLACK);
+
+                    snprintf(buffer, sizeof(buffer), "- %s", infoArr[i].value);
+                    uiTextBox_drawTextLine(&tb, buffer, BLACK);
+                }
                 tb.cursorPosition.x -= 20;
 
-                tb.cursorPosition.y += 5;
+                tb.cursorPosition.y += 16; // spacing
+                uiTextBox_drawTextLine(&tb, "Plant Stats:", BLACK);
+                tb.cursorPosition.y += 5; // spacing
+
+                struct {
+                    const char *label;
+                    float value;
+                } stats[] = {
+                    {"Soil Water", plant->mediumHydration},
+                    {"Soil Nutrients", plant->mediumNutrition},
+                    {"Water", plant->hydration},
+                    {"Nutrients", plant->nutrition},
+                    {"Health", plant->health},
+                };
+
+                int statsCount = 5;
+
+                for (int i = 0; i < statsCount; i++) {
+                    int statBarWitdh = 200;
+                    // TODO: fix magic numbers
+                    int level = plant_getStatLevel(stats[i].value);
+                    int amountByLevel = (100.0f / PLANT_STATUS_LEVEL_COUNT);
+                    int baseAmount = amountByLevel * level;
+                    int restOfLevel = stats[i].value - baseAmount;
+                    int internalWidth = (statBarWitdh / amountByLevel) * restOfLevel;
+
+                    DrawRectangleV(
+                        tb.cursorPosition, (Vector2){internalWidth, fontSize}, LIGHTGRAY);
+                    DrawRectangleLines(
+                        tb.cursorPosition.x, tb.cursorPosition.y, statBarWitdh, fontSize, WHITE);
+
+                    tb.cursorPosition.x += 20;
+                    snprintf(buffer, sizeof(buffer), "%d - %s", level, stats[i].label);
+                    uiTextBox_drawTextLine(&tb, buffer, BLACK);
+                    tb.cursorPosition.x -= 20;
+
+                    tb.cursorPosition.y += 5;
+                }
             }
         }
     }
