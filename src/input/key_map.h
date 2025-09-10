@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../commands/commands.h"
-#include "input_manager.h"
+#include "../input/input.h"
+#include "../messages/messages.h"
 
-#define INPUT_MAP_CAPACITY 16
+#define INPUT_MAP_CAPACITY 64
 
 typedef struct {
-    Command command;
+    Message command;
     int key;
 } Keybind;
 
@@ -16,4 +16,4 @@ typedef struct {
 } KeyMap;
 
 void keyMap_init(KeyMap *keyMap);
-Command keyMap_processInput(KeyMap *keyMap, InputManager *input);
+Message keyMap_processInput(KeyMap *keyMap, InputManager *input);

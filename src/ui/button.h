@@ -1,5 +1,5 @@
 #pragma once
-#include "../commands/commands.h"
+#include "../messages/messages.h"
 #include <raylib.h>
 
 enum ButtonType {
@@ -18,5 +18,5 @@ typedef union {
 typedef struct {
     enum ButtonType type;
     ButtonContent content;
-    Command command;
+    Message command;
 } UIButton;

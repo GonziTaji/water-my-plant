@@ -1,7 +1,5 @@
 #include "ui_button_grid.h"
 #include "../core/asset_manager.h"
-#include "button.h"
-#include "input_manager.h"
 #include "raylib.h"
 #include <assert.h>
 
@@ -67,19 +65,19 @@ int getButtonIndexFromPoint(UIButtonGrid *bn, Vector2 point) {
     return gridCoordsX + (gridCoordsY * gridCoordsX);
 }
 
-Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input) {
-    Command cmd = {COMMAND_NONE};
+Message uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input) {
+    Message msg = {MESSAGE_NONE};
 
     bn->hoveredButtonIndex = getButtonIndexFromPoint(bn, input->worldMousePos);
 
     if (bn->hoveredButtonIndex != -1 && bn->hoveredButtonIndex < uiButtonGrid_getButtonsCount(bn)) {
         if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
-            cmd = bn->buttons[bn->hoveredButtonIndex].command;
+            msg = bn->buttons[bn->hoveredButtonIndex].command;
             bn->activeButtonIndex = bn->hoveredButtonIndex;
         }
     }
 
-    return cmd;
+    return msg;
 }
 
 int uiButtonGrid_getWidth(UIButtonGrid *bp) {

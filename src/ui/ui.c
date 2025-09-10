@@ -2,9 +2,7 @@
 #include "../core/asset_manager.h"
 #include "../utils/utils.h"
 #include "button.h"
-#include "input_manager.h"
 #include "raylib.h"
-#include "ui_button_grid.h"
 #include "ui_text_box.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -111,7 +109,7 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
     for (int i = 0; i < buttonsCount; i++) {
         switch (i) {
         case GARDENING_TOOL_NONE:
-            bcontent.label = "None";
+            bcontent.label = "Select [Esc]";
             break;
 
         case GARDENING_TOOL_IRRIGATOR:
@@ -141,7 +139,7 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
         toolGrid->buttons[i] = (UIButton){
             .type = BUTTON_TYPE_TEXT_LABEL,
             .content = bcontent,
-            .command = (Command){COMMAND_TOOL_SELECTED, {.selection = i}},
+            .command = (Message){MESSAGE_CMD_TOOL_SELECT, {.selection = i}},
         };
     }
 
@@ -159,7 +157,7 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
         ui->speedSelectionButtonPannel.buttons[i] = (UIButton){
             .type = BUTTON_TYPE_TEXT_LABEL,
             .content = {.label = ">"},
-            .command = (Command){COMMAND_GAMEPLAY_CHANGE_SPEED, {.selection = i}},
+            .command = (Message){MESSAGE_CMD_GAMEPLAY_SPEED_CHANGE, {.selection = i}},
         };
 
         if (i == gameplaySpeed) {
@@ -181,35 +179,37 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
     // commands for tool variation are always the same, at least for now
     for (int i = 0; i < UI_BUTTON_PANNEL_MAX_BUTTONS; i++) {
         ui->toolVariantButtonPannel.buttons[i].type = BUTTON_TYPE_SPRITE;
-        ui->toolVariantButtonPannel.buttons[i].command = (Command){
-            COMMAND_TOOL_VARIANT_SELECTED,
+        ui->toolVariantButtonPannel.buttons[i].command = (Message){
+            MESSAGE_CMD_TOOL_VARIANT_SELECT,
             {.selection = i},
         };
     }
 }
 
-Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
-    if (ui->showToolVariantPanel) {
-        Command cmd = uiButtonGrid_processInput(&ui->toolVariantButtonPannel, input);
+Message ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
+    Message msg;
 
-        if (cmd.type != COMMAND_NONE) {
-            return cmd;
+    if (ui->showToolVariantPanel) {
+        msg = uiButtonGrid_processInput(&ui->toolVariantButtonPannel, input);
+
+        if (msg.type != MESSAGE_NONE) {
+            return msg;
         }
     }
 
-    Command cmd = uiButtonGrid_processInput(&ui->toolSelectionButtonPannel, input);
+    msg = uiButtonGrid_processInput(&ui->toolSelectionButtonPannel, input);
 
-    if (cmd.type != COMMAND_NONE) {
-        return cmd;
+    if (msg.type != MESSAGE_NONE) {
+        return msg;
     }
 
-    cmd = uiButtonGrid_processInput(&ui->speedSelectionButtonPannel, input);
+    msg = uiButtonGrid_processInput(&ui->speedSelectionButtonPannel, input);
 
-    if (cmd.type != COMMAND_NONE) {
-        return cmd;
+    if (msg.type != MESSAGE_NONE) {
+        return msg;
     }
 
-    return (Command){COMMAND_NONE};
+    return (Message){MESSAGE_NONE};
 }
 
 void ui_draw(UI *ui,

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../commands/commands.h"
 #include "../game/constants.h"
 #include "../game/gameplay.h"
-#include "../ui/input_manager.h"
+#include "../input/input.h"
+#include "../messages/messages.h"
 #include "planter.h"
 #include <raylib.h>
 
@@ -41,7 +41,7 @@ typedef struct {
 } Garden;
 
 void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime);
-Command garden_processInput(Garden *garden, InputManager *input);
+Message garden_processInput(Garden *garden, InputManager *input);
 void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVariantSelected);
 void garden_update(Garden *garden, float deltaTime, float gameplayTime);
 bool garden_hasPlanterSelected(const Garden *garden);

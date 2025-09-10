@@ -1,8 +1,10 @@
-#include "input_manager.h"
+#include "input.h"
 #include <raylib.h>
 #include <stdio.h>
 
-void inputManager_update(InputManager *input, float scale, Vector2 screenOffset) {
+// maybe separate this funciton in steps like input_pollKeyboard, input_pollMouse and let the game
+// decide the order of execution?
+void input_update(InputManager *input, float scale, Vector2 screenOffset) {
     Vector2 mousePositionAbsolute = GetMousePosition();
 
     Vector2 newWorldMousePos = (Vector2){
@@ -30,7 +32,7 @@ void inputManager_update(InputManager *input, float scale, Vector2 screenOffset)
 }
 
 // For debug purposes
-void inputManager_drawMousePos(InputManager *input, Vector2 screenSize) {
+void input_drawMousePos(InputManager *input, Vector2 screenSize) {
     int fontSize = 30;
 
     char buffer[64];

@@ -37,9 +37,18 @@ ______________________________________________________________________
 
 ## 🗓️ Etapas del desarrollo
 
-### TODO: cosas ajenas a milestones particulares para hacer cuando me den ganas de hacerlo
+### ENGINE: refactorizaciones y mejoras al engine del juego
 
-Misc.
+- [ ] Abstraccion de grid a su propia entidad y usarla para el garden,
+      los botones, las posiciones de plantas para los maceteros, etc. 
+- [ ] Uso de escenas (garden/main menu por ahora pero suficiente para prototipar)
+  - [ ] Desacoplar logica de UI particular del garden y delegar al juego/escena
+    i.e. (1) Juego tiene el estado del puntero, con eso UI dibuja el puntero en vez de necesitar
+    saber que herramienta esta seleccionada (en otra escena puede que no haya herramientas).
+    (2) La escena actual inicializa los elementos de la UI llamando a algo como:
+    ui_clean, ui_addButtonPannel, ui_addTextBox, etc.
+
+### TODO: cosas ajenas a milestones particulares para hacer cuando me den ganas de hacerlo
 
 - [ ] Registrar historial de acciones recientes (cola circular) 
   * quiero hacer una cola circular?

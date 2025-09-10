@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ui/key_map.h"
+#include "../input/key_map.h"
 #include "../ui/ui.h"
 #include "gameplay.h"
 #include <raylib.h>

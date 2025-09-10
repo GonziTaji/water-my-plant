@@ -1,6 +1,5 @@
 #include "ui_text_box.h"
 #include "../core/asset_manager.h"
-#include "input_manager.h"
 #include "raylib.h"
 #include <assert.h>
 
@@ -10,16 +9,16 @@ void uiTextBox_init(UITextBox *tb, int fontSize, Rectangle bounds, Vector2 paddi
     tb->cursorPosition = (Vector2){bounds.x + padding.x, bounds.y + padding.y};
 }
 
-Command uiTextBox_processInput(UITextBox *bn, InputManager *input) {
+Message uiTextBox_processInput(UITextBox *bn, InputManager *input) {
     if (CheckCollisionPointRec(input->worldMousePos, bn->bounds)) {
         bn->isMouseOver = true;
 
         if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
-            return (Command){COMMAND_UI_CLICKED};
+            return (Message){MESSAGE_EV_UI_CLICKED};
         }
     }
 
-    return (Command){COMMAND_NONE};
+    return (Message){MESSAGE_NONE};
 }
 
 void uiTextBox_drawTextLine(UITextBox *tb, const char *text, Color color) {

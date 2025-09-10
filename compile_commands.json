@@ -23,6 +23,51 @@
    "-g",
    "-Werror",
    "-c",
+   "src/messages/messages.c",
+   "-o",
+   "build/messages/messages.o"
+  ],
+  "file": "src/messages/messages.c"
+ },
+ {
+  "directory": "/home/yogusita/proyectos/water-my-plant",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Iinclude",
+   "-g",
+   "-Werror",
+   "-c",
+   "src/input/key_map.c",
+   "-o",
+   "build/input/key_map.o"
+  ],
+  "file": "src/input/key_map.c"
+ },
+ {
+  "directory": "/home/yogusita/proyectos/water-my-plant",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Iinclude",
+   "-g",
+   "-Werror",
+   "-c",
+   "src/input/input.c",
+   "-o",
+   "build/input/input.o"
+  ],
+  "file": "src/input/input.c"
+ },
+ {
+  "directory": "/home/yogusita/proyectos/water-my-plant",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Iinclude",
+   "-g",
+   "-Werror",
+   "-c",
    "src/core/asset_manager.c",
    "-o",
    "build/core/asset_manager.o"
@@ -68,41 +113,11 @@
    "-g",
    "-Werror",
    "-c",
-   "src/ui/key_map.c",
-   "-o",
-   "build/ui/key_map.o"
-  ],
-  "file": "src/ui/key_map.c"
- },
- {
-  "directory": "/home/yogusita/proyectos/water-my-plant",
-  "arguments": [
-   "gcc",
-   "-Wall",
-   "-Iinclude",
-   "-g",
-   "-Werror",
-   "-c",
    "src/ui/ui.c",
    "-o",
    "build/ui/ui.o"
   ],
   "file": "src/ui/ui.c"
- },
- {
-  "directory": "/home/yogusita/proyectos/water-my-plant",
-  "arguments": [
-   "gcc",
-   "-Wall",
-   "-Iinclude",
-   "-g",
-   "-Werror",
-   "-c",
-   "src/ui/input_manager.c",
-   "-o",
-   "build/ui/input_manager.o"
-  ],
-  "file": "src/ui/input_manager.c"
  },
  {
   "directory": "/home/yogusita/proyectos/water-my-plant",
@@ -133,21 +148,6 @@
    "build/ui/ui_text_box.o"
   ],
   "file": "src/ui/ui_text_box.c"
- },
- {
-  "directory": "/home/yogusita/proyectos/water-my-plant",
-  "arguments": [
-   "gcc",
-   "-Wall",
-   "-Iinclude",
-   "-g",
-   "-Werror",
-   "-c",
-   "src/commands/commands.c",
-   "-o",
-   "build/commands/commands.o"
-  ],
-  "file": "src/commands/commands.c"
  },
  {
   "directory": "/home/yogusita/proyectos/water-my-plant",

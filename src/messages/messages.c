@@ -1,11 +1,23 @@
-#include "commands.h"
+#include "messages.h"
 #include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../game/game.h"
 #include "../utils/utils.h"
 #include <assert.h>
 
-void command_addPlanter(Garden *garden, PlanterType planterType) {
+// try to name the functions following this conventions:
+//
+// - Events:
+// Use "on" as prefix and then the event that is being handled in past tense. Put
+// the verb at the end: "onTargetAction"
+// i.e. onTileClicked, onPlantDied, onDayEnded
+//
+// Commands:
+// Prefix the name with the action in present tense and then the target
+// i.e. tileSoil, feedSelectedPlant, changeTool
+//
+
+static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     if (garden_hasPlanterSelected(garden)) {
         return;
     }
@@ -62,7 +74,7 @@ void command_addPlanter(Garden *garden, PlanterType planterType) {
     }
 }
 
-void command_removeFromTile(Garden *garden) {
+static void removeFromTile(Garden *garden) {
     if (!garden_hasPlanterSelected(garden)) {
         return;
     }
@@ -105,23 +117,23 @@ void command_removeFromTile(Garden *garden) {
     }
 }
 
-void command_toolVariantSelected(Game *g, int variant) {
+static void selectToolVariant(Game *g, int variant) {
     g->toolVariantsSelection[g->toolSelected] = variant;
     ui_syncToolVariantPanelToSelection(&g->ui, g->toolSelected, variant);
 }
 
-void command_toolVariantSelectNext(Game *g) {
+static void selectNextToolVariant(Game *g) {
     int nextVariant = g->toolVariantsSelection[g->toolSelected] + 1;
     // change to a utils function to get the variant count based on tool?
     if (nextVariant == uiButtonGrid_getButtonsCount(&g->ui.toolVariantButtonPannel)) {
         nextVariant = 0;
     }
 
-    command_toolVariantSelected(g, nextVariant);
+    selectToolVariant(g, nextVariant);
 }
 
-void command_addPlant(Game *g) {
-    Garden *garden = &g->garden;
+static void addPlantToSelectedPlanter(Garden *garden, enum PlantType type) {
+    // Garden *garden = &g->garden;
 
     if (!garden_hasPlanterSelected(garden)) {
         return;
@@ -129,17 +141,17 @@ void command_addPlant(Game *g) {
 
     Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileCols, garden->tileSelected);
 
-    Planter *planter = garden_getSelectedPlanter(&g->garden);
+    Planter *planter = garden_getSelectedPlanter(garden);
 
     int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
     Plant *plant = &planter->plants[plantIndex];
 
     if (!plant->exists) {
-        planter_addPlant(planter, plantIndex, g->toolVariantsSelection[g->toolSelected]);
+        planter_addPlant(planter, plantIndex, type);
     }
 }
 
-void command_irrigate(Garden *garden) {
+static void irrigateSelectedPlant(Garden *garden) {
     if (!garden_hasPlanterSelected(garden)) {
         return;
     }
@@ -156,7 +168,7 @@ void command_irrigate(Garden *garden) {
     }
 }
 
-void command_feed(Garden *garden) {
+static void feedSelectedPlant(Garden *garden) {
     if (!garden_hasPlanterSelected(garden)) {
         return;
     }
@@ -173,40 +185,35 @@ void command_feed(Garden *garden) {
     }
 }
 
-void command_changeTool(Game *g, enum GardeningTool tool) {
-    if (g->toolSelected == tool) {
-        g->toolSelected = GARDENING_TOOL_NONE;
-    } else {
-        g->toolSelected = tool;
-    }
-
+static void changeTool(Game *g, enum GardeningTool tool) {
+    g->toolSelected = tool;
     g->ui.toolSelectionButtonPannel.activeButtonIndex = g->toolSelected;
 
     ui_syncToolVariantPanelToSelection(&g->ui, tool, g->toolVariantsSelection[tool]);
 }
 
-void command_tileClicked(Game *game, int tileIndex) {
+static void onTileClicked(Game *game, int tileIndex) {
     game->garden.tileSelected = tileIndex;
 
     switch (game->toolSelected) {
     case GARDENING_TOOL_IRRIGATOR:
-        command_irrigate(&game->garden);
+        irrigateSelectedPlant(&game->garden);
         break;
 
     case GARDENING_TOOL_NUTRIENTS:
-        command_feed(&game->garden);
+        feedSelectedPlant(&game->garden);
         break;
 
     case GARDENING_TOOL_PLANTER:
-        command_addPlanter(&game->garden, game->toolVariantsSelection[game->toolSelected]);
+        addPlanterToSelectedTile(&game->garden, game->toolVariantsSelection[game->toolSelected]);
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
-        command_addPlant(game);
+        addPlantToSelectedPlanter(&game->garden, game->toolVariantsSelection[game->toolSelected]);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:
-        command_removeFromTile(&game->garden);
+        removeFromTile(&game->garden);
         break;
 
     case GARDENING_TOOL_NONE:
@@ -219,39 +226,39 @@ void command_tileClicked(Game *game, int tileIndex) {
     }
 }
 
-void command_changeGameplaySpeed(Game *g, GameplaySpeed newSpeed) {
+static void changeGameplaySpeed(Game *g, GameplaySpeed newSpeed) {
     g->gameplaySpeed = newSpeed;
     g->ui.speedSelectionButtonPannel.activeButtonIndex = newSpeed;
 }
 
-/// returns `true` if a command was executed (cmd.type is not "COMMAND_NONE"
-bool command_dispatchCommand(Command cmd, Game *g) {
-    switch (cmd.type) {
-    case COMMAND_TILE_CLICKED:
-        command_tileClicked(g, cmd.args.selection);
+/// returns `true` if a the command executed blocks further messages for this frame
+bool messages_dispatchMessage(Message msg, Game *g) {
+    switch (msg.type) {
+    case MESSAGE_EV_TILE_CLICKED:
+        onTileClicked(g, msg.args.selection);
         break;
 
-    case COMMAND_TOOL_SELECTED:
-        command_changeTool(g, cmd.args.selection);
+    case MESSAGE_CMD_TOOL_SELECT:
+        changeTool(g, msg.args.selection);
         break;
 
-    case COMMAND_TOOL_VARIANT_SELECTED:
-        command_toolVariantSelected(g, cmd.args.selection);
+    case MESSAGE_CMD_TOOL_VARIANT_SELECT:
+        selectToolVariant(g, msg.args.selection);
         break;
 
-    case COMMAND_TOOL_VARIANT_SELECT_NEXT:
-        command_toolVariantSelectNext(g);
+    case MESSAGE_CMD_TOOL_VARIANT_SELECT_NEXT:
+        selectNextToolVariant(g);
         break;
 
-    case COMMAND_GAMEPLAY_CHANGE_SPEED:
-        command_changeGameplaySpeed(g, cmd.args.selection);
+    case MESSAGE_CMD_GAMEPLAY_SPEED_CHANGE:
+        changeGameplaySpeed(g, msg.args.selection);
         break;
 
-    case COMMAND_UI_CLICKED:
+    case MESSAGE_EV_UI_CLICKED:
         // fallback
         break;
 
-    case COMMAND_NONE:
+    case MESSAGE_NONE:
         return false;
         break;
     }

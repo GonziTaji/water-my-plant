@@ -226,7 +226,7 @@ void scaleGarden(Garden *garden, float amount) {
     }
 }
 
-Command garden_processInput(Garden *garden, InputManager *input) {
+Message garden_processInput(Garden *garden, InputManager *input) {
     if (input->keyPressed == KEY_EQUAL) {
         scaleGarden(garden, GARDEN_SCALE_STEP);
     } else if (input->keyPressed == KEY_MINUS) {
@@ -242,7 +242,7 @@ Command garden_processInput(Garden *garden, InputManager *input) {
         scaleGarden(garden, -GARDEN_SCALE_STEP);
     }
 
-    if (input->keyPressed == KEY_ONE) {
+    if (input->keyPressed == KEY_GRAVE) {
         garden->camera.rotation = utils_rotate(garden->camera.rotation, 1);
         updateGardenOrigin(garden);
     }
@@ -255,6 +255,7 @@ Command garden_processInput(Garden *garden, InputManager *input) {
         }
     }
 
+    // TODO: delegate detection of mouse button down (not pressed) to input subsystem
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
         garden->camera.offset.x -= input->worldMouseDelta.x;
         garden->camera.offset.y -= input->worldMouseDelta.y;
@@ -284,13 +285,13 @@ Command garden_processInput(Garden *garden, InputManager *input) {
     garden->tileHovered = cellHoveredIndex;
 
     if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
-        return (Command){
-            COMMAND_TILE_CLICKED,
+        return (Message){
+            MESSAGE_EV_TILE_CLICKED,
             {.selection = cellHoveredIndex},
         };
     }
 
-    return (Command){COMMAND_NONE};
+    return (Message){MESSAGE_NONE};
 }
 
 void drawIsoRectangleLines(Garden *garden, IsoRec isoRec, int lineWidth, Color color) {
@@ -301,25 +302,43 @@ void drawIsoRectangleLines(Garden *garden, IsoRec isoRec, int lineWidth, Color c
 }
 
 void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVariantSelected) {
-    for (int i = 0; i < garden->tilesCount; i++) {
-        if (garden->tileSelected == i || garden->tileHovered == i) {
-            IsoRec isoTile;
+    IsoRec hoveredTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
+    IsoRec selectedTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
 
+    for (int i = 0; i < garden->tilesCount; i++) {
+        IsoRec currentTile = getTileIsoVertices(garden, i);
+
+        DrawTextureEx(slab1Texture,
+            (Vector2){currentTile.left.x, currentTile.top.y},
+            0,
+            garden->camera.zoom,
+            WHITE);
+
+        if (garden->tileSelected == i || garden->tileHovered == i) {
             int planterIndex = garden->tiles[i].planterIndex;
             bool alive = garden->planters[planterIndex].exists;
 
             if (alive) {
-                isoTile = getPlanterIsoVertices(garden, i);
+                currentTile = getPlanterIsoVertices(garden, i);
             } else if (garden->tileHovered == i) {
-                isoTile = getHoveredIsoVertices(garden, i, toolSelected, toolVariantSelected);
-            } else {
-                isoTile = getTileIsoVertices(garden, i);
+                currentTile = getHoveredIsoVertices(garden, i, toolSelected, toolVariantSelected);
             }
 
-            Color planterBorderColor = garden->tileHovered == i ? BROWN : DARKBROWN;
-
-            drawIsoRectangleLines(garden, isoTile, 2, planterBorderColor);
+            if (garden->tileSelected == i) {
+                selectedTile = currentTile;
+            } else {
+                hoveredTile = currentTile;
+            }
         }
+    }
+
+    // Draw outline of selected and hovered tiles after tiles are drawn
+    if (!(hoveredTile.left.x == 0 && hoveredTile.right.x == 0)) {
+        drawIsoRectangleLines(garden, hoveredTile, 2, BROWN);
+    }
+
+    if (!(selectedTile.left.x == 0 && selectedTile.right.x == 0)) {
+        drawIsoRectangleLines(garden, hoveredTile, 2, DARKBROWN);
     }
 
     drawIsoRectangleLines(garden, getGardenIsoVertices(garden), 2, WHITE);

@@ -42,20 +42,20 @@ void game_init(Game *game) {
 }
 
 void game_processInput(Game *game) {
-    inputManager_update(&game->input, game->scale, game->screenOffset);
+    input_update(&game->input, game->scale, game->screenOffset);
 
-    Command cmd = keyMap_processInput(&game->keyMap, &game->input);
-    if (command_dispatchCommand(cmd, game)) {
+    Message cmd = keyMap_processInput(&game->keyMap, &game->input);
+    if (messages_dispatchMessage(cmd, game)) {
         return;
     }
 
     cmd = ui_processInput(&game->ui, &game->input, game->toolSelected);
-    if (command_dispatchCommand(cmd, game)) {
+    if (messages_dispatchMessage(cmd, game)) {
         return;
     }
 
     cmd = garden_processInput(&game->garden, &game->input);
-    if (command_dispatchCommand(cmd, game)) {
+    if (messages_dispatchMessage(cmd, game)) {
         return;
     }
 }
@@ -85,13 +85,13 @@ void game_update(Game *game, float deltaTime) {
     }
 }
 
-void drawGarden(Game *game) {
-    ClearBackground((Color){185, 131, 131, 100});
+void drawGardenScene(Game *game) {
+    ClearBackground((Color){100, 100, 100, 100});
 
     garden_draw(&game->garden, game->toolSelected, game->toolVariantsSelection[game->toolSelected]);
 
     // For debug
-    inputManager_drawMousePos(&game->input, game->screenSize);
+    input_drawMousePos(&game->input, game->screenSize);
 
     // UI must be at the end
     ui_draw(&game->ui,
@@ -102,7 +102,7 @@ void drawGarden(Game *game) {
         game->inGameSeconds);
 }
 
-void drawMainMenu(Game *game) {
+void drawMainMenuScene(Game *game) {
     ClearBackground(BLACK);
 
     int fontSize = uiFont.baseSize * 3.0f;
@@ -123,11 +123,11 @@ void game_draw(Game *game) {
     switch (game->state) {
 
     case GAME_STATE_MAIN_MENU:
-        drawMainMenu(game);
+        drawMainMenuScene(game);
         break;
 
     case GAME_STATE_GARDEN:
-        drawGarden(game);
+        drawGardenScene(game);
         break;
     }
 

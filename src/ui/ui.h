@@ -1,7 +1,7 @@
 #pragma once
 #include "../entity/garden.h"
 #include "../game/gameplay.h"
-#include "input_manager.h"
+#include "../input/input.h"
 #include "ui_button_grid.h"
 #include <raylib.h>
 #include <stdbool.h>
@@ -20,7 +20,7 @@ void ui_syncToolVariantPanelToSelection(
 
 void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed);
 
-Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool);
+Message ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool);
 
 void ui_draw(UI *ui,
     const InputManager *input,

@@ -1,6 +1,6 @@
 #pragma once
-#include "../commands/commands.h"
-#include "input_manager.h"
+#include "../input/input.h"
+#include "../messages/messages.h"
 
 typedef struct {
     // config
@@ -12,7 +12,7 @@ typedef struct {
 } UITextBox;
 
 void uiTextBox_init(UITextBox *bp, int fontSize, Rectangle bounds, Vector2 padding);
-Command uiTextBox_processInput(UITextBox *bn, InputManager *input);
+Message uiTextBox_processInput(UITextBox *bn, InputManager *input);
 void uiTextBox_draw(UITextBox *bp, int fontSize);
 void uiTextBox_translate(UITextBox *bp, Vector2 newPos);
 void uiTextBox_drawTextLine(UITextBox *tb, const char *text, Color color);

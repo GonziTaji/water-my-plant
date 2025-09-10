@@ -1,8 +1,8 @@
 #pragma once
+#include "../input/input.h"
 #include "button.h"
-#include "input_manager.h"
 
-// to avoid dynamic array and malloc. The memory "wasted" is negligible
+// to avoid dynamic array + malloc. The memory "wasted" is negligible
 #define UI_BUTTON_PANNEL_MAX_BUTTONS 20
 
 typedef struct {
@@ -30,7 +30,7 @@ void uiButtonGrid_init(UIButtonGrid *bp,
     Vector2i buttonSpacing,
     Vector2i padding,
     Vector2i origin);
-Command uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input);
+Message uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input);
 void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize);
 int uiButtonGrid_getWidth(UIButtonGrid *bp);
 int uiButtonGrid_getHeight(UIButtonGrid *bp);
