@@ -189,7 +189,7 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
 }
 
 Command ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
-    if (tool == GARDENING_TOOL_PLANT_CUTTING) {
+    if (ui->showToolVariantPanel) {
         Command cmd = uiButtonGrid_processInput(&ui->toolVariantButtonPannel, input);
 
         if (cmd.type != COMMAND_NONE) {
