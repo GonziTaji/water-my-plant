@@ -4,6 +4,7 @@
 #include "../game/gameplay.h"
 #include "../input/input.h"
 #include "../messages/messages.h"
+#include "../utils/utils.h"
 #include "planter.h"
 #include <raylib.h>
 
@@ -22,17 +23,8 @@ typedef struct {
     int lightLevel;
 } GardenTile;
 
-// WIP
 typedef struct {
-    int cols;
-    int rows;
-    int tileWidth;
-    int tileHeight;
-    int tileCount;
-} TileGrid;
-
-typedef struct {
-    Camera2D camera;
+    SceneTransform transform;
     // TODO: use camera.target?
     Vector2 *screenSize;
     TileGrid tileGrid;

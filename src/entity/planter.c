@@ -91,8 +91,8 @@ int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 coords) {
     return plantIndex;
 }
 
-Vector2 planter_getPlantCoords(Planter *planter, Camera2D *camera, int plantIndex) {
-    Rotation planterRotation = utils_rotate(planter->rotation, camera->rotation);
+Vector2 planter_getPlantCoords(Planter *planter, SceneTransform *transform, int plantIndex) {
+    Rotation planterRotation = utils_rotate(planter->rotation, transform->rotation);
     Rectangle rotatedPlanterRec = utils_getRotatedRec(planter->bounds, planterRotation);
 
     Vector2 coords = utils_grid_getCoordsFromTileIndex(planter->bounds.width, plantIndex);
@@ -102,16 +102,15 @@ Vector2 planter_getPlantCoords(Planter *planter, Camera2D *camera, int plantInde
     return coords;
 }
 
-Vector2 planter_getPlantWorldPos(Planter *planter, Camera2D *camera, int plantIndex) {
-    Vector2 plantCoords = planter_getPlantCoords(planter, camera, plantIndex);
+Vector2 planter_getPlantWorldPos(Planter *planter, SceneTransform *transform, int plantIndex) {
+    Vector2 plantCoords = planter_getPlantCoords(planter, transform, plantIndex);
     Rectangle plantBounds = (Rectangle){plantCoords.x, plantCoords.y, 1, 1};
 
-    IsoRec isoRec = utils_toIsoRec(camera, plantBounds);
-    utils_rotateIsoRec(&isoRec, camera->rotation);
+    IsoRec isoRec = utils_toIsoRec(transform, plantBounds);
 
     return (Vector2){
         isoRec.bottom.x,
-        isoRec.bottom.y - (planter->plantBasePosY * camera->zoom),
+        isoRec.bottom.y - (planter->plantBasePosY * transform->scale),
     };
 }
 

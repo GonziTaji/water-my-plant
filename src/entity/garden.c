@@ -2,7 +2,6 @@
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
 #include "../game/gameplay.h"
-#include "../utils/utils.h"
 #include "plant.h"
 #include "planter.h"
 #include <assert.h>
@@ -52,14 +51,14 @@ Vector2 getLightSourcePosition(Garden *garden, int gameplayTime) {
         v.y * cos(rad) + v.x * sin(rad),
     };
 
-    rotated.x += garden->camera.offset.x + TILE_WIDTH;
-    rotated.y += garden->camera.offset.y - TILE_HEIGHT;
+    rotated.x += garden->transform.translation.x + TILE_WIDTH;
+    rotated.y += garden->transform.translation.y - TILE_HEIGHT;
 
     return rotated;
 }
 
 IsoRec getGardenIsoVertices(Garden *garden) {
-    IsoRec isoRec = utils_toIsoRec(&garden->camera,
+    IsoRec isoRec = utils_toIsoRec(&garden->transform,
         (Rectangle){
             0,
             0,
@@ -67,15 +66,13 @@ IsoRec getGardenIsoVertices(Garden *garden) {
             garden->tileGrid.rows,
         });
 
-    utils_rotateIsoRec(&isoRec, garden->camera.rotation);
-
     return isoRec;
 }
 
 /// If a planter with size NxM is hovered, it's whole area is hovered
 IsoRec getHoveredIsoVertices(
     const Garden *garden, int tileIndex, enum GardeningTool tool, int toolVariant) {
-    Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
+    Vector2 translation = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
     Vector2 dimensions = {1, 1};
 
     if (tool == GARDENING_TOOL_PLANTER) {
@@ -83,14 +80,13 @@ IsoRec getHoveredIsoVertices(
     }
 
     Rectangle rec = (Rectangle){
-        origin.x,
-        origin.y,
+        translation.x,
+        translation.y,
         dimensions.x,
         dimensions.y,
     };
 
-    IsoRec isoRec = utils_toIsoRec(&garden->camera, rec);
-    utils_rotateIsoRec(&isoRec, garden->camera.rotation);
+    IsoRec isoRec = utils_toIsoRec(&garden->transform, rec);
 
     return isoRec;
 }
@@ -99,18 +95,16 @@ IsoRec getPlanterIsoVertices(const Garden *garden, int tileIndex) {
     int planterIndex = garden->tiles[tileIndex].planterIndex;
     const Planter *p = &garden->planters[planterIndex];
 
-    IsoRec isoRec = utils_toIsoRec(&garden->camera, p->bounds);
-    utils_rotateIsoRec(&isoRec, garden->camera.rotation);
+    IsoRec isoRec = utils_toIsoRec(&garden->transform, p->bounds);
 
     return isoRec;
 }
 
 IsoRec getTileIsoVertices(const Garden *garden, int tileIndex) {
-    Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
-    Rectangle rec = {origin.x, origin.y, 1, 1};
+    Vector2 translation = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
+    Rectangle rec = {translation.x, translation.y, 1, 1};
 
-    IsoRec isoRec = utils_toIsoRec(&garden->camera, rec);
-    utils_rotateIsoRec(&isoRec, garden->camera.rotation);
+    IsoRec isoRec = utils_toIsoRec(&garden->transform, rec);
 
     return isoRec;
 }
@@ -121,7 +115,7 @@ float distanceBetweenPoints(Vector2 p1, Vector2 p2) {
 
 void updateLightLevelOfTiles(Garden *garden) {
     Vector2 lightSourceInGrid = utils_grid_worldPointToCoords(
-        &garden->camera, garden->lightSourcePos.x, garden->lightSourcePos.y);
+        &garden->transform, garden->lightSourcePos.x, garden->lightSourcePos.y);
 
     for (int i = 0; i < garden->tileGrid.tileCount; i++) {
         Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
@@ -132,12 +126,12 @@ void updateLightLevelOfTiles(Garden *garden) {
 }
 
 void updateGardenOrigin(Garden *garden) {
-    garden->camera.offset = (Vector2){0, 0};
+    garden->transform.translation = (Vector2){0, 0};
 
     IsoRec target;
 
     // TODO: if moved (as in, not centered, update based on scale)
-    if (garden->camera.zoom == GARDEN_SCALE_INITIAL) {
+    if (garden->transform.scale == GARDEN_SCALE_INITIAL) {
         target = getGardenIsoVertices(garden);
     } else if (garden->tileHovered != -1) {
         target = getTileIsoVertices(garden, garden->tileHovered);
@@ -147,8 +141,8 @@ void updateGardenOrigin(Garden *garden) {
         target = getGardenIsoVertices(garden);
     }
 
-    garden->camera.offset.x = (garden->screenSize->x - target.right.x - target.left.x) / 2;
-    garden->camera.offset.y = (garden->screenSize->y - target.bottom.y - target.top.y) / 2;
+    garden->transform.translation.x = (garden->screenSize->x - target.right.x - target.left.x) / 2;
+    garden->transform.translation.y = (garden->screenSize->y - target.bottom.y - target.top.y) / 2;
 }
 
 // TODO: move
@@ -168,9 +162,10 @@ void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
     garden->tileHovered = -1;
 
     garden->selectionRotation = ROTATION_0;
-
-    garden->camera.rotation = ROTATION_0;
-    garden->camera.zoom = GARDEN_SCALE_INITIAL;
+    garden->transform.rotation = ROTATION_0;
+    garden->transform.scale = GARDEN_SCALE_INITIAL;
+    garden->transform.translation.x = 0;
+    garden->transform.translation.y = 0;
 
     updateGardenOrigin(garden);
 
@@ -218,15 +213,16 @@ void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
 }
 
 void resetGardenScale(Garden *garden) {
-    garden->camera.zoom = GARDEN_SCALE_INITIAL;
+    garden->transform.scale = GARDEN_SCALE_INITIAL;
     updateGardenOrigin(garden);
 }
 
 void scaleGarden(Garden *garden, float amount) {
-    float newScale = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->camera.zoom + amount);
+    float newScale
+        = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->transform.scale + amount);
 
-    if (newScale != garden->camera.zoom) {
-        garden->camera.zoom = newScale;
+    if (newScale != garden->transform.scale) {
+        garden->transform.scale = newScale;
         updateGardenOrigin(garden);
     }
 }
@@ -248,7 +244,7 @@ Message garden_processInput(Garden *garden, InputManager *input) {
     }
 
     if (input->keyPressed == KEY_GRAVE) {
-        garden->camera.rotation = utils_rotate(garden->camera.rotation, 1);
+        garden->transform.rotation = utils_rotate(garden->transform.rotation, 1);
         updateGardenOrigin(garden);
     }
 
@@ -262,27 +258,29 @@ Message garden_processInput(Garden *garden, InputManager *input) {
 
     // TODO: delegate detection of mouse button down (not pressed) to input subsystem
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-        garden->camera.offset.x -= input->worldMouseDelta.x;
-        garden->camera.offset.y -= input->worldMouseDelta.y;
+        garden->transform.translation.x -= input->worldMouseDelta.x;
+        garden->transform.translation.y -= input->worldMouseDelta.y;
 
         IsoRec gardenIsoRec = getGardenIsoVertices(garden);
         int isoRecWidth = gardenIsoRec.right.x - gardenIsoRec.left.x;
 
-        int startLimitX = -isoRecWidth + (4 * TILE_WIDTH * garden->camera.zoom);
-        int endLimitX = garden->screenSize->x - (4 * TILE_WIDTH * garden->camera.zoom);
-        int startLimitY
-            = gardenIsoRec.left.y - gardenIsoRec.bottom.y + (4 * TILE_HEIGHT * garden->camera.zoom);
+        int startLimitX = -isoRecWidth + (4 * TILE_WIDTH * garden->transform.scale);
+        int endLimitX = garden->screenSize->x - (4 * TILE_WIDTH * garden->transform.scale);
+        int startLimitY = gardenIsoRec.left.y - gardenIsoRec.bottom.y
+                        + (4 * TILE_HEIGHT * garden->transform.scale);
         int endLimitY = garden->screenSize->y - (gardenIsoRec.top.y - gardenIsoRec.left.y)
-                      - (4 * TILE_HEIGHT * garden->camera.zoom);
+                      - (4 * TILE_HEIGHT * garden->transform.scale);
 
-        garden->camera.offset.x = utils_clampf(startLimitX, endLimitX, garden->camera.offset.x);
-        garden->camera.offset.y = utils_clampf(startLimitY, endLimitY, garden->camera.offset.y);
+        garden->transform.translation.x
+            = utils_clampf(startLimitX, endLimitX, garden->transform.translation.x);
+        garden->transform.translation.y
+            = utils_clampf(startLimitY, endLimitY, garden->transform.translation.y);
     }
 
     Vector2 *mousePos = &input->worldMousePos;
 
     Vector2 cellHoveredCoords
-        = utils_grid_worldPointToCoords(&garden->camera, mousePos->x, mousePos->y);
+        = utils_grid_worldPointToCoords(&garden->transform, mousePos->x, mousePos->y);
 
     int cellHoveredIndex = utils_grid_getTileIndexFromCoords(
         garden->tileGrid.cols, garden->tileGrid.rows, cellHoveredCoords.x, cellHoveredCoords.y);
@@ -313,7 +311,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         DrawTextureEx(slab1Texture,
             (Vector2){currentTile.left.x, currentTile.top.y},
             0,
-            garden->camera.zoom,
+            garden->transform.scale,
             WHITE);
 
         if (garden->tileSelected == i || garden->tileHovered == i) {
@@ -322,6 +320,11 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
             if (planterIndex != -1 && alive) {
                 currentTile = getPlanterIsoVertices(garden, i);
+            } else if (toolSelected == GARDENING_TOOL_PLANTER) {
+                Vector2 p = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
+                Vector2 d = planter_getDimensions(toolVariantSelected, garden->transform.rotation);
+
+                currentTile = utils_toIsoRec(&garden->transform, (Rectangle){p.x, p.y, d.x, d.y});
             } else if (garden->tileHovered == i) {
                 currentTile = getHoveredIsoVertices(garden, i, toolSelected, toolVariantSelected);
             }
@@ -336,7 +339,14 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
     // Draw outline of selected and hovered tiles after tiles are drawn
     if (!(hoveredTile.left.x == 0 && hoveredTile.right.x == 0)) {
-        drawIsoRectangleLines(garden, hoveredTile, 2, BROWN);
+
+        BeginBlendMode(BLEND_ADDITIVE);
+
+        DrawTriangle(
+            hoveredTile.left, hoveredTile.bottom, hoveredTile.right, (Color){255, 255, 255, 40});
+        DrawTriangle(
+            hoveredTile.right, hoveredTile.top, hoveredTile.left, (Color){255, 255, 255, 40});
+        EndBlendMode();
     }
 
     if (!(selectedTile.left.x == 0 && selectedTile.right.x == 0)) {
@@ -362,7 +372,8 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
         Vector2 isoTileOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
 
-        planter_draw(planter, isoTileOrigin, garden->camera.zoom, garden->camera.rotation, WHITE);
+        planter_draw(
+            planter, isoTileOrigin, garden->transform.scale, garden->transform.rotation, WHITE);
 
         int tileIndex = utils_grid_getTileIndexFromCoords(
             garden->tileGrid.cols, garden->tileGrid.cols, planter->bounds.x, planter->bounds.y);
@@ -371,8 +382,8 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             BeginBlendMode(BLEND_ADDITIVE);
             planter_draw(planter,
                 isoTileOrigin,
-                garden->camera.zoom,
-                garden->camera.rotation,
+                garden->transform.scale,
+                garden->transform.rotation,
                 (Color){255, 255, 255, 100});
             EndBlendMode();
         }
@@ -383,15 +394,16 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             if (planter->plants[j].exists) {
                 plantsToDraw[plantsToDrawCount] = &planter->plants[j];
                 plantsOrigins[plantsToDrawCount]
-                    = planter_getPlantWorldPos(planter, &garden->camera, j);
+                    = planter_getPlantWorldPos(planter, &garden->transform, j);
                 plantsToDrawCount++;
             }
         }
     }
 
-    // Draw plants after planters. Maybe use origin's Y base to order in case there's a high planter
+    // Draw plants after planters. Maybe use translation's Y base to order in case there's a high
+    // planter
     for (int i = 0; i < plantsToDrawCount; i++) {
-        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->camera.zoom, WHITE);
+        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->transform.scale, WHITE);
     }
 
     // Draw selection indicator at the end
@@ -407,13 +419,13 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             };
             Planter p;
             Vector2 gridCoords = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
-            Vector2 origin
-                = utils_grid_coordsToWorldPoint(&garden->camera, gridCoords.x, gridCoords.y);
-            planter_init(&p, toolVariantSelected, origin, garden->selectionRotation);
+            Vector2 translation
+                = utils_grid_coordsToWorldPoint(&garden->transform, gridCoords.x, gridCoords.y);
+            planter_init(&p, toolVariantSelected, translation, garden->selectionRotation);
             planter_draw(&p,
                 isoTileOrigin,
-                garden->camera.zoom,
-                garden->camera.rotation,
+                garden->transform.scale,
+                garden->transform.rotation,
                 (Color){255, 255, 255, 200});
         } else {
             isoTile = getTileIsoVertices(garden, i);
@@ -425,9 +437,10 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             float plantBasePosY;
 
             if (alive) {
-                plantBasePosY = garden->planters[planterIndex].plantBasePosY * garden->camera.zoom;
+                plantBasePosY
+                    = garden->planters[planterIndex].plantBasePosY * garden->transform.scale;
             } else {
-                plantBasePosY = TILE_HEIGHT * garden->camera.zoom / 2.0f;
+                plantBasePosY = TILE_HEIGHT * garden->transform.scale / 2.0f;
             }
 
             Vector2 isoTileBase = (Vector2){
@@ -436,12 +449,12 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             };
             Plant plant = {.health = 100};
             plant_init(&plant, toolVariantSelected);
-            plant_draw(&plant, isoTileBase, garden->camera.zoom, (Color){255, 255, 255, 200});
+            plant_draw(&plant, isoTileBase, garden->transform.scale, (Color){255, 255, 255, 200});
         }
     }
 
     DrawCircle(garden->lightSourcePos.x,
         garden->lightSourcePos.y,
-        LIGHT_SOURCE_RADIUS * garden->camera.zoom,
+        LIGHT_SOURCE_RADIUS * garden->transform.scale,
         YELLOW);
 }

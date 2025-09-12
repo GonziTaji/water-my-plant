@@ -22,7 +22,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
         return;
     }
 
-    Rotation rotation = utils_rotate(garden->camera.rotation, garden->selectionRotation);
+    Rotation rotation = utils_rotate(garden->transform.rotation, garden->selectionRotation);
     Vector2 dimensions = planter_getDimensions(planterType, rotation);
     Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};

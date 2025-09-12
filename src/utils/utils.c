@@ -94,17 +94,17 @@ int utils_grid_getTileIndexFromCoords(int gridCols, int gridRows, float x, float
     return ((int)y * gridCols) + (int)x;
 }
 
-Vector2 utils_grid_worldPointToCoords(Camera2D *camera, float x, float y) {
-    const float TW = TILE_WIDTH * camera->zoom;
-    const float TH = TILE_HEIGHT * camera->zoom;
+Vector2 utils_grid_worldPointToCoords(SceneTransform *transform, float x, float y) {
+    const float TW = TILE_WIDTH * transform->scale;
+    const float TH = TILE_HEIGHT * transform->scale;
 
-    const float dx = x - camera->offset.x;
-    const float dy = y - camera->offset.y;
+    const float dx = x - transform->translation.x;
+    const float dy = y - transform->translation.y;
 
     Vector2 gridCoords = {};
 
     // TODO: refactor in some way? ugly
-    switch ((int)camera->rotation) {
+    switch ((int)transform->rotation) {
     case ROTATION_0:
         gridCoords.x = +(dx / TW) - (dy / TH);
         gridCoords.y = +(dx / TW) + (dy / TH);
@@ -130,12 +130,12 @@ Vector2 utils_grid_worldPointToCoords(Camera2D *camera, float x, float y) {
     return gridCoords;
 }
 
-Vector2 utils_grid_coordsToWorldPoint(const Camera2D *camera, float x, float y) {
+Vector2 utils_grid_coordsToWorldPoint(const SceneTransform *transform, float x, float y) {
     int sumX = 0;
     int sumY = 0;
 
     // TODO: refactor in some way? ugly
-    switch ((int)camera->rotation) {
+    switch ((int)transform->rotation) {
     case ROTATION_0:
         sumX = +x + y;
         sumY = -x + y;
@@ -158,18 +158,20 @@ Vector2 utils_grid_coordsToWorldPoint(const Camera2D *camera, float x, float y) 
     }
 
     return (Vector2){
-        camera->offset.x + (sumX * TILE_WIDTH * camera->zoom / 2.0f),
-        camera->offset.y + (sumY * TILE_HEIGHT * camera->zoom / 2.0f),
+        transform->translation.x + (sumX * TILE_WIDTH * transform->scale / 2.0f),
+        transform->translation.y + (sumY * TILE_HEIGHT * transform->scale / 2.0f),
     };
 }
 
-IsoRec utils_toIsoRec(const Camera2D *camera, Rectangle rec) {
+IsoRec utils_toIsoRec(const SceneTransform *transform, Rectangle rec) {
     IsoRec isoRec = {
-        utils_grid_coordsToWorldPoint(camera, rec.x, rec.y),
-        utils_grid_coordsToWorldPoint(camera, rec.x + rec.width, rec.y),
-        utils_grid_coordsToWorldPoint(camera, rec.x + rec.width, rec.y + rec.height),
-        utils_grid_coordsToWorldPoint(camera, rec.x, rec.y + rec.height),
+        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y),
+        utils_grid_coordsToWorldPoint(transform, rec.x + rec.width, rec.y),
+        utils_grid_coordsToWorldPoint(transform, rec.x + rec.width, rec.y + rec.height),
+        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y + rec.height),
     };
+
+    utils_rotateIsoRec(&isoRec, transform->rotation);
 
     return isoRec;
 }

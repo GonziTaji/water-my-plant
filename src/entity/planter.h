@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../game/gameplay.h"
+#include "../utils/utils.h"
 #include "plant.h"
 #include <raylib.h>
 
@@ -32,6 +33,6 @@ void planter_addPlant(Planter *planter, int index, enum PlantType type);
 Rectangle planter_getSpriteSourceRec(
     PlanterType type, Rotation planterRotation, Rotation viewRotation);
 void planter_draw(Planter *planter, Vector2 origin, float scale, Rotation rotation, Color color);
-Vector2 planter_getPlantWorldPos(Planter *planter, Camera2D *camera, int plantIndex);
-Vector2 planter_getPlantCoords(Planter *planter, Camera2D *camera, int plantIndex);
+Vector2 planter_getPlantWorldPos(Planter *planter, SceneTransform *transform, int plantIndex);
+Vector2 planter_getPlantCoords(Planter *planter, SceneTransform *transform, int plantIndex);
 int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 point);
