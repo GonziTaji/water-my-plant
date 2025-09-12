@@ -88,7 +88,11 @@ void game_update(Game *game, float deltaTime) {
 void drawGardenScene(Game *game) {
     ClearBackground((Color){100, 100, 100, 100});
 
+    // See if it's worth it to refactor to use 2D mode instead of handrolling zoom, rotation and
+    // target position (garden.origin)
+    // BeginMode2D(game->garden.camera);
     garden_draw(&game->garden, game->toolSelected, game->toolVariantsSelection[game->toolSelected]);
+    // EndMode2D();
 
     // For debug
     input_drawMousePos(&game->input, game->screenSize);

@@ -24,7 +24,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
     Rotation rotation = utils_rotate(garden->camera.rotation, garden->selectionRotation);
     Vector2 dimensions = planter_getDimensions(planterType, rotation);
-    Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileCols, garden->tileSelected);
+    Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
 
     bool planterFits = true;
@@ -33,12 +33,13 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     for (int x = origin.x; x < end.x; x++) {
         for (int y = origin.y; y < end.y; y++) {
             // could be outside
-            if (!utils_grid_isValidCoords(garden->tileCols, garden->tileRows, x, y)) {
+            if (!utils_grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
                 planterFits = false;
                 break;
             }
 
-            int index = utils_grid_getTileIndexFromCoords(garden->tileCols, garden->tileRows, x, y);
+            int index = utils_grid_getTileIndexFromCoords(
+                garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
             if (garden->tiles[index].planterIndex != -1) {
                 planterFits = false;
@@ -65,8 +66,8 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
         for (int x = p->bounds.x; x < end.x; x++) {
             for (int y = p->bounds.y; y < end.y; y++) {
-                int tileIndex
-                    = utils_grid_getTileIndexFromCoords(garden->tileCols, garden->tileRows, x, y);
+                int tileIndex = utils_grid_getTileIndexFromCoords(
+                    garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
                 garden->tiles[tileIndex].planterIndex = planterIndex;
             }
@@ -89,7 +90,7 @@ static void removeFromTile(Garden *garden) {
     Planter *planter = &garden->planters[planterIndex];
     if (planter->exists == true) {
         Vector2 tileCoords
-            = utils_grid_getCoordsFromTileIndex(garden->tileCols, garden->tileSelected);
+            = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
 
         int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
 
@@ -109,7 +110,7 @@ static void removeFromTile(Garden *garden) {
             for (int x = planter->bounds.x; x < end.x; x++) {
                 for (int y = planter->bounds.y; y < end.y; y++) {
                     int tileIndex = utils_grid_getTileIndexFromCoords(
-                        garden->tileCols, garden->tileRows, x, y);
+                        garden->tileGrid.cols, garden->tileGrid.rows, x, y);
                     garden->tiles[tileIndex].planterIndex = -1;
                 }
             }
@@ -139,7 +140,8 @@ static void addPlantToSelectedPlanter(Garden *garden, enum PlantType type) {
         return;
     }
 
-    Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileCols, garden->tileSelected);
+    Vector2 tileCoords
+        = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
 
     Planter *planter = garden_getSelectedPlanter(garden);
 
@@ -156,7 +158,8 @@ static void irrigateSelectedPlant(Garden *garden) {
         return;
     }
 
-    Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileCols, garden->tileSelected);
+    Vector2 tileCoords
+        = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
 
     Planter *planter = garden_getSelectedPlanter(garden);
 
@@ -173,7 +176,8 @@ static void feedSelectedPlant(Garden *garden) {
         return;
     }
 
-    Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileCols, garden->tileSelected);
+    Vector2 tileCoords
+        = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
 
     Planter *planter = garden_getSelectedPlanter(garden);
 

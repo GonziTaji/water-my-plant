@@ -22,18 +22,23 @@ typedef struct {
     int lightLevel;
 } GardenTile;
 
+// WIP
+typedef struct {
+    int cols;
+    int rows;
+    int tileWidth;
+    int tileHeight;
+    int tileCount;
+} TileGrid;
+
 typedef struct {
     Camera2D camera;
     // TODO: use camera.target?
     Vector2 *screenSize;
-    int tileCols;
-    int tileRows;
+    TileGrid tileGrid;
     GardenTile tiles[GARDEN_MAX_TILES];
-    int tileWidth;
-    int tileHeight;
     int tileSelected;
     int tileHovered;
-    int tilesCount;
     Planter planters[GARDEN_MAX_TILES];
     Vector2 lightSourcePos;
     int lightSourceLevel;

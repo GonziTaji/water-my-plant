@@ -242,7 +242,7 @@ void ui_draw(UI *ui,
     char buffer[64];
 
     if (tileIndex != -1) {
-        Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileCols, tileIndex);
+        Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
 
         snprintf(buffer,
             sizeof(buffer),
