@@ -213,9 +213,9 @@ Message ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool) {
 }
 
 void ui_draw(UI *ui,
-    const InputManager *input,
-    const Vector2 *screenSize,
-    const Garden *garden,
+    InputManager *input,
+    Vector2 *screenSize,
+    Garden *garden,
     enum GardeningTool toolSelected,
     float gameplayTime) {
 
@@ -227,7 +227,6 @@ void ui_draw(UI *ui,
         uiButtonGrid_draw(&ui->toolVariantButtonPannel, bpFontSize);
     }
 
-    // const GardenTile *tile;
     int tileIndex = -1;
 
     if (garden->tileHovered != -1) {
@@ -254,7 +253,7 @@ void ui_draw(UI *ui,
 
         int lightLevel = garden->tiles[tileIndex].lightLevel;
         int planterIndex = garden->tiles[tileIndex].planterIndex;
-        const Planter *planter = &garden->planters[planterIndex];
+        Planter *planter = &garden->planters[planterIndex];
 
         Vector2 offset = {-20, 20};
         Rectangle tbBounds = {
@@ -273,9 +272,13 @@ void ui_draw(UI *ui,
         uiTextBox_drawTextLine(&tb, "", BLACK); // spacing
 
         if (planter->exists) {
+            Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+
             // how to deal with const? I really don't want to have two functions and have one
             // returning a readonly plant and one returning a mutable plant pointer
-            int plantIndex = planter_getPlantIndexFromGridCoords((Planter *)planter, tileCoords);
+            int plantIndex = planter_getPlantIndexFromWorldPos(
+                planter, &garden->transform, planterOrigin, input->worldMousePos);
+
             const Plant *plant = &planter->plants[plantIndex];
 
             if (plant->exists) {

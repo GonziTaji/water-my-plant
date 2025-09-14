@@ -3,6 +3,14 @@
 #include <assert.h>
 #include <raylib.h>
 
+void utils_rotateVector(Vector2 *vector, Rotation rotation) {
+    if (rotation == ROTATION_90 || rotation == ROTATION_270) {
+        float aux = vector->x;
+        vector->x = vector->y;
+        vector->y = aux;
+    }
+}
+
 float utils_clampf(float min, float max, float value) {
     if (min > value) {
         return min;
@@ -81,6 +89,8 @@ bool utils_grid_isValidCoords(int gridCols, int gridRows, float x, float y) {
 }
 
 Vector2 utils_grid_getCoordsFromTileIndex(int gridCols, int i) {
+    // should avoid division by 0? Crashes here expose bugs,
+    // and should never happen (getting grid coords from a grid with 0 cols?)
     return (Vector2){i % gridCols, (int)(i / gridCols)};
 }
 
@@ -94,9 +104,11 @@ int utils_grid_getTileIndexFromCoords(int gridCols, int gridRows, float x, float
     return ((int)y * gridCols) + (int)x;
 }
 
-Vector2 utils_grid_worldPointToCoords(SceneTransform *transform, float x, float y) {
-    const float TW = TILE_WIDTH * transform->scale;
-    const float TH = TILE_HEIGHT * transform->scale;
+Vector2 utils_grid_worldPointToCoords(
+    SceneTransform *transform, float x, float y, float tileWidth, float tileHeight) {
+
+    const float TW = tileWidth * transform->scale;
+    const float TH = tileHeight * transform->scale;
 
     const float dx = x - transform->translation.x;
     const float dy = y - transform->translation.y;
@@ -130,7 +142,9 @@ Vector2 utils_grid_worldPointToCoords(SceneTransform *transform, float x, float 
     return gridCoords;
 }
 
-Vector2 utils_grid_coordsToWorldPoint(const SceneTransform *transform, float x, float y) {
+Vector2 utils_grid_coordsToWorldPoint(
+    const SceneTransform *transform, float x, float y, float tileWidth, float tileHeight) {
+
     int sumX = 0;
     int sumY = 0;
 
@@ -158,17 +172,19 @@ Vector2 utils_grid_coordsToWorldPoint(const SceneTransform *transform, float x, 
     }
 
     return (Vector2){
-        transform->translation.x + (sumX * TILE_WIDTH * transform->scale / 2.0f),
-        transform->translation.y + (sumY * TILE_HEIGHT * transform->scale / 2.0f),
+        transform->translation.x + (sumX * tileWidth * transform->scale / 2.0f),
+        transform->translation.y + (sumY * tileHeight * transform->scale / 2.0f),
     };
 }
 
-IsoRec utils_toIsoRec(const SceneTransform *transform, Rectangle rec) {
+IsoRec utils_toIsoRec(
+    const SceneTransform *transform, Rectangle rec, float tileWidth, float tileHeight) {
     IsoRec isoRec = {
-        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y),
-        utils_grid_coordsToWorldPoint(transform, rec.x + rec.width, rec.y),
-        utils_grid_coordsToWorldPoint(transform, rec.x + rec.width, rec.y + rec.height),
-        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y + rec.height),
+        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y, tileWidth, tileHeight),
+        utils_grid_coordsToWorldPoint(transform, rec.x + rec.width, rec.y, tileWidth, tileHeight),
+        utils_grid_coordsToWorldPoint(
+            transform, rec.x + rec.width, rec.y + rec.height, tileWidth, tileHeight),
+        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y + rec.height, tileWidth, tileHeight),
     };
 
     utils_rotateIsoRec(&isoRec, transform->rotation);

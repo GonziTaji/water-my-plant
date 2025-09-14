@@ -25,12 +25,12 @@ typedef struct {
 
 typedef struct {
     SceneTransform transform;
-    // TODO: use camera.target?
     Vector2 *screenSize;
     TileGrid tileGrid;
     GardenTile tiles[GARDEN_MAX_TILES];
     int tileSelected;
     int tileHovered;
+    int planterTileHovered;
     Planter planters[GARDEN_MAX_TILES];
     Vector2 lightSourcePos;
     int lightSourceLevel;
@@ -43,3 +43,4 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 void garden_update(Garden *garden, float deltaTime, float gameplayTime);
 bool garden_hasPlanterSelected(const Garden *garden);
 Planter *garden_getSelectedPlanter(Garden *garden);
+Vector2 garden_getTileOrigin(Garden *garden, Vector2 coords);

@@ -41,7 +41,7 @@ void input_drawMousePos(InputManager *input, Vector2 screenSize) {
 
     int textPosY = screenSize.y - (2 * fontSize);
 
-    DrawText(buffer, 0, textPosY, fontSize, BLACK);
+    DrawText(buffer, 0, textPosY, fontSize, WHITE);
 
     textPosY += fontSize;
 
@@ -49,5 +49,5 @@ void input_drawMousePos(InputManager *input, Vector2 screenSize) {
 
     snprintf(buffer, 64, "screen mouse: %f, %f", screenMouse.x, screenMouse.y);
 
-    DrawText(buffer, 0, textPosY, fontSize, BLACK);
+    DrawText(buffer, 0, textPosY, fontSize, WHITE);
 }

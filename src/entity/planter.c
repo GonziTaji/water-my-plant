@@ -2,9 +2,11 @@
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
 #include "../utils/utils.h"
+#include <assert.h>
 #include <raylib.h>
 
-Vector2 planter_getDimensions(PlanterType planterType, Rotation rotation) {
+/// cols and rows that the planter uses in the garden grid
+Vector2 planter_getFootPrint(PlanterType planterType, Rotation rotation) {
     Vector2 d = (Vector2){0, 0};
 
     switch (planterType) {
@@ -13,11 +15,15 @@ Vector2 planter_getDimensions(PlanterType planterType, Rotation rotation) {
         break;
 
     case PLANTER_TYPE_1x2:
-        d = (Vector2){1, 2};
+        d = (Vector2){2, 4};
         break;
 
     case PLANTER_TYPE_2x2:
-        d = (Vector2){2, 2};
+        d = (Vector2){4, 4};
+        break;
+
+    case PLANTER_COUCH:
+        d = (Vector2){4, 4};
         break;
 
     case PLANTER_TYPE_COUNT:
@@ -25,17 +31,80 @@ Vector2 planter_getDimensions(PlanterType planterType, Rotation rotation) {
         break;
     }
 
-    if (rotation == ROTATION_90 || rotation == ROTATION_270) {
-        float aux = d.x;
-        d.x = d.y;
-        d.y = aux;
-    }
+    utils_rotateVector(&d, rotation);
 
     return d;
 }
 
+Vector3 planter_getIsoDimensions(PlanterType planterType, Rotation rotation) {
+    Vector2 f = planter_getFootPrint(planterType, rotation);
+
+    Vector3 dimensionsOnGrid = {f.x, f.y, 0};
+
+    if (planterType == PLANTER_COUCH) {
+        dimensionsOnGrid.z = 2;
+    } else if (planterType == PLANTER_TYPE_2x2) {
+        dimensionsOnGrid.z = 1;
+    }
+
+    return (Vector3){
+        (dimensionsOnGrid.x + dimensionsOnGrid.y) * TILE_WIDTH / 2,
+        (dimensionsOnGrid.x + dimensionsOnGrid.y) * TILE_HEIGHT / 2,
+        dimensionsOnGrid.z * TILE_HEIGHT / 2,
+    };
+}
+
+/// internal plant grid of the planter
+TileGrid planter_getGrid(PlanterType planterType, Rotation rotation, int tileWidth) {
+    Vector2 dimensions = planter_getFootPrint(planterType, rotation);
+
+    TileGrid grid;
+
+    switch (planterType) {
+    case PLANTER_TYPE_NORMAL:
+        grid.cols = 1;
+        grid.rows = 1;
+        break;
+
+    case PLANTER_TYPE_1x2:
+        grid.cols = 1;
+        grid.rows = 2;
+        break;
+
+    case PLANTER_TYPE_2x2:
+        grid.cols = 3;
+        grid.rows = 3;
+        break;
+
+    case PLANTER_COUCH:
+        grid.cols = 0;
+        grid.rows = 0;
+        break;
+
+    case PLANTER_TYPE_COUNT:
+        assert(false);
+        break;
+    }
+
+    Vector2 gd = (Vector2){grid.cols, grid.rows};
+    utils_rotateVector(&gd, rotation);
+    grid.cols = gd.x;
+    grid.rows = gd.y;
+
+    assert(dimensions.x >= grid.cols);
+    assert(dimensions.y >= grid.rows);
+
+    grid.tileCount = grid.cols * grid.rows;
+
+    grid.tileHeight = (tileWidth / 2.0f) * (dimensions.x / grid.cols);
+    grid.tileWidth = tileWidth * (dimensions.y / grid.rows);
+
+    return grid;
+}
+
+// remove?
 int planter_getPlantCount(const Planter *planter) {
-    return planter->bounds.height * planter->bounds.width;
+    return planter->plantGrid.tileCount;
 }
 
 void planter_empty(Planter *planter) {
@@ -43,32 +112,26 @@ void planter_empty(Planter *planter) {
     planter->exists = false;
     planter->rotation = 0;
     planter->plantBasePosY = 0;
-    planter->bounds = (Rectangle){0, 0, 0, 0};
+    planter->size = (Vector2){0, 0};
+    planter->coords = (Vector2){0, 0};
 }
 
-void planter_init(Planter *planter, PlanterType type, Vector2 origin, Rotation rotation) {
+void planter_init(
+    Planter *planter, PlanterType type, Vector2 coords, Rotation rotation, int tileWidth) {
     planter->type = type;
     planter->exists = true;
     planter->rotation = rotation;
+    planter->size = planter_getFootPrint(type, rotation);
+    planter->coords = coords;
+    planter->plantGrid = planter_getGrid(type, rotation, tileWidth);
 
-    Vector2 dimensions = planter_getDimensions(type, rotation);
-
-    planter->bounds = (Rectangle){
-        origin.x,
-        origin.y,
-        dimensions.x,
-        dimensions.y,
-    };
-
-    const int plantsCount = planter_getPlantCount(planter);
-
-    for (int i = 0; i < plantsCount; i++) {
+    for (int i = 0; i < planter->plantGrid.tileCount; i++) {
         planter->plants[i].exists = false;
     }
 
     switch (type) {
     case PLANTER_TYPE_NORMAL:
-        planter->plantBasePosY = 24;
+        planter->plantBasePosY = 12;
         break;
     case PLANTER_TYPE_1x2:
         planter->plantBasePosY = 18;
@@ -76,42 +139,69 @@ void planter_init(Planter *planter, PlanterType type, Vector2 origin, Rotation r
     case PLANTER_TYPE_2x2:
         planter->plantBasePosY = 18;
         break;
+
+    case PLANTER_COUCH:
+        planter->plantBasePosY = 0;
+        break;
+
     case PLANTER_TYPE_COUNT:
         break;
     }
 }
 
 int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 coords) {
-    int plantX = coords.x - planter->bounds.x;
-    int plantY = coords.y - planter->bounds.y;
+    int plantX = coords.x - planter->coords.x;
+    int plantY = coords.y - planter->coords.y;
 
-    int plantIndex = utils_grid_getTileIndexFromCoords(
-        planter->bounds.width, planter->bounds.height, plantX, plantY);
+    int plantIndex
+        = utils_grid_getTileIndexFromCoords(planter->size.x, planter->size.y, plantX, plantY);
 
     return plantIndex;
 }
 
-Vector2 planter_getPlantCoords(Planter *planter, SceneTransform *transform, int plantIndex) {
-    Rotation planterRotation = utils_rotate(planter->rotation, transform->rotation);
-    Rectangle rotatedPlanterRec = utils_getRotatedRec(planter->bounds, planterRotation);
-
-    Vector2 coords = utils_grid_getCoordsFromTileIndex(planter->bounds.width, plantIndex);
-    coords.x += rotatedPlanterRec.x;
-    coords.y += rotatedPlanterRec.y;
-
+Vector2 planter_getPlantCoords(Planter *planter, int plantIndex) {
+    Vector2 coords = utils_grid_getCoordsFromTileIndex(planter->plantGrid.cols, plantIndex);
     return coords;
 }
 
-Vector2 planter_getPlantWorldPos(Planter *planter, SceneTransform *transform, int plantIndex) {
-    Vector2 plantCoords = planter_getPlantCoords(planter, transform, plantIndex);
-    Rectangle plantBounds = (Rectangle){plantCoords.x, plantCoords.y, 1, 1};
+int planter_getPlantIndexFromWorldPos(
+    Planter *planter, SceneTransform *transform, Vector2 planterWorldPos, Vector2 point) {
 
-    IsoRec isoRec = utils_toIsoRec(transform, plantBounds);
-
-    return (Vector2){
-        isoRec.bottom.x,
-        isoRec.bottom.y - (planter->plantBasePosY * transform->scale),
+    SceneTransform localTransform = {
+        planterWorldPos,
+        transform->rotation,
+        transform->scale,
     };
+
+    Vector2 plantCoords = utils_grid_worldPointToCoords(&localTransform,
+        point.x,
+        point.y,
+        planter->plantGrid.tileWidth,
+        planter->plantGrid.tileHeight);
+
+    return utils_grid_getTileIndexFromCoords(
+        planter->plantGrid.cols, planter->plantGrid.rows, plantCoords.x, plantCoords.y);
+}
+
+Vector2 planter_getPlantWorldPos(
+    Planter *planter, SceneTransform *transform, Vector2 planterWorldPos, int plantIndex) {
+
+    Vector2 plantCoords = planter_getPlantCoords(planter, plantIndex);
+
+    SceneTransform localTransform = {
+        planterWorldPos,
+        transform->rotation,
+        transform->scale,
+    };
+
+    IsoRec isoRec = utils_toIsoRec(&localTransform,
+        (Rectangle){plantCoords.x, plantCoords.y, 1, 1},
+        planter->plantGrid.tileWidth,
+        planter->plantGrid.tileHeight);
+
+    isoRec.bottom.y -= (planter->plantBasePosY * transform->scale);
+
+    return isoRec.bottom;
 }
 
 void planter_addPlant(Planter *planter, int index, enum PlantType type) {
@@ -122,16 +212,20 @@ void planter_addPlant(Planter *planter, int index, enum PlantType type) {
     plant_init(&planter->plants[index], type);
 }
 
+Vector2 planter_getSpriteDimensions(PlanterType type, Rotation rotation) {
+    Vector3 dimensions = planter_getIsoDimensions(type, rotation);
+
+    return (Vector2){
+        dimensions.x,
+        dimensions.y + dimensions.z,
+    };
+}
+
 Rectangle planter_getSpriteSourceRec(
     PlanterType type, Rotation planterRotation, Rotation viewRotation) {
 
     Rotation finalRotation = utils_rotate(planterRotation, viewRotation);
-    Vector2 planterDimensions = planter_getDimensions(type, finalRotation);
-
-    Vector2 spriteDimensions = (Vector2){
-        (planterDimensions.x + planterDimensions.y) * TILE_WIDTH / 2,
-        (planterDimensions.x + planterDimensions.y) * TILE_HEIGHT / 2,
-    };
+    Vector2 spriteDimensions = planter_getSpriteDimensions(type, finalRotation);
 
     float planterOriginY = 0;
 
@@ -140,9 +234,9 @@ Rectangle planter_getSpriteSourceRec(
             break;
         }
 
-        Vector2 d = planter_getDimensions(i, viewRotation);
+        Vector2 d = planter_getSpriteDimensions(i, finalRotation);
 
-        planterOriginY += (d.x + d.y) * TILE_HEIGHT / 2;
+        planterOriginY += d.y;
     }
 
     Vector2 spriteOrigin = (Vector2){
@@ -171,9 +265,10 @@ void planter_draw(
         source.height * scale,
     };
 
-    Vector2 pivot = {0, 0};
+    Vector3 isoDimensions
+        = planter_getIsoDimensions(planter->type, utils_rotate(planter->rotation, viewRotation));
 
-    // TODO: sprite based on type
+    Vector2 pivot = {0, isoDimensions.z * scale};
+
     DrawTexturePro(planterAtlas, source, dest, pivot, 0, color);
-    // DrawRectangleLinesEx(dest, 2, BLACK);
 }

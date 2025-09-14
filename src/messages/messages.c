@@ -2,6 +2,7 @@
 #include "../core/asset_manager.h"
 #include "../entity/garden.h"
 #include "../game/game.h"
+#include "../input/input.h"
 #include "../utils/utils.h"
 #include <assert.h>
 
@@ -23,7 +24,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     }
 
     Rotation rotation = utils_rotate(garden->transform.rotation, garden->selectionRotation);
-    Vector2 dimensions = planter_getDimensions(planterType, rotation);
+    Vector2 dimensions = planter_getFootPrint(planterType, rotation);
     Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
 
@@ -62,10 +63,10 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
         Planter *p = &garden->planters[planterIndex];
 
-        planter_init(p, planterType, origin, garden->selectionRotation);
+        planter_init(p, planterType, origin, garden->selectionRotation, garden->tileGrid.tileWidth);
 
-        for (int x = p->bounds.x; x < end.x; x++) {
-            for (int y = p->bounds.y; y < end.y; y++) {
+        for (int x = p->coords.x; x < end.x; x++) {
+            for (int y = p->coords.y; y < end.y; y++) {
                 int tileIndex = utils_grid_getTileIndexFromCoords(
                     garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
@@ -75,7 +76,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     }
 }
 
-static void removeFromTile(Garden *garden) {
+static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
     if (!garden_hasPlanterSelected(garden)) {
         return;
     }
@@ -89,10 +90,10 @@ static void removeFromTile(Garden *garden) {
 
     Planter *planter = &garden->planters[planterIndex];
     if (planter->exists == true) {
-        Vector2 tileCoords
-            = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+        Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
-        int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
+        int plantIndex = planter_getPlantIndexFromWorldPos(
+            planter, &garden->transform, planterOrigin, worldMousePos);
 
         Plant *plant = &planter->plants[plantIndex];
 
@@ -103,12 +104,12 @@ static void removeFromTile(Garden *garden) {
             planter->exists = false;
 
             Vector2 end = (Vector2){
-                planter->bounds.x + planter->bounds.width,
-                planter->bounds.y + planter->bounds.height,
+                planter->coords.x + planter->size.x,
+                planter->coords.y + planter->size.y,
             };
 
-            for (int x = planter->bounds.x; x < end.x; x++) {
-                for (int y = planter->bounds.y; y < end.y; y++) {
+            for (int x = planter->coords.x; x < end.x; x++) {
+                for (int y = planter->coords.y; y < end.y; y++) {
                     int tileIndex = utils_grid_getTileIndexFromCoords(
                         garden->tileGrid.cols, garden->tileGrid.rows, x, y);
                     garden->tiles[tileIndex].planterIndex = -1;
@@ -133,19 +134,22 @@ static void selectNextToolVariant(Game *g) {
     selectToolVariant(g, nextVariant);
 }
 
-static void addPlantToSelectedPlanter(Garden *garden, enum PlantType type) {
-    // Garden *garden = &g->garden;
-
+static void addPlantToSelectedPlanter(Garden *garden, InputManager *input, enum PlantType type) {
     if (!garden_hasPlanterSelected(garden)) {
         return;
     }
 
-    Vector2 tileCoords
-        = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
-
     Planter *planter = garden_getSelectedPlanter(garden);
 
-    int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
+    if (planter->plantGrid.tileCount == 0) {
+        return;
+    }
+
+    Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+
+    int plantIndex = planter_getPlantIndexFromWorldPos(
+        planter, &garden->transform, planterOrigin, input->worldMousePos);
+
     Plant *plant = &planter->plants[plantIndex];
 
     if (!plant->exists) {
@@ -213,11 +217,12 @@ static void onTileClicked(Game *game, int tileIndex) {
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
-        addPlantToSelectedPlanter(&game->garden, game->toolVariantsSelection[game->toolSelected]);
+        addPlantToSelectedPlanter(
+            &game->garden, &game->input, game->toolVariantsSelection[game->toolSelected]);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:
-        removeFromTile(&game->garden);
+        removeFromTile(&game->garden, game->input.worldMousePos);
         break;
 
     case GARDENING_TOOL_NONE:

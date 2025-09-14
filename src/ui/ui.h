@@ -23,8 +23,8 @@ void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed);
 Message ui_processInput(UI *ui, InputManager *input, enum GardeningTool tool);
 
 void ui_draw(UI *ui,
-    const InputManager *input,
-    const Vector2 *screenSize,
-    const Garden *garden,
+    InputManager *input,
+    Vector2 *screenSize,
+    Garden *garden,
     enum GardeningTool toolSelected,
     float gameplayTime);
