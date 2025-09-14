@@ -8,6 +8,7 @@
 #include <math.h>
 #include <raylib.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #define LIGHT_SOURCE_RADIUS 40
 
@@ -164,7 +165,7 @@ void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
 
     garden->lightSourceLevel = 12;
 
-    garden->tileGrid = (TileGrid){14, 10, TILE_WIDTH, TILE_HEIGHT};
+    garden->tileGrid = (TileGrid){14, 12, TILE_WIDTH, TILE_HEIGHT};
     garden->tileGrid.tileCount = garden->tileGrid.cols * garden->tileGrid.rows;
 
     garden->tileSelected = -1;
@@ -333,21 +334,47 @@ void drawIsoRectangleLines(Garden *garden, IsoRec isoRec, int lineWidth, Color c
     DrawLineEx(isoRec.right, isoRec.top, 2, color);
 }
 
+typedef enum {
+    DRAWABLE_PLANTER,
+    DRAWABLE_PLANT,
+} DrawableType;
+
+typedef struct {
+    DrawableType type;
+    void *data;
+    Vector2 origin;
+    float depth;
+} Drawable;
+
+int compareDrawableDepths(const void *a, const void *b) {
+    const Drawable *da = a;
+    const Drawable *db = b;
+
+    if (da->depth < db->depth) {
+        return -1;
+    }
+
+    if (da->depth > db->depth) {
+        return 1;
+    }
+
+    return 0;
+}
+
 void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVariantSelected) {
     IsoRec hoveredTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
     IsoRec selectedTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
 
     int hoveredPlanterToDrawIndex = -1;
-    int plantersToDrawCount = 0;
-    Planter *plantersToDraw[garden->tileGrid.tileCount];
-    Vector2 plantersOrigins[garden->tileGrid.tileCount];
-
     int hoveredPlantToDrawIndex = -1;
-    int plantsToDrawCount = 0;
-    Plant *plantsToDraw[garden->tileGrid.tileCount * PLANTER_MAX_PLANTS];
-    Vector2 plantsOrigins[garden->tileGrid.tileCount * PLANTER_MAX_PLANTS];
 
-    // Get all the plants and planters to draw, and the hovered and selected tiles, and draw tiles
+    int maxEntities
+        = garden->tileGrid.tileCount + (garden->tileGrid.tileCount * PLANTER_MAX_PLANTS);
+
+    Drawable entitiesToDraw[maxEntities];
+    int entitiesToDrawCount = 0;
+
+    // Get all the entities to draw, the hovered and selected tiles, and draw tiles
     for (int i = 0; i < garden->tileGrid.tileCount; i++) {
         IsoRec currentTile = getTileIsoVertices(garden, i);
 
@@ -373,31 +400,40 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
             Vector2 isoTileOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
 
-            plantersToDraw[plantersToDrawCount] = planter;
-            plantersOrigins[plantersToDrawCount] = isoTileOrigin;
+            entitiesToDraw[entitiesToDrawCount] = (Drawable){
+                DRAWABLE_PLANTER,
+                planter,
+                isoTileOrigin,
+                isoTileOrigin.y,
+            };
 
             if (i == garden->tiles[garden->tileHovered].planterIndex) {
                 hoveredPlanterToDrawIndex = i;
             }
 
-            plantersToDrawCount++;
+            entitiesToDrawCount++;
 
             int plantsCount = planter_getPlantCount(planter);
 
             for (int j = 0; j < plantsCount; j++) {
                 if (planter->plants[j].exists) {
                     Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
-                    plantsToDraw[plantsToDrawCount] = &planter->plants[j];
-
-                    plantsOrigins[plantsToDrawCount]
+                    Vector2 plantOrigin
                         = planter_getPlantWorldPos(planter, &garden->transform, planterOrigin, j);
+
+                    entitiesToDraw[entitiesToDrawCount] = (Drawable){
+                        DRAWABLE_PLANT,
+                        &planter->plants[j],
+                        plantOrigin,
+                        plantOrigin.y,
+                    };
 
                     if (i == garden->tiles[garden->tileHovered].planterIndex
                         && j == garden->planterTileHovered) {
-                        hoveredPlantToDrawIndex = plantsToDrawCount;
+                        hoveredPlantToDrawIndex = entitiesToDrawCount;
                     }
 
-                    plantsToDrawCount++;
+                    entitiesToDrawCount++;
                 }
             }
         }
@@ -448,22 +484,37 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         EndBlendMode();
     }
 
-    // Draw planters
-    for (int i = 0; i < plantersToDrawCount; i++) {
-        planter_draw(plantersToDraw[i],
-            plantersOrigins[i],
-            garden->transform.scale,
-            garden->transform.rotation,
-            WHITE);
+    // Draw entities
+    qsort(entitiesToDraw, entitiesToDrawCount, sizeof(Drawable), compareDrawableDepths);
 
-        if (i == hoveredPlanterToDrawIndex) {
-            BeginBlendMode(BLEND_ADDITIVE);
-            planter_draw(plantersToDraw[i],
-                plantersOrigins[i],
-                garden->transform.scale,
-                garden->transform.rotation,
-                (Color){255, 255, 255, 100});
-            EndBlendMode();
+    for (int i = 0; i < entitiesToDrawCount; i++) {
+        Vector2 origin = entitiesToDraw[i].origin;
+
+        if (entitiesToDraw[i].type == DRAWABLE_PLANTER) {
+            Planter *p = entitiesToDraw[i].data;
+
+            planter_draw(p, origin, garden->transform.scale, garden->transform.rotation, WHITE);
+
+            if (i == hoveredPlanterToDrawIndex) {
+                BeginBlendMode(BLEND_ADDITIVE);
+                planter_draw(p,
+                    origin,
+                    garden->transform.scale,
+                    garden->transform.rotation,
+                    (Color){255, 255, 255, 100});
+                EndBlendMode();
+            }
+        } else {
+
+            Plant *p = entitiesToDraw[i].data;
+
+            plant_draw(p, origin, garden->transform.scale, WHITE);
+
+            if (i == hoveredPlantToDrawIndex) {
+                BeginBlendMode(BLEND_ADDITIVE);
+                plant_draw(p, origin, garden->transform.scale, (Color){255, 255, 255, 100});
+                EndBlendMode();
+            }
         }
     }
 
@@ -495,20 +546,6 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
                 DrawEllipse(plantWorldPos.x, plantWorldPos.y, 10, 5, (Color){255, 255, 255, 225});
             }
-        }
-    }
-
-    // Draw plants
-    for (int i = 0; i < plantsToDrawCount; i++) {
-        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->transform.scale, WHITE);
-
-        if (i == hoveredPlantToDrawIndex) {
-            BeginBlendMode(BLEND_ADDITIVE);
-            plant_draw(plantsToDraw[i],
-                plantsOrigins[i],
-                garden->transform.scale,
-                (Color){255, 255, 255, 100});
-            EndBlendMode();
         }
     }
 
