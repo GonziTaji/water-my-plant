@@ -337,6 +337,17 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
     IsoRec hoveredTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
     IsoRec selectedTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
 
+    int hoveredPlanterToDrawIndex = -1;
+    int plantersToDrawCount = 0;
+    Planter *plantersToDraw[garden->tileGrid.tileCount];
+    Vector2 plantersOrigins[garden->tileGrid.tileCount];
+
+    int hoveredPlantToDrawIndex = -1;
+    int plantsToDrawCount = 0;
+    Plant *plantsToDraw[garden->tileGrid.tileCount * PLANTER_MAX_PLANTS];
+    Vector2 plantsOrigins[garden->tileGrid.tileCount * PLANTER_MAX_PLANTS];
+
+    // Get all the plants and planters to draw, and the hovered and selected tiles, and draw tiles
     for (int i = 0; i < garden->tileGrid.tileCount; i++) {
         IsoRec currentTile = getTileIsoVertices(garden, i);
 
@@ -351,6 +362,45 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             (Vector2){0, 0},
             0,
             WHITE);
+
+        Planter *planter = &garden->planters[i];
+
+        if (planter->exists) {
+            int isoTileIndex = utils_grid_getTileIndexFromCoords(
+                garden->tileGrid.cols, garden->tileGrid.rows, planter->coords.x, planter->coords.y);
+
+            IsoRec isoTile = getPlanterIsoVertices(garden, isoTileIndex);
+
+            Vector2 isoTileOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
+
+            plantersToDraw[plantersToDrawCount] = planter;
+            plantersOrigins[plantersToDrawCount] = isoTileOrigin;
+
+            if (i == garden->tiles[garden->tileHovered].planterIndex) {
+                hoveredPlanterToDrawIndex = i;
+            }
+
+            plantersToDrawCount++;
+
+            int plantsCount = planter_getPlantCount(planter);
+
+            for (int j = 0; j < plantsCount; j++) {
+                if (planter->plants[j].exists) {
+                    Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+                    plantsToDraw[plantsToDrawCount] = &planter->plants[j];
+
+                    plantsOrigins[plantsToDrawCount]
+                        = planter_getPlantWorldPos(planter, &garden->transform, planterOrigin, j);
+
+                    if (i == garden->tiles[garden->tileHovered].planterIndex
+                        && j == garden->planterTileHovered) {
+                        hoveredPlantToDrawIndex = plantsToDrawCount;
+                    }
+
+                    plantsToDrawCount++;
+                }
+            }
+        }
 
         if (garden->tileSelected == i || garden->tileHovered == i) {
             int planterIndex = garden->tiles[i].planterIndex;
@@ -381,6 +431,9 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         }
     }
 
+    drawIsoRectangleLines(garden, getGardenIsoVertices(garden), 2, WHITE);
+
+    // Draw selection/hovered indicators
     if (!(selectedTile.left.x == 0 && selectedTile.right.x == 0)) {
         drawIsoRectangleLines(garden, selectedTile, 2, DARKBROWN);
     }
@@ -395,58 +448,26 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         EndBlendMode();
     }
 
-    drawIsoRectangleLines(garden, getGardenIsoVertices(garden), 2, WHITE);
+    // Draw planters
+    for (int i = 0; i < plantersToDrawCount; i++) {
+        planter_draw(plantersToDraw[i],
+            plantersOrigins[i],
+            garden->transform.scale,
+            garden->transform.rotation,
+            WHITE);
 
-    int plantsToDrawCount = 0;
-    Plant *plantsToDraw[garden->tileGrid.tileCount];
-    Vector2 plantsOrigins[garden->tileGrid.tileCount];
-
-    for (int i = 0; i < garden->tileGrid.tileCount; i++) {
-        Planter *planter = &garden->planters[i];
-
-        if (!planter->exists) {
-            continue;
-        }
-
-        int isoTileIndex = utils_grid_getTileIndexFromCoords(
-            garden->tileGrid.cols, garden->tileGrid.rows, planter->coords.x, planter->coords.y);
-        IsoRec isoTile = getPlanterIsoVertices(garden, isoTileIndex);
-
-        Vector2 isoTileOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
-
-        planter_draw(
-            planter, isoTileOrigin, garden->transform.scale, garden->transform.rotation, WHITE);
-
-        if (i == garden->tiles[garden->tileHovered].planterIndex) {
+        if (i == hoveredPlanterToDrawIndex) {
             BeginBlendMode(BLEND_ADDITIVE);
-            planter_draw(planter,
-                isoTileOrigin,
+            planter_draw(plantersToDraw[i],
+                plantersOrigins[i],
                 garden->transform.scale,
                 garden->transform.rotation,
                 (Color){255, 255, 255, 100});
             EndBlendMode();
         }
-
-        int plantsCount = planter_getPlantCount(planter);
-
-        for (int j = 0; j < plantsCount; j++) {
-            if (planter->plants[j].exists) {
-                Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
-                plantsToDraw[plantsToDrawCount] = &planter->plants[j];
-
-                plantsOrigins[plantsToDrawCount]
-                    = planter_getPlantWorldPos(planter, &garden->transform, planterOrigin, j);
-                plantsToDrawCount++;
-            }
-        }
     }
 
-    // Draw plants after planters. Maybe use translation's Y base to order in case there's a high
-    // planter
-    for (int i = 0; i < plantsToDrawCount; i++) {
-        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->transform.scale, WHITE);
-    }
-
+    // Draw available slots to put a plant when a plant cutting is selected
     if (toolSelected == GARDENING_TOOL_PLANT_CUTTING) {
         for (int i = 0; i < garden->tileGrid.tileCount; i++) {
             if (!garden->planters[i].exists) {
@@ -457,7 +478,9 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
             for (int j = 0; j < planter->plantGrid.tileCount; j++) {
                 // don't draw slot indicator if the planter has a plant in that slot
-                if (planter->plants[j].exists || garden->planterTileHovered == j) {
+                if (planter->plants[j].exists
+                    || (i == garden->tiles[garden->tileHovered].planterIndex
+                        && j == garden->planterTileHovered)) {
                     continue;
                 }
 
@@ -475,7 +498,21 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         }
     }
 
-    // Draw selection indicator at the end
+    // Draw plants
+    for (int i = 0; i < plantsToDrawCount; i++) {
+        plant_draw(plantsToDraw[i], plantsOrigins[i], garden->transform.scale, WHITE);
+
+        if (i == hoveredPlantToDrawIndex) {
+            BeginBlendMode(BLEND_ADDITIVE);
+            plant_draw(plantsToDraw[i],
+                plantsOrigins[i],
+                garden->transform.scale,
+                (Color){255, 255, 255, 100});
+            EndBlendMode();
+        }
+    }
+
+    // Draw item on hovered tile
     if (garden->tileHovered != -1) {
         int i = garden->tileHovered;
 
