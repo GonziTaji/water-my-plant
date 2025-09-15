@@ -23,7 +23,7 @@ Vector2 planter_getFootPrint(PlanterType planterType, Rotation rotation) {
         break;
 
     case PLANTER_COUCH:
-        d = (Vector2){4, 4};
+        d = (Vector2){3, 4};
         break;
 
     case PLANTER_TYPE_COUNT:
@@ -42,15 +42,15 @@ Vector3 planter_getIsoDimensions(PlanterType planterType, Rotation rotation) {
     Vector3 dimensionsOnGrid = {f.x, f.y, 0};
 
     if (planterType == PLANTER_COUCH) {
-        dimensionsOnGrid.z = 2;
+        dimensionsOnGrid.z = 1.5;
     } else if (planterType == PLANTER_TYPE_2x2) {
-        dimensionsOnGrid.z = 1;
+        dimensionsOnGrid.z = 0.5;
     }
 
     return (Vector3){
         (dimensionsOnGrid.x + dimensionsOnGrid.y) * TILE_WIDTH / 2,
         (dimensionsOnGrid.x + dimensionsOnGrid.y) * TILE_HEIGHT / 2,
-        dimensionsOnGrid.z * TILE_HEIGHT / 2,
+        dimensionsOnGrid.z * TILE_HEIGHT,
     };
 }
 

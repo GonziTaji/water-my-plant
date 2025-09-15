@@ -7,7 +7,9 @@
 #include <assert.h>
 #include <math.h>
 #include <raylib.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define LIGHT_SOURCE_RADIUS 40
@@ -100,6 +102,7 @@ IsoRec getPlanterIsoVertices(const Garden *garden, int tileIndex) {
     const Planter *p = &garden->planters[planterIndex];
 
     Rectangle planterRec = {p->coords.x, p->coords.y, p->size.x, p->size.y};
+
     IsoRec isoRec = utils_toIsoRec(
         &garden->transform, planterRec, garden->tileGrid.tileWidth, garden->tileGrid.tileHeight);
 
@@ -344,6 +347,7 @@ typedef struct {
     void *data;
     Vector2 origin;
     float depth;
+    bool highlight;
 } Drawable;
 
 int compareDrawableDepths(const void *a, const void *b) {
@@ -364,9 +368,6 @@ int compareDrawableDepths(const void *a, const void *b) {
 void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVariantSelected) {
     IsoRec hoveredTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
     IsoRec selectedTile = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
-
-    int hoveredPlanterToDrawIndex = -1;
-    int hoveredPlantToDrawIndex = -1;
 
     int maxEntities
         = garden->tileGrid.tileCount + (garden->tileGrid.tileCount * PLANTER_MAX_PLANTS);
@@ -404,12 +405,9 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                 DRAWABLE_PLANTER,
                 planter,
                 isoTileOrigin,
-                isoTileOrigin.y,
+                isoTile.bottom.y,
+                i == garden->tiles[garden->tileHovered].planterIndex,
             };
-
-            if (i == garden->tiles[garden->tileHovered].planterIndex) {
-                hoveredPlanterToDrawIndex = i;
-            }
 
             entitiesToDrawCount++;
 
@@ -421,17 +419,12 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                     Vector2 plantOrigin
                         = planter_getPlantWorldPos(planter, &garden->transform, planterOrigin, j);
 
-                    entitiesToDraw[entitiesToDrawCount] = (Drawable){
-                        DRAWABLE_PLANT,
+                    entitiesToDraw[entitiesToDrawCount] = (Drawable){DRAWABLE_PLANT,
                         &planter->plants[j],
                         plantOrigin,
                         plantOrigin.y,
-                    };
-
-                    if (i == garden->tiles[garden->tileHovered].planterIndex
-                        && j == garden->planterTileHovered) {
-                        hoveredPlantToDrawIndex = entitiesToDrawCount;
-                    }
+                        i == garden->tiles[garden->tileHovered].planterIndex
+                            && j == garden->planterTileHovered};
 
                     entitiesToDrawCount++;
                 }
@@ -495,7 +488,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
             planter_draw(p, origin, garden->transform.scale, garden->transform.rotation, WHITE);
 
-            if (i == hoveredPlanterToDrawIndex) {
+            if (entitiesToDraw[i].highlight) {
                 BeginBlendMode(BLEND_ADDITIVE);
                 planter_draw(p,
                     origin,
@@ -505,12 +498,11 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                 EndBlendMode();
             }
         } else {
-
             Plant *p = entitiesToDraw[i].data;
 
             plant_draw(p, origin, garden->transform.scale, WHITE);
 
-            if (i == hoveredPlantToDrawIndex) {
+            if (entitiesToDraw[i].highlight) {
                 BeginBlendMode(BLEND_ADDITIVE);
                 plant_draw(p, origin, garden->transform.scale, (Color){255, 255, 255, 100});
                 EndBlendMode();
@@ -571,7 +563,8 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             planter_draw(&p,
                 drawOrigin,
                 garden->transform.scale,
-                garden->transform.rotation,
+                0,
+                // garden->transform.rotation,
                 (Color){255, 255, 255, 200});
 
         } else if (toolSelected == GARDENING_TOOL_PLANT_CUTTING) {
@@ -603,6 +596,34 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             plant_draw(&plant, drawOrigin, garden->transform.scale, (Color){255, 255, 255, 200});
         }
     }
+
+    // drawings for debug
+
+    for (int i = 0; i < garden->tileGrid.tileCount; i++) {
+        IsoRec currentTile = getTileIsoVertices(garden, i);
+
+        int planterIndex = garden->tiles[i].planterIndex;
+
+        if (planterIndex == -1) {
+            continue;
+        }
+
+        char buffer[8];
+
+        snprintf(buffer, 8, "%d", planterIndex);
+
+        DrawText(buffer,
+            currentTile.right.x - ((currentTile.right.x - currentTile.left.x) / 2),
+            currentTile.bottom.y - ((currentTile.bottom.y - currentTile.top.y) / 2),
+            20,
+            WHITE);
+    }
+
+    char buffer[8];
+    snprintf(buffer, 8, "GR %d", garden->transform.rotation);
+    DrawText(buffer, 600, 0, 20, WHITE);
+    snprintf(buffer, 8, "SR %d", garden->selectionRotation);
+    DrawText(buffer, 600, 30, 20, WHITE);
 
     // DrawCircle(garden->lightSourcePos.x,
     //     garden->lightSourcePos.y,

@@ -363,9 +363,6 @@ void ui_draw(UI *ui,
 
     // Draw cursor at the end
     Texture2D cursorTexture;
-    Texture2D cursorExtraTexture;
-    Rectangle cursorExtraSourceRec = {0, 0, 0, 0};
-    cursorExtraTexture.id = 0;
 
     switch (toolSelected) {
     case GARDENING_TOOL_IRRIGATOR:
@@ -378,16 +375,10 @@ void ui_draw(UI *ui,
 
     case GARDENING_TOOL_PLANTER:
         cursorTexture = cursorTexture_planter;
-        cursorExtraTexture = planterAtlas;
-        cursorExtraSourceRec = (Rectangle){0, 0, planterAtlas.width, planterAtlas.height};
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
         cursorTexture = cursorTexture_plant;
-        cursorExtraTexture = plantAtlas;
-
-        int variantSelection = ui->toolVariantButtonPannel.activeButtonIndex;
-        cursorExtraSourceRec = plant_getSpriteSourceRect(variantSelection, 100);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:
@@ -405,20 +396,4 @@ void ui_draw(UI *ui,
 
     Vector2 mp = input->worldMousePos;
     DrawTexture(cursorTexture, mp.x - cursorTexture_1.width, mp.y, WHITE);
-
-    if (cursorExtraTexture.id != 0) {
-        DrawTexturePro(cursorExtraTexture,
-            cursorExtraSourceRec,
-            (Rectangle){
-                0,
-                0,
-                // mp.x + 10,
-                // mp.y + 10,
-                cursorExtraSourceRec.width / 2,
-                cursorExtraSourceRec.height / 2,
-            },
-            (Vector2){0, 0},
-            0,
-            GetColor(0xffffffec));
-    }
 }

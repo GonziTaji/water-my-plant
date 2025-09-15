@@ -63,7 +63,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
         Planter *p = &garden->planters[planterIndex];
 
-        planter_init(p, planterType, origin, garden->selectionRotation, garden->tileGrid.tileWidth);
+        planter_init(p, planterType, origin, rotation, garden->tileGrid.tileWidth);
 
         for (int x = p->coords.x; x < end.x; x++) {
             for (int y = p->coords.y; y < end.y; y++) {
@@ -86,6 +86,12 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
     if (planterIndex == -1) {
         // nothing to do
         return;
+    }
+
+    for (int i = 0; i < garden->tileGrid.tileCount; i++) {
+        if (garden->tiles[i].planterIndex == planterIndex) {
+            garden->tiles[i].planterIndex = -1;
+        }
     }
 
     Planter *planter = &garden->planters[planterIndex];
