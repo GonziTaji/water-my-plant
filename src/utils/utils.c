@@ -179,12 +179,17 @@ Vector2 utils_grid_coordsToWorldPoint(
 
 IsoRec utils_toIsoRec(
     const SceneTransform *transform, Rectangle rec, float tileWidth, float tileHeight) {
+
+    Vector2 left = {rec.x, rec.y};
+    Vector2 top = {rec.x + rec.width, rec.y};
+    Vector2 right = {rec.x + rec.width, rec.y + rec.height};
+    Vector2 bottom = {rec.x, rec.y + rec.height};
+
     IsoRec isoRec = {
-        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y, tileWidth, tileHeight),
-        utils_grid_coordsToWorldPoint(transform, rec.x + rec.width, rec.y, tileWidth, tileHeight),
-        utils_grid_coordsToWorldPoint(
-            transform, rec.x + rec.width, rec.y + rec.height, tileWidth, tileHeight),
-        utils_grid_coordsToWorldPoint(transform, rec.x, rec.y + rec.height, tileWidth, tileHeight),
+        utils_grid_coordsToWorldPoint(transform, left.x, left.y, tileWidth, tileHeight),
+        utils_grid_coordsToWorldPoint(transform, top.x, top.y, tileWidth, tileHeight),
+        utils_grid_coordsToWorldPoint(transform, right.x, right.y, tileWidth, tileHeight),
+        utils_grid_coordsToWorldPoint(transform, bottom.x, bottom.y, tileWidth, tileHeight),
     };
 
     utils_rotateIsoRec(&isoRec, transform->rotation);

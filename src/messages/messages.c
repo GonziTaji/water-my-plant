@@ -23,8 +23,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
         return;
     }
 
-    Rotation rotation = utils_rotate(garden->transform.rotation, garden->selectionRotation);
-    Vector2 dimensions = planter_getFootPrint(planterType, rotation);
+    Vector2 dimensions = planter_getFootPrint(planterType, garden->selectionRotation);
     Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
 
@@ -63,7 +62,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
         Planter *p = &garden->planters[planterIndex];
 
-        planter_init(p, planterType, origin, rotation, garden->tileGrid.tileWidth);
+        planter_init(p, planterType, origin, garden->selectionRotation, garden->tileGrid.tileWidth);
 
         for (int x = p->coords.x; x < end.x; x++) {
             for (int y = p->coords.y; y < end.y; y++) {

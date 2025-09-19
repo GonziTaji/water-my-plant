@@ -433,19 +433,9 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
         if (garden->tileSelected == i || garden->tileHovered == i) {
             int planterIndex = garden->tiles[i].planterIndex;
-            bool alive = garden->planters[planterIndex].exists;
 
-            if (planterIndex != -1 && alive) {
+            if (planterIndex != -1 && garden->planters[planterIndex].exists) {
                 currentTile = getPlanterIsoVertices(garden, i);
-            } else if (garden->tileHovered == i && toolSelected == GARDENING_TOOL_PLANTER) {
-                Vector2 p = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
-                Rotation r = utils_rotate(garden->selectionRotation, garden->transform.rotation);
-                Vector2 d = planter_getFootPrint(toolVariantSelected, r);
-
-                currentTile = utils_toIsoRec(&garden->transform,
-                    (Rectangle){p.x, p.y, d.x, d.y},
-                    garden->tileGrid.tileWidth,
-                    garden->tileGrid.tileHeight);
             } else if (garden->tileHovered == i) {
                 currentTile = getHoveredIsoVertices(garden, i, toolSelected, toolVariantSelected);
             }
@@ -546,25 +536,19 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         int i = garden->tileHovered;
 
         if (toolSelected == GARDENING_TOOL_PLANTER) {
-            IsoRec isoTile = getHoveredIsoVertices(garden, i, toolSelected, toolVariantSelected);
+            IsoRec isoTile = hoveredTile;
             Vector2 drawOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
             Planter p;
             Vector2 gridCoords = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
-            Vector2 translation = utils_grid_coordsToWorldPoint(&garden->transform,
-                gridCoords.x,
-                gridCoords.y,
-                garden->tileGrid.tileWidth,
-                garden->tileGrid.tileHeight);
             planter_init(&p,
                 toolVariantSelected,
-                translation,
+                gridCoords,
                 garden->selectionRotation,
                 garden->tileGrid.tileWidth);
             planter_draw(&p,
                 drawOrigin,
                 garden->transform.scale,
-                0,
-                // garden->transform.rotation,
+                garden->transform.rotation,
                 (Color){255, 255, 255, 200});
 
         } else if (toolSelected == GARDENING_TOOL_PLANT_CUTTING) {
