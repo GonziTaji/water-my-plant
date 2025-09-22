@@ -490,7 +490,8 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                         .origin = plantOrigin,
                         .tileDepth = zIndex,
                         .localDepth = getPlantZIndex(garden->transform.rotation, planter, j),
-                        .highlight = i == tileHovered->planterIndex && j == tileHovered->plantIndex,
+                        .highlight
+                        = i == tileHovered->planterIndex && j == garden->planterTileHovered,
                     };
 
                     entitiesToDrawCount++;
@@ -615,11 +616,50 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
     // drawings for debug - maybe refactor into something to control this on runtime?
 
-    bool showZIndexOnTile = true;
-    bool showZIndexOnEntity = true;
+    bool showZIndexOnTile = false;
+    bool showZIndexOnEntity = false;
     bool showPlanterIndexOnTile = false;
-    bool drawTileBounds = true;
+    bool drawTileBounds = false;
+    bool drawPlantBounds = true;
     char buffer[8];
+
+    if (drawPlantBounds) {
+        for (int i = 0; i < garden->tileGrid.tileCount; i++) {
+            Planter *planter = &garden->planters[i];
+
+            if (planter->exists) {
+                for (int j = 0; j < planter->plantGrid.tileCount; j++) {
+                    if (planter->plants[j].exists) {
+
+                        Vector2 plantCoords
+                            = grid_getCoordsFromTileIndex(planter->plantGrid.cols, j);
+
+                        Vector2 planterWorldPos = grid_coordsToWorldPoint(&garden->transform,
+                            planter->coords.x,
+                            planter->coords.y,
+                            garden->tileGrid.tileWidth,
+                            garden->tileGrid.tileHeight);
+
+                        planterWorldPos.y -= planter->plantBasePosY;
+
+                        SceneTransform localTransform = {
+                            planterWorldPos,
+                            garden->transform.rotation,
+                            garden->transform.scale,
+                        };
+
+                        IsoRec isoRec = grid_toIsoRec(&localTransform,
+                            plantCoords,
+                            (Vector2){1, 1},
+                            planter->plantGrid.tileWidth,
+                            planter->plantGrid.tileHeight);
+
+                        drawIsoRectangleLines(garden, isoRec, 1, RED);
+                    }
+                }
+            }
+        }
+    }
 
     for (int i = 0; i < garden->tileGrid.tileCount; i++) {
         IsoRec currentTile = getTileIsoVertices(garden, i);
@@ -650,35 +690,6 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             Planter *planter = &garden->planters[i];
 
             if (planter->exists) {
-                // V1: use of size and rotation to get nearest coords
-                //
-                // Vector2 nearestCoords = planter->coords;
-                // Vector2 size = planter_getFootPrint(
-                //     planter->type, utils_rotate(garden->transform.rotation, planter->rotation));
-                //
-                // switch (garden->transform.rotation) {
-                // case ROTATION_0:
-                //     nearestCoords.y += size.y - 1;
-                //     break;
-                // case ROTATION_90:
-                //     nearestCoords.x += size.y - 1;
-                //     nearestCoords.y += size.x - 1;
-                //     break;
-                // case ROTATION_180:
-                //     nearestCoords.x += size.x - 1;
-                //     break;
-                // case ROTATION_270:
-                // case ROTATION_COUNT:
-                //     break;
-                // }
-                //
-                // int zIndex = grid_getZIndex(garden->transform.rotation,
-                //     nearestCoords.x,
-                //     nearestCoords.y,
-                //     garden->tileGrid.cols,
-                //     garden->tileGrid.rows);
-                //
-
                 int planterTileIndex = grid_getTileIndexFromCoords(garden->tileGrid.cols,
                     garden->tileGrid.rows,
                     planter->coords.x,

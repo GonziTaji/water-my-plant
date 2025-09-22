@@ -20,7 +20,6 @@
 // Maybe don't use this lol
 typedef struct {
     int planterIndex;
-    int plantIndex;
     int lightLevel;
 } GardenTile;
 

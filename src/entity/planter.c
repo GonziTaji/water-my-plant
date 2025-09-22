@@ -33,7 +33,7 @@ static Vector2 getSpriteDimensions(PlanterType type, Rotation rotation) {
 }
 
 /// internal plant grid of the planter
-static TileGrid getGrid(PlanterType planterType, Rotation rotation, int worldTileGrid) {
+static TileGrid getGrid(PlanterType planterType, Rotation rotation, int worldTileWidth) {
     Vector2 dimensions = planter_getFootPrint(planterType, rotation);
 
     TileGrid grid;
@@ -74,8 +74,8 @@ static TileGrid getGrid(PlanterType planterType, Rotation rotation, int worldTil
 
     grid.tileCount = grid.cols * grid.rows;
 
-    grid.tileHeight = (worldTileGrid / 2.0f) * (dimensions.x / grid.cols);
-    grid.tileWidth = worldTileGrid * (dimensions.y / grid.rows);
+    grid.tileHeight = (worldTileWidth / 2.0f) * (dimensions.x / grid.cols);
+    grid.tileWidth = worldTileWidth * (dimensions.y / grid.rows);
 
     return grid;
 }

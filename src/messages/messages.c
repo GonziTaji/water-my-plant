@@ -97,7 +97,6 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
 
         if (plant->exists) {
             plant->exists = false;
-            garden->tiles[garden->tileHovered].plantIndex = -1;
         } else {
             // TODO: do something if clicked on planter with plants, but in a empty plant space?
             planter->exists = false;
@@ -146,7 +145,6 @@ static void addPlantToSelectedPlanter(Garden *garden, Vector2 worldMousePos, enu
 
     if (!plant->exists) {
         planter_addPlant(planter, plantIndex, type);
-        garden->tiles[garden->tileHovered].plantIndex = plantIndex;
     }
 }
 
