@@ -120,3 +120,59 @@ IsoRec grid_toIsoRec(const SceneTransform *transform,
 
     return isoRec;
 }
+
+Vector2 grid_getDistanceFromFarthestTile(Rotation rotation, int x, int y, int cols, int rows) {
+    Vector2 distance;
+
+    switch (rotation) {
+    case ROTATION_0:
+        distance.x = cols - 1 - x;
+        distance.y = y;
+        break;
+    case ROTATION_90:
+        distance.x = y;
+        distance.y = x;
+        break;
+    case ROTATION_180:
+        distance.x = x;
+        distance.y = rows - 1 - y;
+        break;
+    case ROTATION_270:
+        distance.x = rows - 1 - y;
+        distance.y = cols - 1 - x;
+        break;
+    case ROTATION_COUNT:
+        assert(false);
+        break;
+    }
+
+    return distance;
+}
+
+int grid_getZIndex(Rotation rotation, int x, int y, int cols, int rows) {
+    Vector2 distance = grid_getDistanceFromFarthestTile(rotation, x, y, cols, rows);
+    int localCols;
+    int localRows;
+
+    switch (rotation) {
+    case ROTATION_180:
+    case ROTATION_0:
+        localCols = cols;
+        localRows = rows;
+        break;
+    case ROTATION_90:
+    case ROTATION_270:
+        localCols = rows;
+        localRows = cols;
+        break;
+    case ROTATION_COUNT:
+        assert(false);
+        break;
+    }
+
+    int d = distance.x + distance.y;
+    d += distance.y * localCols;
+    d += distance.x * localRows;
+
+    return d;
+}

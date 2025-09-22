@@ -251,6 +251,7 @@ Rectangle planter_getSpriteSourceRec(
 
 void planter_draw(
     Planter *planter, Vector2 origin, float scale, Rotation viewRotation, Color color) {
+
     Rectangle source = planter_getSpriteSourceRec(planter->type, planter->rotation, viewRotation);
 
     Rectangle dest = {

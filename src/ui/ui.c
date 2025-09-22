@@ -250,6 +250,20 @@ void ui_draw(UI *ui,
 
         DrawTextEx(uiFont, buffer, (Vector2){100, 300}, fontSize, 0, WHITE);
 
+        Vector2 distanceToLeftVertice = grid_getDistanceFromFarthestTile(garden->transform.rotation,
+            tileCoords.x,
+            tileCoords.y,
+            garden->tileGrid.cols,
+            garden->tileGrid.rows);
+
+        snprintf(buffer,
+            sizeof(buffer),
+            "distance to left vertice (X, Y) = %d, %d",
+            (int)distanceToLeftVertice.x,
+            (int)distanceToLeftVertice.y);
+
+        DrawTextEx(uiFont, buffer, (Vector2){100, 330}, fontSize, 0, WHITE);
+
         int lightLevel = garden->tiles[tileIndex].lightLevel;
         int planterIndex = garden->tiles[tileIndex].planterIndex;
         Planter *planter = &garden->planters[planterIndex];

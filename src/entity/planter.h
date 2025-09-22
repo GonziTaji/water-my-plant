@@ -49,8 +49,6 @@ void planter_draw(Planter *planter, Vector2 origin, float scale, Rotation rotati
 Vector2 planter_getPlantWorldPos(
     Planter *planter, SceneTransform *transform, Vector2 planterWorldPos, int plantIndex);
 
-Vector2 planter_getPlantCoords(Planter *planter, int plantIndex);
-
 int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 point);
 
 int planter_getPlantIndexFromWorldPos(

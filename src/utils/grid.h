@@ -30,3 +30,7 @@ IsoRec grid_toIsoRec(const SceneTransform *transform,
     Vector2 size,
     float tileWidth,
     float tileHeight);
+
+Vector2 grid_getDistanceFromFarthestTile(Rotation rotation, int x, int y, int cols, int rows);
+
+int grid_getZIndex(Rotation rotation, int x, int y, int cols, int rows);
