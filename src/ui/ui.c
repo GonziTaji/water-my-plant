@@ -1,6 +1,5 @@
 #include "ui.h"
 #include "../core/asset_manager.h"
-#include "../utils/utils.h"
 #include "button.h"
 #include "raylib.h"
 #include "ui_text_box.h"
@@ -241,7 +240,7 @@ void ui_draw(UI *ui,
     char buffer[64];
 
     if (tileIndex != -1) {
-        Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
+        Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
 
         snprintf(buffer,
             sizeof(buffer),
@@ -274,8 +273,6 @@ void ui_draw(UI *ui,
         if (planter->exists) {
             Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
-            // how to deal with const? I really don't want to have two functions and have one
-            // returning a readonly plant and one returning a mutable plant pointer
             int plantIndex = planter_getPlantIndexFromWorldPos(
                 planter, &garden->transform, planterOrigin, input->worldMousePos);
 

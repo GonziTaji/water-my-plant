@@ -4,7 +4,7 @@
 #include "../game/gameplay.h"
 #include "../input/input.h"
 #include "../messages/messages.h"
-#include "../utils/utils.h"
+#include "../utils/grid.h"
 #include "planter.h"
 #include <raylib.h>
 
@@ -20,6 +20,7 @@
 // Maybe don't use this lol
 typedef struct {
     int planterIndex;
+    int plantIndex;
     int lightLevel;
 } GardenTile;
 

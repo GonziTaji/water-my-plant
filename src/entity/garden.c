@@ -61,13 +61,9 @@ Vector2 getLightSourcePosition(Garden *garden, int gameplayTime) {
 }
 
 IsoRec getGardenIsoVertices(Garden *garden) {
-    IsoRec isoRec = utils_toIsoRec(&garden->transform,
-        (Rectangle){
-            0,
-            0,
-            garden->tileGrid.cols,
-            garden->tileGrid.rows,
-        },
+    IsoRec isoRec = grid_toIsoRec(&garden->transform,
+        (Vector2){0, 0},
+        (Vector2){garden->tileGrid.cols, garden->tileGrid.rows},
         garden->tileGrid.tileWidth,
         garden->tileGrid.tileHeight);
 
@@ -77,22 +73,18 @@ IsoRec getGardenIsoVertices(Garden *garden) {
 /// If a planter with size NxM is hovered, it's whole area is hovered
 IsoRec getHoveredIsoVertices(
     const Garden *garden, int tileIndex, enum GardeningTool tool, int toolVariant) {
-    Vector2 translation = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
+    Vector2 coords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
     Vector2 dimensions = {1, 1};
 
     if (tool == GARDENING_TOOL_PLANTER) {
         dimensions = planter_getFootPrint(toolVariant, garden->selectionRotation);
     }
 
-    Rectangle rec = (Rectangle){
-        translation.x,
-        translation.y,
-        dimensions.x,
-        dimensions.y,
-    };
-
-    IsoRec isoRec = utils_toIsoRec(
-        &garden->transform, rec, garden->tileGrid.tileWidth, garden->tileGrid.tileHeight);
+    IsoRec isoRec = grid_toIsoRec(&garden->transform,
+        coords,
+        dimensions,
+        garden->tileGrid.tileWidth,
+        garden->tileGrid.tileHeight);
 
     return isoRec;
 }
@@ -101,20 +93,23 @@ IsoRec getPlanterIsoVertices(const Garden *garden, int tileIndex) {
     int planterIndex = garden->tiles[tileIndex].planterIndex;
     const Planter *p = &garden->planters[planterIndex];
 
-    Rectangle planterRec = {p->coords.x, p->coords.y, p->size.x, p->size.y};
-
-    IsoRec isoRec = utils_toIsoRec(
-        &garden->transform, planterRec, garden->tileGrid.tileWidth, garden->tileGrid.tileHeight);
+    IsoRec isoRec = grid_toIsoRec(&garden->transform,
+        p->coords,
+        p->size,
+        garden->tileGrid.tileWidth,
+        garden->tileGrid.tileHeight);
 
     return isoRec;
 }
 
 IsoRec getTileIsoVertices(const Garden *garden, int tileIndex) {
-    Vector2 translation = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
-    Rectangle rec = {translation.x, translation.y, 1, 1};
+    Vector2 coords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
 
-    IsoRec isoRec = utils_toIsoRec(
-        &garden->transform, rec, garden->tileGrid.tileWidth, garden->tileGrid.tileHeight);
+    IsoRec isoRec = grid_toIsoRec(&garden->transform,
+        coords,
+        (Vector2){1, 1},
+        garden->tileGrid.tileWidth,
+        garden->tileGrid.tileHeight);
 
     return isoRec;
 }
@@ -124,14 +119,14 @@ float distanceBetweenPoints(Vector2 p1, Vector2 p2) {
 }
 
 void updateLightLevelOfTiles(Garden *garden) {
-    Vector2 lightSourceInGrid = utils_grid_worldPointToCoords(&garden->transform,
+    Vector2 lightSourceInGrid = grid_worldPointToCoords(&garden->transform,
         garden->lightSourcePos.x,
         garden->lightSourcePos.y,
         garden->tileGrid.tileWidth,
         garden->tileGrid.tileHeight);
 
     for (int i = 0; i < garden->tileGrid.tileCount; i++) {
-        Vector2 tileCoords = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
+        Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
 
         float distance = distanceBetweenPoints(tileCoords, lightSourceInGrid);
         garden->tiles[i].lightLevel = garden->lightSourceLevel - distance;
@@ -196,7 +191,7 @@ void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
 }
 
 Vector2 garden_getTileOrigin(Garden *garden, Vector2 coords) {
-    return utils_grid_coordsToWorldPoint(&garden->transform,
+    return grid_coordsToWorldPoint(&garden->transform,
         coords.x,
         coords.y,
         garden->tileGrid.tileWidth,
@@ -301,13 +296,13 @@ Message garden_processInput(Garden *garden, InputManager *input) {
 
     Vector2 *mousePos = &input->worldMousePos;
 
-    Vector2 cellHoveredCoords = utils_grid_worldPointToCoords(&garden->transform,
+    Vector2 cellHoveredCoords = grid_worldPointToCoords(&garden->transform,
         mousePos->x,
         mousePos->y,
         garden->tileGrid.tileWidth,
         garden->tileGrid.tileHeight);
 
-    int cellHoveredIndex = utils_grid_getTileIndexFromCoords(
+    int cellHoveredIndex = grid_getTileIndexFromCoords(
         garden->tileGrid.cols, garden->tileGrid.rows, cellHoveredCoords.x, cellHoveredCoords.y);
 
     garden->tileHovered = cellHoveredIndex;
@@ -394,7 +389,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         Planter *planter = &garden->planters[i];
 
         if (planter->exists) {
-            int isoTileIndex = utils_grid_getTileIndexFromCoords(
+            int isoTileIndex = grid_getTileIndexFromCoords(
                 garden->tileGrid.cols, garden->tileGrid.rows, planter->coords.x, planter->coords.y);
 
             IsoRec isoTile = getPlanterIsoVertices(garden, isoTileIndex);
@@ -517,7 +512,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                     continue;
                 }
 
-                Vector2 planterWorldPos = utils_grid_coordsToWorldPoint(&garden->transform,
+                Vector2 planterWorldPos = grid_coordsToWorldPoint(&garden->transform,
                     planter->coords.x,
                     planter->coords.y,
                     garden->tileGrid.tileWidth,
@@ -539,7 +534,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             IsoRec isoTile = hoveredTile;
             Vector2 drawOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
             Planter p;
-            Vector2 gridCoords = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
+            Vector2 gridCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
             planter_init(&p,
                 toolVariantSelected,
                 gridCoords,

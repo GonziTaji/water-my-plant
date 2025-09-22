@@ -219,7 +219,7 @@ void plant_update(Plant *plant, float deltaTime) {
     plant->mediumNutrition = utils_clampf(0, 100, plant->mediumNutrition);
 }
 
-Vector2 getSpriteDimensions(enum PlantType type) {
+static Vector2 getSpriteDimensions(enum PlantType type) {
     const int unit = 32;
     Vector2 dimensions = (Vector2){0, 0};
 

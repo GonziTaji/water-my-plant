@@ -3,7 +3,6 @@
 #include "../entity/garden.h"
 #include "../game/game.h"
 #include "../input/input.h"
-#include "../utils/utils.h"
 #include <assert.h>
 
 // try to name the functions following this conventions:
@@ -24,7 +23,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     }
 
     Vector2 dimensions = planter_getFootPrint(planterType, garden->selectionRotation);
-    Vector2 origin = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+    Vector2 origin = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
 
     bool planterFits = true;
@@ -33,13 +32,13 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     for (int x = origin.x; x < end.x; x++) {
         for (int y = origin.y; y < end.y; y++) {
             // could be outside
-            if (!utils_grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
+            if (!grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
                 planterFits = false;
                 break;
             }
 
-            int index = utils_grid_getTileIndexFromCoords(
-                garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+            int index
+                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
             if (garden->tiles[index].planterIndex != -1) {
                 planterFits = false;
@@ -66,7 +65,7 @@ static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
         for (int x = p->coords.x; x < end.x; x++) {
             for (int y = p->coords.y; y < end.y; y++) {
-                int tileIndex = utils_grid_getTileIndexFromCoords(
+                int tileIndex = grid_getTileIndexFromCoords(
                     garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
                 garden->tiles[tileIndex].planterIndex = planterIndex;
@@ -87,12 +86,6 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
         return;
     }
 
-    for (int i = 0; i < garden->tileGrid.tileCount; i++) {
-        if (garden->tiles[i].planterIndex == planterIndex) {
-            garden->tiles[i].planterIndex = -1;
-        }
-    }
-
     Planter *planter = &garden->planters[planterIndex];
     if (planter->exists == true) {
         Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
@@ -104,20 +97,14 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
 
         if (plant->exists) {
             plant->exists = false;
+            garden->tiles[garden->tileHovered].plantIndex = -1;
         } else {
             // TODO: do something if clicked on planter with plants, but in a empty plant space?
             planter->exists = false;
 
-            Vector2 end = (Vector2){
-                planter->coords.x + planter->size.x,
-                planter->coords.y + planter->size.y,
-            };
-
-            for (int x = planter->coords.x; x < end.x; x++) {
-                for (int y = planter->coords.y; y < end.y; y++) {
-                    int tileIndex = utils_grid_getTileIndexFromCoords(
-                        garden->tileGrid.cols, garden->tileGrid.rows, x, y);
-                    garden->tiles[tileIndex].planterIndex = -1;
+            for (int i = 0; i < garden->tileGrid.tileCount; i++) {
+                if (garden->tiles[i].planterIndex == planterIndex) {
+                    garden->tiles[i].planterIndex = -1;
                 }
             }
         }
@@ -139,7 +126,7 @@ static void selectNextToolVariant(Game *g) {
     selectToolVariant(g, nextVariant);
 }
 
-static void addPlantToSelectedPlanter(Garden *garden, InputManager *input, enum PlantType type) {
+static void addPlantToSelectedPlanter(Garden *garden, Vector2 worldMousePos, enum PlantType type) {
     if (!garden_hasPlanterSelected(garden)) {
         return;
     }
@@ -153,12 +140,13 @@ static void addPlantToSelectedPlanter(Garden *garden, InputManager *input, enum 
     Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
     int plantIndex = planter_getPlantIndexFromWorldPos(
-        planter, &garden->transform, planterOrigin, input->worldMousePos);
+        planter, &garden->transform, planterOrigin, worldMousePos);
 
     Plant *plant = &planter->plants[plantIndex];
 
     if (!plant->exists) {
         planter_addPlant(planter, plantIndex, type);
+        garden->tiles[garden->tileHovered].plantIndex = plantIndex;
     }
 }
 
@@ -167,8 +155,7 @@ static void irrigateSelectedPlant(Garden *garden) {
         return;
     }
 
-    Vector2 tileCoords
-        = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+    Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
 
     Planter *planter = garden_getSelectedPlanter(garden);
 
@@ -185,8 +172,7 @@ static void feedSelectedPlant(Garden *garden) {
         return;
     }
 
-    Vector2 tileCoords
-        = utils_grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+    Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
 
     Planter *planter = garden_getSelectedPlanter(garden);
 
@@ -222,8 +208,9 @@ static void onTileClicked(Game *game, int tileIndex) {
         break;
 
     case GARDENING_TOOL_PLANT_CUTTING:
-        addPlantToSelectedPlanter(
-            &game->garden, &game->input, game->toolVariantsSelection[game->toolSelected]);
+        addPlantToSelectedPlanter(&game->garden,
+            game->input.worldMousePos,
+            game->toolVariantsSelection[game->toolSelected]);
         break;
 
     case GARDENING_TOOL_TRASH_BIN:

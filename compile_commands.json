@@ -23,6 +23,21 @@
    "-g",
    "-Werror",
    "-c",
+   "src/utils/grid.c",
+   "-o",
+   "build/utils/grid.o"
+  ],
+  "file": "src/utils/grid.c"
+ },
+ {
+  "directory": "/home/yogusita/proyectos/water-my-plant",
+  "arguments": [
+   "gcc",
+   "-Wall",
+   "-Iinclude",
+   "-g",
+   "-Werror",
+   "-c",
    "src/messages/messages.c",
    "-o",
    "build/messages/messages.o"

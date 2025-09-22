@@ -109,7 +109,7 @@ void uiButtonGrid_draw(UIButtonGrid *bp, int fontSize) {
 
         Rectangle bounds = getButtonBounds(bp, i);
 
-        DrawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, buttonColor);
+        DrawRectangleRec(bounds, buttonColor);
 
         if (bp->buttons[i].type == BUTTON_TYPE_SPRITE) {
             Rectangle dest = {
