@@ -47,6 +47,8 @@ ______________________________________________________________________
     saber que herramienta esta seleccionada (en otra escena puede que no haya herramientas).
     (2) La escena actual inicializa los elementos de la UI llamando a algo como:
     ui_clean, ui_addButtonPannel, ui_addTextBox, etc.
+- [ ] Delegar el registrado de comandos en el keymap al juego/escena
+
 
 ### TODO: cosas ajenas a milestones particulares para hacer cuando me den ganas de hacerlo
 
@@ -88,8 +90,11 @@ ______________________________________________________________________
 
 ### Milestone: UI a la sims/RCT
 
-- [ ] Orden de dibujado de plantas y maceteros
-- [ ] Permitir mover maceteros;
+- [X] Orden de dibujado de plantas y maceteros
+- [-] Permitir mover maceteros;
+  - [X] Mover macetero
+  - [ ] Mostrarlo con sus plantas en el cursor cuando se esta moviendo
+  - [ ] Traslucir las plantas en el lugar original del planter cuando se esta moviendo
 - [X] Zoom y movimiento del garden (con limites para que no se salga de la pantalla)
   - [X] Zoom
   - [X] Movimiento
