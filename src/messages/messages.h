@@ -1,5 +1,6 @@
 #pragma once
 
+#include <raylib.h>
 #include <stdbool.h>
 typedef struct Game Game;
 
@@ -16,11 +17,18 @@ typedef enum {
     MESSAGE_CMD_TOOL_VARIANT_SELECT,
     MESSAGE_CMD_TOOL_VARIANT_SELECT_NEXT,
     MESSAGE_CMD_GAMEPLAY_SPEED_CHANGE,
+    MESSAGE_CMD_VIEW_MOVE,
+    MESSAGE_CMD_VIEW_ROTATE,
+    MESSAGE_CMD_VIEW_ZOOM_UP,
+    MESSAGE_CMD_VIEW_ZOOM_DOWN,
+    MESSAGE_CMD_VIEW_ZOOM_RESET,
+    MESSAGE_CMD_TOOL_VARIANT_ROTATE,
 } MessageType;
 
 // used to have more members and will probably will have more members eventually
 typedef union {
     int selection;
+    Vector2 vector;
 } MessageArgs;
 
 typedef struct {

@@ -21,6 +21,7 @@ void utils_rotateVector(Vector2 *vector, Rotation rotation);
 
 // math
 float utils_clampf(float min, float max, float value);
+float utils_absf(float f);
 
 // rec and isometric transform utils
 Rectangle utils_getRotatedRec(Rectangle rec, Rotation rotation);

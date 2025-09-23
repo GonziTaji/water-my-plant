@@ -13,7 +13,7 @@ Message uiTextBox_processInput(UITextBox *bn, InputManager *input) {
     if (CheckCollisionPointRec(input->worldMousePos, bn->bounds)) {
         bn->isMouseOver = true;
 
-        if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
+        if (input->mouseButtonState[MOUSE_BUTTON_LEFT] == MOUSE_BUTTON_STATE_PRESSED) {
             return (Message){MESSAGE_EV_UI_CLICKED};
         }
     }

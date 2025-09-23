@@ -137,7 +137,7 @@ void updateLightLevelOfTiles(Garden *garden) {
     }
 }
 
-void updateGardenOrigin(Garden *garden) {
+void garden_updateGardenOrigin(Garden *garden) {
     garden->transform.translation = (Vector2){0, 0};
 
     IsoRec target;
@@ -181,7 +181,7 @@ void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
     garden->transform.translation.x = 0;
     garden->transform.translation.y = 0;
 
-    updateGardenOrigin(garden);
+    garden_updateGardenOrigin(garden);
 
     for (int i = 0; i < GARDEN_MAX_TILES; i++) {
         planter_empty(&garden->planters[i]);
@@ -241,97 +241,42 @@ void garden_update(Garden *garden, float deltaTime, float gameplayTime) {
     }
 }
 
-void resetGardenScale(Garden *garden) {
-    garden->transform.scale = GARDEN_SCALE_INITIAL;
-    updateGardenOrigin(garden);
-}
-
-void scaleGarden(Garden *garden, float amount) {
-    float newScale
-        = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->transform.scale + amount);
-
-    if (newScale != garden->transform.scale) {
-        garden->transform.scale = newScale;
-        updateGardenOrigin(garden);
-    }
-}
-
 Message garden_processInput(Garden *garden, InputManager *input) {
-    if (input->keyPressed == KEY_EQUAL) {
-        scaleGarden(garden, GARDEN_SCALE_STEP);
-    } else if (input->keyPressed == KEY_MINUS) {
-        scaleGarden(garden, -GARDEN_SCALE_STEP);
-    } else if (input->keyPressed == KEY_ZERO) {
-        resetGardenScale(garden);
-    }
-
-    float mouseWheelMove = GetMouseWheelMove();
-    if (mouseWheelMove > 0) {
-        scaleGarden(garden, GARDEN_SCALE_STEP);
-    } else if (mouseWheelMove < 0) {
-        scaleGarden(garden, -GARDEN_SCALE_STEP);
-    }
-
-    if (input->keyPressed == KEY_GRAVE) {
-        garden->transform.rotation = utils_rotate(garden->transform.rotation, 1);
-        updateGardenOrigin(garden);
-    }
-
-    if (input->keyPressed == KEY_T) {
-        garden->selectionRotation++;
-
-        if (garden->selectionRotation == ROTATION_COUNT) {
-            garden->selectionRotation = 0;
-        }
-    }
-
-    // TODO: delegate detection of mouse button down (not pressed) to input subsystem
-    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-        garden->transform.translation.x -= input->worldMouseDelta.x;
-        garden->transform.translation.y -= input->worldMouseDelta.y;
-
-        IsoRec gardenIsoRec = getGardenIsoVertices(garden);
-        int isoRecWidth = gardenIsoRec.right.x - gardenIsoRec.left.x;
-
-        int startLimitX = -isoRecWidth + (4 * TILE_WIDTH * garden->transform.scale);
-        int endLimitX = garden->screenSize->x - (4 * TILE_WIDTH * garden->transform.scale);
-        int startLimitY = gardenIsoRec.left.y - gardenIsoRec.bottom.y
-                        + (4 * TILE_HEIGHT * garden->transform.scale);
-        int endLimitY = garden->screenSize->y - (gardenIsoRec.top.y - gardenIsoRec.left.y)
-                      - (4 * TILE_HEIGHT * garden->transform.scale);
-
-        garden->transform.translation.x
-            = utils_clampf(startLimitX, endLimitX, garden->transform.translation.x);
-        garden->transform.translation.y
-            = utils_clampf(startLimitY, endLimitY, garden->transform.translation.y);
-    }
 
     Vector2 *mousePos = &input->worldMousePos;
 
-    Vector2 cellHoveredCoords = grid_worldPointToCoords(&garden->transform,
+    Vector2 tileHoveredCoords = grid_worldPointToCoords(&garden->transform,
         mousePos->x,
         mousePos->y,
         garden->tileGrid.tileWidth,
         garden->tileGrid.tileHeight);
 
-    int cellHoveredIndex = grid_getTileIndexFromCoords(
-        garden->tileGrid.cols, garden->tileGrid.rows, cellHoveredCoords.x, cellHoveredCoords.y);
+    int tileHoveredIndex = grid_getTileIndexFromCoords(
+        garden->tileGrid.cols, garden->tileGrid.rows, tileHoveredCoords.x, tileHoveredCoords.y);
 
-    garden->tileHovered = cellHoveredIndex;
+    garden->tileHovered = tileHoveredIndex;
 
     garden->planterTileHovered = -1;
-    if (garden->tileHovered != -1) {
-        if (garden->tiles[garden->tileHovered].planterIndex != -1) {
-            Planter *planter = &garden->planters[garden->tiles[garden->tileHovered].planterIndex];
-            Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
-            garden->planterTileHovered = planter_getPlantIndexFromWorldPos(
-                planter, &garden->transform, planterOrigin, input->worldMousePos);
+    if (garden->tileHovered != -1 && garden->tiles[garden->tileHovered].planterIndex != -1) {
+        int planterIndex = garden->tiles[garden->tileHovered].planterIndex;
+
+        if (planterIndex != -1) {
+            Planter *planter = &garden->planters[planterIndex];
+
+            if (planter->exists) {
+                Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+
+                garden->planterTileHovered = planter_getPlantIndexFromWorldPos(
+                    planter, &garden->transform, planterOrigin, input->worldMousePos);
+            }
         }
     }
 
-    if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
-        return (Message){MESSAGE_EV_TILE_CLICKED, {.selection = cellHoveredIndex}};
+    if (input->mouseButtonState[MOUSE_BUTTON_LEFT] == MOUSE_BUTTON_STATE_PRESSED) {
+        printf("MOUSE BUTTON LEFT STATE PRESSED\n");
+
+        return (Message){MESSAGE_EV_TILE_CLICKED, {.selection = tileHoveredIndex}};
     }
 
     return (Message){MESSAGE_NONE};

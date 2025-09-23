@@ -13,6 +13,5 @@ typedef struct {
 
 void uiTextBox_init(UITextBox *bp, int fontSize, Rectangle bounds, Vector2 padding);
 Message uiTextBox_processInput(UITextBox *bn, InputManager *input);
-void uiTextBox_draw(UITextBox *bp, int fontSize);
 void uiTextBox_translate(UITextBox *bp, Vector2 newPos);
 void uiTextBox_drawTextLine(UITextBox *tb, const char *text, Color color);

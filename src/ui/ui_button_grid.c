@@ -71,7 +71,7 @@ Message uiButtonGrid_processInput(UIButtonGrid *bn, InputManager *input) {
     bn->hoveredButtonIndex = getButtonIndexFromPoint(bn, input->worldMousePos);
 
     if (bn->hoveredButtonIndex != -1 && bn->hoveredButtonIndex < uiButtonGrid_getButtonsCount(bn)) {
-        if (input->mouseButtonPressed == MOUSE_BUTTON_LEFT) {
+        if (input->mouseButtonState[MOUSE_BUTTON_LEFT] == MOUSE_BUTTON_STATE_PRESSED) {
             msg = bn->buttons[bn->hoveredButtonIndex].command;
             bn->activeButtonIndex = bn->hoveredButtonIndex;
         }

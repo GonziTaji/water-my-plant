@@ -18,6 +18,56 @@
 // i.e. tileSoil, feedSelectedPlant, changeTool
 //
 
+static void resetZoomView(Garden *garden) {
+    garden->transform.scale = GARDEN_SCALE_INITIAL;
+    garden_updateGardenOrigin(garden);
+}
+
+static void zoomView(Garden *garden, float amount) {
+    float newScale
+        = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->transform.scale + amount);
+
+    if (newScale != garden->transform.scale) {
+        garden->transform.scale = newScale;
+        garden_updateGardenOrigin(garden);
+    }
+}
+
+static void rotateView(Garden *garden) {
+    garden->transform.rotation = utils_rotate(garden->transform.rotation, 1);
+    garden_updateGardenOrigin(garden);
+}
+
+static void moveView(Garden *garden, Vector2 delta) {
+    Vector2 *gardenTranslation = &garden->transform.translation;
+    gardenTranslation->x -= delta.x;
+    gardenTranslation->y -= delta.y;
+
+    // Limits to clamp
+    int gardenWidth = garden->tileGrid.cols * garden->tileGrid.tileWidth * garden->transform.scale;
+    int gardenHeight
+        = garden->tileGrid.rows * garden->tileGrid.tileHeight * garden->transform.scale;
+
+    int minVisible = 4 * TILE_WIDTH * garden->transform.scale;
+
+    int leftLimit = -gardenWidth + minVisible;
+    int rightLimit = garden->screenSize->x - minVisible;
+
+    int topLimit = -gardenHeight + minVisible;
+    int bottomLimit = garden->screenSize->y - minVisible;
+
+    gardenTranslation->x = utils_clampf(leftLimit, rightLimit, gardenTranslation->x);
+    gardenTranslation->y = utils_clampf(topLimit, bottomLimit, gardenTranslation->y);
+}
+
+void rotateSelection(Garden *garden) {
+    garden->selectionRotation++;
+
+    if (garden->selectionRotation == ROTATION_COUNT) {
+        garden->selectionRotation = 0;
+    }
+}
+
 /// returns true if the planter could be added
 static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     if (garden_hasPlanterSelected(garden)) {
@@ -340,13 +390,36 @@ bool messages_dispatchMessage(Message msg, Game *g) {
         changeGameplaySpeed(g, msg.args.selection);
         break;
 
+    case MESSAGE_CMD_VIEW_MOVE:
+        moveView(&g->garden, msg.args.vector);
+        break;
+
+    case MESSAGE_CMD_VIEW_ROTATE:
+        rotateView(&g->garden);
+        break;
+
+    case MESSAGE_CMD_VIEW_ZOOM_UP:
+        zoomView(&g->garden, GARDEN_SCALE_STEP);
+        break;
+
+    case MESSAGE_CMD_VIEW_ZOOM_DOWN:
+        zoomView(&g->garden, -GARDEN_SCALE_STEP);
+        break;
+
+    case MESSAGE_CMD_VIEW_ZOOM_RESET:
+        resetZoomView(&g->garden);
+        break;
+
+    case MESSAGE_CMD_TOOL_VARIANT_ROTATE:
+        rotateSelection(&g->garden);
+        break;
+
     case MESSAGE_EV_UI_CLICKED:
         // fallback
         break;
 
     case MESSAGE_NONE:
         return false;
-        break;
     }
 
     return true;

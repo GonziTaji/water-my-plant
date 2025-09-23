@@ -3,6 +3,10 @@
 #include <assert.h>
 #include <raylib.h>
 
+float utils_absf(float f) {
+    return f > 0 ? f : -f;
+}
+
 void utils_rotateVector(Vector2 *vector, Rotation rotation) {
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
         float aux = vector->x;

@@ -27,10 +27,6 @@ int minmax(int min, int max) {
     return min;
 }
 
-float absf(float f) {
-    return f > 0 ? f : -f;
-}
-
 int plant_getMaxValueForLevel(int level) {
     int pointsPerLevel = 100.0f / PLANT_STATUS_LEVEL_COUNT;
 
@@ -183,7 +179,7 @@ void plant_update(Plant *plant, float deltaTime) {
     plant->hydration += hydrationChange * deltaTime;
 
     // Medium hydration change based on own level and plant hydration change
-    float hydrationLoss = absf(hydrationChange) * 0.5f;
+    float hydrationLoss = utils_absf(hydrationChange) * 0.5f;
     // Drainage for higher hydration levels
     if (mediumHydrationLevel > 2) {
         hydrationLoss += (mediumHydrationLevel - 2);
@@ -209,7 +205,7 @@ void plant_update(Plant *plant, float deltaTime) {
     }
 
     plant->nutrition += nutritionChange * deltaTime;
-    plant->mediumNutrition -= absf(nutritionChange) * 0.5f * deltaTime;
+    plant->mediumNutrition -= utils_absf(nutritionChange) * 0.5f * deltaTime;
 
     // clamp stat values
     plant->health = utils_clampf(0, 100, plant->health);

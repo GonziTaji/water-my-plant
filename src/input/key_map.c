@@ -1,14 +1,13 @@
 #include "key_map.h"
 #include "../game/gameplay.h"
+#include "../utils/utils.h"
 #include "input.h"
+#include <assert.h>
 #include <raylib.h>
-#include <stdio.h>
 
 void registerCommand(KeyMap *keyMap, int key, Message cmd) {
-    if (keyMap->registeredCommandsCount == INPUT_MAP_CAPACITY - 1) {
-        printf("Trying to register a command in a full keyMap");
-        return;
-    }
+    assert(keyMap->registeredCommandsCount != INPUT_MAP_CAPACITY - 1
+           && "Trying to register a command in a full keyMap");
 
     keyMap->registeredCommands[keyMap->registeredCommandsCount] = (Keybind){cmd, key};
 
@@ -43,6 +42,12 @@ void keyMap_init(KeyMap *keyMap) {
     registerCommand(keyMap, KEY_ESCAPE, toolSelectionCommands[GARDENING_TOOL_NONE]);
 
     registerCommand(keyMap, KEY_TAB, (Message){MESSAGE_CMD_TOOL_VARIANT_SELECT_NEXT});
+
+    registerCommand(keyMap, KEY_EQUAL, (Message){MESSAGE_CMD_VIEW_ZOOM_UP});
+    registerCommand(keyMap, KEY_MINUS, (Message){MESSAGE_CMD_VIEW_ZOOM_DOWN});
+    registerCommand(keyMap, KEY_ZERO, (Message){MESSAGE_CMD_VIEW_ZOOM_RESET});
+    registerCommand(keyMap, KEY_GRAVE, (Message){MESSAGE_CMD_VIEW_ROTATE});
+    registerCommand(keyMap, KEY_T, (Message){MESSAGE_CMD_TOOL_VARIANT_ROTATE});
 }
 
 Message keyMap_processInput(KeyMap *keyMap, InputManager *input) {
@@ -52,9 +57,21 @@ Message keyMap_processInput(KeyMap *keyMap, InputManager *input) {
         }
     }
 
-    // Mouse global binds. Make a map if this grows or it's configurable
-    if (input->mouseButtonPressed == MOUSE_RIGHT_BUTTON) {
+    if (input->mouseButtonState[MOUSE_BUTTON_RIGHT] == MOUSE_BUTTON_STATE_DRAGGING) {
+        if (utils_absf(input->worldMouseDelta.x + input->worldMouseDelta.y) > 2) {
+            return (Message){MESSAGE_CMD_VIEW_MOVE, {.vector = input->worldMouseDelta}};
+        }
+    }
+
+    if (input->mouseButtonState[MOUSE_BUTTON_RIGHT] == MOUSE_BUTTON_STATE_RELEASED) {
         return (Message){MESSAGE_CMD_TOOL_SELECT, {.selection = GARDENING_TOOL_NONE}};
+    }
+
+    if (input->mouseWheelMove > 0) {
+        return (Message){MESSAGE_CMD_VIEW_ZOOM_UP};
+
+    } else if (input->mouseWheelMove < 0) {
+        return (Message){MESSAGE_CMD_VIEW_ZOOM_DOWN};
     }
 
     return (Message){MESSAGE_NONE};

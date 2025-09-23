@@ -45,3 +45,4 @@ void garden_update(Garden *garden, float deltaTime, float gameplayTime);
 bool garden_hasPlanterSelected(const Garden *garden);
 Planter *garden_getSelectedPlanter(Garden *garden);
 Vector2 garden_getTileOrigin(Garden *garden, Vector2 coords);
+void garden_updateGardenOrigin(Garden *garden);
