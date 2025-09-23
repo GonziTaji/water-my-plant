@@ -4,6 +4,7 @@
 #include "../game/game.h"
 #include "../input/input.h"
 #include <assert.h>
+#include <stdlib.h>
 
 // try to name the functions following this conventions:
 //
@@ -17,61 +18,113 @@
 // i.e. tileSoil, feedSelectedPlant, changeTool
 //
 
-static void addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
+/// returns true if the planter could be added
+static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     if (garden_hasPlanterSelected(garden)) {
-        return;
+        return false;
     }
 
     Vector2 dimensions = planter_getFootPrint(planterType, garden->selectionRotation);
     Vector2 origin = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
     Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
 
-    bool planterFits = true;
-
     // zero coords
     for (int x = origin.x; x < end.x; x++) {
         for (int y = origin.y; y < end.y; y++) {
             // could be outside
             if (!grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
-                planterFits = false;
-                break;
+                return false;
             }
 
             int index
                 = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
             if (garden->tiles[index].planterIndex != -1) {
-                planterFits = false;
-                break;
+                return false;
             }
         }
+    }
 
-        if (planterFits == false) {
+    int planterIndex;
+    for (planterIndex = 0; planterIndex < GARDEN_MAX_TILES; planterIndex++) {
+        if (!garden->planters[planterIndex].exists) {
             break;
         }
     }
 
-    if (planterFits) {
-        int planterIndex;
-        for (planterIndex = 0; planterIndex < GARDEN_MAX_TILES; planterIndex++) {
-            if (!garden->planters[planterIndex].exists) {
-                break;
-            }
+    Planter *p = &garden->planters[planterIndex];
+
+    planter_init(p, planterType, origin, garden->selectionRotation, garden->tileGrid.tileWidth);
+
+    for (int x = p->coords.x; x < end.x; x++) {
+        for (int y = p->coords.y; y < end.y; y++) {
+            int tileIndex
+                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+
+            garden->tiles[tileIndex].planterIndex = planterIndex;
         }
+    }
 
-        Planter *p = &garden->planters[planterIndex];
+    return true;
+}
 
-        planter_init(p, planterType, origin, garden->selectionRotation, garden->tileGrid.tileWidth);
+static bool movePlanter(Garden *garden, int planterIndex, int destinationTileIndex) {
+    Planter *planter = &garden->planters[garden->planterPickedUpIndex];
 
-        for (int x = p->coords.x; x < end.x; x++) {
-            for (int y = p->coords.y; y < end.y; y++) {
-                int tileIndex = grid_getTileIndexFromCoords(
-                    garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+    Vector2 dimensions = planter_getFootPrint(planter->type, garden->selectionRotation);
+    Vector2 coords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, destinationTileIndex);
+    Vector2 end = (Vector2){dimensions.x + coords.x, dimensions.y + coords.y};
 
-                garden->tiles[tileIndex].planterIndex = planterIndex;
+    // zero coords
+    for (int x = coords.x; x < end.x; x++) {
+        for (int y = coords.y; y < end.y; y++) {
+            // could be outside
+            if (!grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
+                return false;
+            }
+
+            int tileIndex
+                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+
+            int tilePlanterIndex = garden->tiles[tileIndex].planterIndex;
+
+            if (tilePlanterIndex != -1 && tilePlanterIndex != planterIndex) {
+                return false;
             }
         }
     }
+
+    Rotation r = utils_rotate(garden->transform.rotation, planter->rotation);
+    Vector2 oldDimensions = planter_getFootPrint(planter->type, r);
+    Vector2 oldEnd = (Vector2){
+        oldDimensions.x + planter->coords.x,
+        oldDimensions.y + planter->coords.y,
+    };
+
+    for (int x = planter->coords.x; x < oldEnd.x; x++) {
+        for (int y = planter->coords.y; y < oldEnd.y; y++) {
+            int tileIndex
+                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+
+            garden->tiles[tileIndex].planterIndex = -1;
+        }
+    }
+
+    planter->coords.x = coords.x;
+    planter->coords.y = coords.y;
+    planter->rotation = garden->selectionRotation;
+    planter->size = dimensions;
+
+    for (int x = planter->coords.x; x < end.x; x++) {
+        for (int y = planter->coords.y; y < end.y; y++) {
+            int tileIndex
+                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+
+            garden->tiles[tileIndex].planterIndex = planterIndex;
+        }
+    }
+
+    return true;
 }
 
 static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
@@ -101,9 +154,19 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
             // TODO: do something if clicked on planter with plants, but in a empty plant space?
             planter->exists = false;
 
-            for (int i = 0; i < garden->tileGrid.tileCount; i++) {
-                if (garden->tiles[i].planterIndex == planterIndex) {
-                    garden->tiles[i].planterIndex = -1;
+            Rotation r = utils_rotate(garden->transform.rotation, planter->rotation);
+            Vector2 oldDimensions = planter_getFootPrint(planter->type, r);
+            Vector2 oldEnd = (Vector2){
+                oldDimensions.x + planter->coords.x,
+                oldDimensions.y + planter->coords.y,
+            };
+
+            for (int x = planter->coords.x; x < oldEnd.x; x++) {
+                for (int y = planter->coords.y; y < oldEnd.y; y++) {
+                    int tileIndex = grid_getTileIndexFromCoords(
+                        garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+
+                    garden->tiles[tileIndex].planterIndex = -1;
                 }
             }
         }
@@ -126,13 +189,9 @@ static void selectNextToolVariant(Game *g) {
 }
 
 static void addPlantToSelectedPlanter(Garden *garden, Vector2 worldMousePos, enum PlantType type) {
-    if (!garden_hasPlanterSelected(garden)) {
-        return;
-    }
-
     Planter *planter = garden_getSelectedPlanter(garden);
 
-    if (planter->plantGrid.tileCount == 0) {
+    if (planter == NULL || planter->plantGrid.tileCount == 0) {
         return;
     }
 
@@ -149,13 +208,13 @@ static void addPlantToSelectedPlanter(Garden *garden, Vector2 worldMousePos, enu
 }
 
 static void irrigateSelectedPlant(Garden *garden) {
-    if (!garden_hasPlanterSelected(garden)) {
+    Planter *planter = garden_getSelectedPlanter(garden);
+
+    if (planter == NULL) {
         return;
     }
 
     Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
-
-    Planter *planter = garden_getSelectedPlanter(garden);
 
     int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
     Plant *plant = &planter->plants[plantIndex];
@@ -166,13 +225,13 @@ static void irrigateSelectedPlant(Garden *garden) {
 }
 
 static void feedSelectedPlant(Garden *garden) {
-    if (!garden_hasPlanterSelected(garden)) {
+    Planter *planter = garden_getSelectedPlanter(garden);
+
+    if (planter == NULL) {
         return;
     }
 
     Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
-
-    Planter *planter = garden_getSelectedPlanter(garden);
 
     int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
     Plant *plant = &planter->plants[plantIndex];
@@ -186,7 +245,35 @@ static void changeTool(Game *g, enum GardeningTool tool) {
     g->toolSelected = tool;
     g->ui.toolSelectionButtonPannel.activeButtonIndex = g->toolSelected;
 
+    // resets
+    if (g->garden.planterPickedUpIndex != -1) {
+        g->garden.planterPickedUpIndex = -1;
+    }
+
     ui_syncToolVariantPanelToSelection(&g->ui, tool, g->toolVariantsSelection[tool]);
+}
+
+static void pickupOrSetPlanter(Garden *garden) {
+    if (garden->planterPickedUpIndex == -1) {
+        Planter *planter = garden_getSelectedPlanter(garden);
+
+        if (planter == NULL) {
+            return;
+        }
+
+        if (!planter->exists) {
+            return;
+        }
+
+        garden->planterPickedUpIndex = garden->tiles[garden->tileSelected].planterIndex;
+        garden->selectionRotation = utils_rotate(planter->rotation, garden->transform.rotation);
+    } else {
+        bool added = movePlanter(garden, garden->planterPickedUpIndex, garden->tileSelected);
+
+        if (added) {
+            garden->planterPickedUpIndex = -1;
+        }
+    }
 }
 
 static void onTileClicked(Game *game, int tileIndex) {
@@ -216,7 +303,7 @@ static void onTileClicked(Game *game, int tileIndex) {
         break;
 
     case GARDENING_TOOL_NONE:
-        game->toolSelected = GARDENING_TOOL_NONE;
+        pickupOrSetPlanter(&game->garden);
         break;
 
     case GARDENING_TOOL_COUNT:

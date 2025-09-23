@@ -30,6 +30,7 @@ typedef struct {
     GardenTile tiles[GARDEN_MAX_TILES];
     int tileSelected;
     int tileHovered;
+    int planterPickedUpIndex;
     int planterTileHovered;
     Planter planters[GARDEN_MAX_TILES];
     Vector2 lightSourcePos;
