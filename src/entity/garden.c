@@ -301,6 +301,7 @@ typedef struct {
     int tileDepth;
     int localDepth;
     bool highlight;
+    bool pickedUp;
 } Drawable;
 
 int compareDrawableDepths(const void *a, const void *b) {
@@ -421,6 +422,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             Vector2 isoTileOrigin = (Vector2){isoTile.left.x, isoTile.top.y};
 
             int zIndex = getPlanterZIndex(garden, isoTileIndex);
+            bool pickedUp = i == garden->planterPickedUpIndex;
 
             entitiesToDraw[entitiesToDrawCount] = (Drawable){
                 .type = DRAWABLE_PLANTER,
@@ -428,6 +430,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                 .origin = isoTileOrigin,
                 .tileDepth = zIndex,
                 .highlight = i == tileHovered->planterIndex,
+                .pickedUp = pickedUp,
             };
 
             entitiesToDrawCount++;
@@ -449,6 +452,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                         .localDepth = getPlantZIndex(garden->transform.rotation, planter, j),
                         .highlight
                         = i == tileHovered->planterIndex && j == garden->planterTileHovered,
+                        .pickedUp = pickedUp,
                     };
 
                     entitiesToDrawCount++;
@@ -462,16 +466,10 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
     for (int i = 0; i < entitiesToDrawCount; i++) {
         Vector2 origin = entitiesToDraw[i].origin;
+        Color color = entitiesToDraw[i].pickedUp ? (Color){255, 255, 255, 100} : WHITE;
 
         if (entitiesToDraw[i].type == DRAWABLE_PLANTER) {
             Planter *p = entitiesToDraw[i].data;
-
-            int tileIndex = grid_getTileIndexFromCoords(
-                garden->tileGrid.cols, garden->tileGrid.rows, p->coords.x, p->coords.y);
-            int planterIndex = garden->tiles[tileIndex].planterIndex;
-
-            Color color = planterIndex == garden->planterPickedUpIndex ? (Color){255, 255, 255, 100}
-                                                                       : WHITE;
 
             planter_draw(p, origin, garden->transform.scale, garden->transform.rotation, color);
 
@@ -487,7 +485,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         } else {
             Plant *p = entitiesToDraw[i].data;
 
-            plant_draw(p, origin, garden->transform.scale, WHITE);
+            plant_draw(p, origin, garden->transform.scale, color);
 
             if (entitiesToDraw[i].highlight) {
                 BeginBlendMode(BLEND_ADDITIVE);
@@ -530,7 +528,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
     // Draw item on hovered tile
     if (garden->tileHovered != -1) {
-        int i = garden->tileHovered;
+        int hoveredIndex = garden->tileHovered;
 
         switch (toolSelected) {
         case GARDENING_TOOL_NONE:
@@ -539,7 +537,10 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
                 Vector2 drawOrigin = (Vector2){hoveredTile.left.x, hoveredTile.top.y};
                 Planter p;
-                Vector2 gridCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
+                Vector2 gridCoords
+                    = grid_getCoordsFromTileIndex(garden->tileGrid.cols, hoveredIndex);
+
+                Color color = {255, 255, 255, 200};
 
                 planter_init(&p,
                     originalPlanter->type,
@@ -547,18 +548,26 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                     garden->selectionRotation,
                     garden->tileGrid.tileWidth);
 
-                planter_draw(&p,
-                    drawOrigin,
-                    garden->transform.scale,
-                    garden->transform.rotation,
-                    (Color){255, 255, 255, 200});
+                planter_draw(
+                    &p, drawOrigin, garden->transform.scale, garden->transform.rotation, color);
+
+                for (int i = 0; i < p.plantGrid.tileCount; i++) {
+                    Plant *plant = &originalPlanter->plants[i];
+                    if (plant->exists) {
+
+                        Vector2 plantOrigin
+                            = planter_getPlantWorldPos(&p, &garden->transform, hoveredTile.left, i);
+
+                        plant_draw(plant, plantOrigin, garden->transform.scale, color);
+                    }
+                }
             }
 
             break;
         case GARDENING_TOOL_PLANTER: {
             Vector2 drawOrigin = (Vector2){hoveredTile.left.x, hoveredTile.top.y};
             Planter p;
-            Vector2 gridCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, i);
+            Vector2 gridCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, hoveredIndex);
 
             planter_init(&p,
                 toolVariantSelected,
@@ -574,7 +583,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
         } break;
 
         case GARDENING_TOOL_PLANT_CUTTING: {
-            int planterIndex = garden->tiles[i].planterIndex;
+            int planterIndex = garden->tiles[hoveredIndex].planterIndex;
             Vector2 drawOrigin;
 
             Planter *planter = &garden->planters[planterIndex];
