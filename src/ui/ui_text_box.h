@@ -3,7 +3,7 @@
 #include "../messages/messages.h"
 
 typedef struct {
-    // config
+    Font font;
     int fontSize;
     Rectangle bounds;
     Vector2 padding;
@@ -11,7 +11,7 @@ typedef struct {
     bool isMouseOver;
 } UITextBox;
 
-void uiTextBox_init(UITextBox *bp, int fontSize, Rectangle bounds, Vector2 padding);
+void uiTextBox_init(UITextBox *bp, Font font, int fontSize, Rectangle bounds, Vector2 padding);
 Message uiTextBox_processInput(UITextBox *bn, InputManager *input);
 void uiTextBox_translate(UITextBox *bp, Vector2 newPos);
 void uiTextBox_drawTextLine(UITextBox *tb, const char *text, Color color);

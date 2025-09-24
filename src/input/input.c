@@ -1,4 +1,5 @@
 #include "input.h"
+#include "../core/asset_manager.h"
 #include "../ui/ui_text_box.h"
 #include <math.h>
 #include <raylib.h>
@@ -60,8 +61,11 @@ void input_update(InputManager *input, float scale, Vector2 screenOffset) {
 // For debug purposes
 void input_drawMousePos(InputManager *input, Vector2 screenSize) {
     UITextBox uiTextBox;
-    uiTextBox_init(
-        &uiTextBox, 30, (Rectangle){0, screenSize.y / 2, 300, screenSize.y / 2}, (Vector2){10, 10});
+    uiTextBox_init(&uiTextBox,
+        debugFont,
+        debugFont.baseSize,
+        (Rectangle){0, screenSize.y / 2, 300, screenSize.y / 2},
+        (Vector2){10, 10});
 
     char buffer[64];
 

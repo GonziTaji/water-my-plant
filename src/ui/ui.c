@@ -277,7 +277,7 @@ void ui_draw(UI *ui,
         };
 
         UITextBox tb;
-        uiTextBox_init(&tb, fontSize, tbBounds, (Vector2){20, 20});
+        uiTextBox_init(&tb, uiFont, fontSize, tbBounds, (Vector2){20, 20});
 
         snprintf(buffer, sizeof(buffer), "Light level: %d", lightLevel);
 

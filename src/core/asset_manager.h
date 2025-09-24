@@ -12,6 +12,7 @@ extern Texture2D cursorTexture_feed;
 extern Texture2D cursorTexture_remove;
 extern Texture2D slab1Texture;
 extern Font uiFont;
+extern Font debugFont;
 
 void assetManager_loadAssets();
 void assetManager_unloadAssets();

@@ -3,9 +3,12 @@
 #include "raylib.h"
 #include <assert.h>
 
-void uiTextBox_init(UITextBox *tb, int fontSize, Rectangle bounds, Vector2 padding) {
+void uiTextBox_init(UITextBox *tb, Font font, int fontSize, Rectangle bounds, Vector2 padding) {
+    assert(font.texture.id != 0);
+
     tb->bounds = bounds;
     tb->fontSize = fontSize;
+    tb->font = font;
     tb->cursorPosition = (Vector2){bounds.x + padding.x, bounds.y + padding.y};
 }
 
@@ -22,6 +25,6 @@ Message uiTextBox_processInput(UITextBox *bn, InputManager *input) {
 }
 
 void uiTextBox_drawTextLine(UITextBox *tb, const char *text, Color color) {
-    DrawTextEx(uiFont, text, tb->cursorPosition, tb->fontSize, 0, color);
+    DrawTextEx(tb->font, text, tb->cursorPosition, tb->fontSize, 0, color);
     tb->cursorPosition.y += tb->fontSize;
 }

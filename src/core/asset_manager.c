@@ -12,11 +12,12 @@ Texture2D cursorTexture_feed;
 Texture2D cursorTexture_remove;
 Texture2D slab1Texture;
 Font uiFont;
+Font debugFont;
 
 void assetManager_loadAssets() {
     char *fontUrl = "resources/fonts/micro_5/regular.ttf";
     uiFont = LoadFont(fontUrl);
-    // SetTextureFilter(uiFont.texture, TEXTURE_FILTER_POINT);
+    debugFont = LoadFont("resources/fonts/roboto/static/Roboto-Bold.ttf");
 
     plantAtlas = LoadTexture("resources/assets/plants.png");
 
