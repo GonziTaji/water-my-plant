@@ -45,6 +45,8 @@ void uiButtonGrid_init(UIButtonGrid *bp,
     bp->buttonSpacing = buttonSpacing;
     bp->padding = padding;
     bp->origin = origin;
+    bp->activeButtonIndex = -1;
+    bp->hoveredButtonIndex = -1;
 }
 
 int getButtonIndexFromPoint(UIButtonGrid *bn, Vector2 point) {

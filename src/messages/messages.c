@@ -4,6 +4,7 @@
 #include "../game/game.h"
 #include "../input/input.h"
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 // try to name the functions following this conventions:
@@ -58,6 +59,13 @@ static void moveView(Garden *garden, Vector2 delta) {
 
     gardenTranslation->x = utils_clampf(leftLimit, rightLimit, gardenTranslation->x);
     gardenTranslation->y = utils_clampf(topLimit, bottomLimit, gardenTranslation->y);
+
+    if (garden->tileGrid.tileWidth < 0) {
+        assert(garden->tileGrid.tileWidth > 0);
+    }
+    if (garden->tileGrid.tileHeight < 0) {
+        assert(garden->tileGrid.tileHeight > 0);
+    }
 }
 
 void rotateSelection(Garden *garden) {
@@ -75,12 +83,12 @@ static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     }
 
     Vector2 dimensions = planter_getFootPrint(planterType, garden->selectionRotation);
-    Vector2 origin = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
-    Vector2 end = (Vector2){dimensions.x + origin.x, dimensions.y + origin.y};
+    Vector2 coords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+    Vector2 end = {coords.x + dimensions.x - 1, coords.y + dimensions.y - 1};
 
     // zero coords
-    for (int x = origin.x; x < end.x; x++) {
-        for (int y = origin.y; y < end.y; y++) {
+    for (int x = coords.x; x <= end.x; x++) {
+        for (int y = coords.y; y <= end.y; y++) {
             // could be outside
             if (!grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
                 return false;
@@ -104,10 +112,10 @@ static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
     Planter *p = &garden->planters[planterIndex];
 
-    planter_init(p, planterType, origin, garden->selectionRotation, garden->tileGrid.tileWidth);
+    planter_init(p, planterType, coords, garden->selectionRotation, garden->tileGrid.tileWidth);
 
-    for (int x = p->coords.x; x < end.x; x++) {
-        for (int y = p->coords.y; y < end.y; y++) {
+    for (int x = p->coords.x; x <= end.x; x++) {
+        for (int y = p->coords.y; y <= end.y; y++) {
             int tileIndex
                 = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
@@ -119,15 +127,20 @@ static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 }
 
 static bool movePlanter(Garden *garden, int planterIndex, int destinationTileIndex) {
+    const Rotation rotationBefore = garden->transform.rotation;
+
     Planter *planter = &garden->planters[garden->planterPickedUpIndex];
 
     Vector2 dimensions = planter_getFootPrint(planter->type, garden->selectionRotation);
     Vector2 coords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, destinationTileIndex);
-    Vector2 end = (Vector2){dimensions.x + coords.x, dimensions.y + coords.y};
+    Vector2 end = {coords.x + dimensions.x - 1, coords.y + dimensions.y - 1};
+
+    // int newTilesIndexes[planter->plantGrid.tileCount];
+    // int newTilesIndexesCount = 0;
 
     // zero coords
-    for (int x = coords.x; x < end.x; x++) {
-        for (int y = coords.y; y < end.y; y++) {
+    for (int x = coords.x; x <= end.x; x++) {
+        for (int y = coords.y; y <= end.y; y++) {
             // could be outside
             if (!grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
                 return false;
@@ -141,18 +154,21 @@ static bool movePlanter(Garden *garden, int planterIndex, int destinationTileInd
             if (tilePlanterIndex != -1 && tilePlanterIndex != planterIndex) {
                 return false;
             }
+
+            // newTilesIndexes[newTilesIndexesCount] = tileIndex;
+            // newTilesIndexesCount++;
         }
     }
 
-    Rotation r = utils_rotate(garden->transform.rotation, planter->rotation);
-    Vector2 oldDimensions = planter_getFootPrint(planter->type, r);
+    // Use the planter's original rotation to get the correct footprint
+    Vector2 oldDimensions = planter_getFootPrint(planter->type, planter->rotation);
     Vector2 oldEnd = (Vector2){
-        oldDimensions.x + planter->coords.x,
-        oldDimensions.y + planter->coords.y,
+        planter->coords.x + oldDimensions.x - 1,
+        planter->coords.y + oldDimensions.y - 1,
     };
 
-    for (int x = planter->coords.x; x < oldEnd.x; x++) {
-        for (int y = planter->coords.y; y < oldEnd.y; y++) {
+    for (int x = planter->coords.x; x <= oldEnd.x; x++) {
+        for (int y = planter->coords.y; y <= oldEnd.y; y++) {
             int tileIndex
                 = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
@@ -163,16 +179,19 @@ static bool movePlanter(Garden *garden, int planterIndex, int destinationTileInd
     planter->coords.x = coords.x;
     planter->coords.y = coords.y;
     planter->rotation = garden->selectionRotation;
-    planter->size = dimensions;
 
-    for (int x = planter->coords.x; x < end.x; x++) {
-        for (int y = planter->coords.y; y < end.y; y++) {
+    for (int x = planter->coords.x; x <= end.x; x++) {
+        for (int y = planter->coords.y; y <= end.y; y++) {
             int tileIndex
                 = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
 
             garden->tiles[tileIndex].planterIndex = planterIndex;
         }
     }
+
+    const Rotation rotationAfter = garden->transform.rotation;
+
+    assert(rotationBefore == rotationAfter);
 
     return true;
 }
@@ -264,9 +283,8 @@ static void irrigateSelectedPlant(Garden *garden) {
         return;
     }
 
-    Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+    int plantIndex = garden->planterTileHovered;
 
-    int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
     Plant *plant = &planter->plants[plantIndex];
 
     if (plant->exists) {
@@ -316,7 +334,7 @@ static void pickupOrSetPlanter(Garden *garden) {
         }
 
         garden->planterPickedUpIndex = garden->tiles[garden->tileSelected].planterIndex;
-        garden->selectionRotation = utils_rotate(planter->rotation, garden->transform.rotation);
+        garden->selectionRotation = planter->rotation;
     } else {
         bool added = movePlanter(garden, garden->planterPickedUpIndex, garden->tileSelected);
 
@@ -367,8 +385,41 @@ static void changeGameplaySpeed(Game *g, GameplaySpeed newSpeed) {
     g->ui.speedSelectionButtonPannel.activeButtonIndex = newSpeed;
 }
 
+static void outputMessageInfo(Message m) {
+    if (m.type == MESSAGE_NONE) {
+        return;
+    }
+
+    printf("[DISPATCHED MESSAGE]: %d\n", m.type);
+
+    // output params
+    switch (m.type) {
+    case MESSAGE_EV_TILE_CLICKED:
+    case MESSAGE_CMD_TOOL_SELECT:
+    case MESSAGE_CMD_TOOL_VARIANT_SELECT:
+    case MESSAGE_CMD_GAMEPLAY_SPEED_CHANGE:
+        printf("    [args.selection]: %d\n", m.args.selection);
+        break;
+
+        break;
+
+    case MESSAGE_CMD_VIEW_MOVE:
+        printf("    [args.vector]: {%0.2f,%0.2f}\n", m.args.vector.x, m.args.vector.y);
+        break;
+
+    default:
+        break;
+    }
+}
+
 /// returns `true` if a the command executed blocks further messages for this frame
 bool messages_dispatchMessage(Message msg, Game *g) {
+    const bool debugMessageInfo = true;
+
+    if (debugMessageInfo) {
+        outputMessageInfo(msg);
+    }
+
     switch (msg.type) {
     case MESSAGE_EV_TILE_CLICKED:
         onTileClicked(g, msg.args.selection);

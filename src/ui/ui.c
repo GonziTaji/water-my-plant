@@ -83,6 +83,8 @@ void ui_syncToolVariantPanelToSelection(
 void ui_init(UI *ui, Vector2 *screenSize, GameplaySpeed gameplaySpeed) {
     HideCursor();
 
+    ui->showToolVariantPanel = false;
+
     UIButtonGrid *toolGrid = &ui->toolSelectionButtonPannel;
 
     uiButtonGrid_init(toolGrid,
@@ -284,7 +286,7 @@ void ui_draw(UI *ui,
         uiTextBox_drawTextLine(&tb, buffer, BLACK);
         uiTextBox_drawTextLine(&tb, "", BLACK); // spacing
 
-        if (planter->exists) {
+        if (planterIndex != -1 && planter->exists) {
             Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
             int plantIndex = planter_getPlantIndexFromWorldPos(
@@ -292,7 +294,7 @@ void ui_draw(UI *ui,
 
             const Plant *plant = &planter->plants[plantIndex];
 
-            if (plant->exists) {
+            if (plantIndex != -1 && plant->exists) {
                 uiTextBox_drawTextLine(&tb, "Plant info:", BLACK);
                 tb.cursorPosition.y += 5; // spacing
 

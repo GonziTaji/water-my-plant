@@ -5,21 +5,50 @@
 #include <assert.h>
 #include <raylib.h>
 
+static const PlanterDefinition planterDefinitions[PLANTER_TYPE_COUNT] = {
+    [PLANTER_TYPE_NORMAL] = {
+        .size = {1, 1},
+        .spriteExtraHeight = 0,
+        .plantBasePosY = 12,
+        .cols = 1,
+        .rows = 1,
+    },
+
+    [PLANTER_TYPE_1x2] = {
+        .size = {2, 4},
+        .spriteExtraHeight = 0,
+        .plantBasePosY = 18,
+        .cols = 1,
+        .rows = 2,
+    },
+
+    [PLANTER_TYPE_2x2] = {
+        .size = {4, 4},
+        .spriteExtraHeight = 0.5,
+        .plantBasePosY = 18,
+        .cols = 3,
+        .rows = 3,
+    },
+
+    [PLANTER_COUCH] = {
+        .size = {3, 4},
+        .spriteExtraHeight = 1.5,
+        .plantBasePosY = 0,
+        .cols = 0,
+        .rows = 0,
+    },
+};
+
 static Vector3 getIsoDimensions(PlanterType planterType, Rotation rotation) {
-    Vector2 f = planter_getFootPrint(planterType, rotation);
+    Vector2 size = planterDefinitions[planterType].size;
+    float height = planterDefinitions[planterType].spriteExtraHeight;
 
-    Vector3 dimensionsOnGrid = {f.x, f.y, 0};
-
-    if (planterType == PLANTER_COUCH) {
-        dimensionsOnGrid.z = 1.5;
-    } else if (planterType == PLANTER_TYPE_2x2) {
-        dimensionsOnGrid.z = 0.5;
-    }
+    utils_rotateVector(&size, rotation);
 
     return (Vector3){
-        (dimensionsOnGrid.x + dimensionsOnGrid.y) * TILE_WIDTH / 2,
-        (dimensionsOnGrid.x + dimensionsOnGrid.y) * TILE_HEIGHT / 2,
-        dimensionsOnGrid.z * TILE_HEIGHT,
+        (size.x + size.y) * TILE_WIDTH / 2,
+        (size.x + size.y) * TILE_HEIGHT / 2,
+        height * TILE_HEIGHT,
     };
 }
 
@@ -38,31 +67,8 @@ static TileGrid getGrid(PlanterType planterType, Rotation rotation, int worldTil
 
     TileGrid grid;
 
-    switch (planterType) {
-    case PLANTER_TYPE_NORMAL:
-        grid.cols = 1;
-        grid.rows = 1;
-        break;
-
-    case PLANTER_TYPE_1x2:
-        grid.cols = 1;
-        grid.rows = 2;
-        break;
-
-    case PLANTER_TYPE_2x2:
-        grid.cols = 3;
-        grid.rows = 3;
-        break;
-
-    case PLANTER_COUCH:
-        grid.cols = 0;
-        grid.rows = 0;
-        break;
-
-    case PLANTER_TYPE_COUNT:
-        assert(false);
-        break;
-    }
+    grid.cols = planterDefinitions[planterType].cols;
+    grid.rows = planterDefinitions[planterType].rows;
 
     Vector2 gd = (Vector2){grid.cols, grid.rows};
     utils_rotateVector(&gd, rotation);
@@ -82,46 +88,22 @@ static TileGrid getGrid(PlanterType planterType, Rotation rotation, int worldTil
 
 /// cols and rows that the planter uses in the garden grid
 Vector2 planter_getFootPrint(PlanterType planterType, Rotation rotation) {
-    Vector2 d = (Vector2){0, 0};
+    assert(planterType != PLANTER_TYPE_COUNT);
 
-    switch (planterType) {
-    case PLANTER_TYPE_NORMAL:
-        d = (Vector2){1, 1};
-        break;
-
-    case PLANTER_TYPE_1x2:
-        d = (Vector2){2, 4};
-        break;
-
-    case PLANTER_TYPE_2x2:
-        d = (Vector2){4, 4};
-        break;
-
-    case PLANTER_COUCH:
-        d = (Vector2){3, 4};
-        break;
-
-    case PLANTER_TYPE_COUNT:
-        d = (Vector2){1, 1};
-        break;
-    }
+    Vector2 d = {
+        planterDefinitions[planterType].size.x,
+        planterDefinitions[planterType].size.y,
+    };
 
     utils_rotateVector(&d, rotation);
 
     return d;
 }
 
-// remove? there's value in an interface in case the plant count has logic involved
-int planter_getPlantCount(const Planter *planter) {
-    return planter->plantGrid.tileCount;
-}
-
 void planter_empty(Planter *planter) {
     planter->type = 0;
     planter->exists = false;
     planter->rotation = 0;
-    planter->plantBasePosY = 0;
-    planter->size = (Vector2){0, 0};
     planter->coords = (Vector2){0, 0};
 }
 
@@ -130,31 +112,12 @@ void planter_init(
     planter->type = type;
     planter->exists = true;
     planter->rotation = rotation;
-    planter->size = planter_getFootPrint(type, rotation);
     planter->coords = coords;
     planter->plantGrid = getGrid(type, rotation, tileWidth);
 
-    for (int i = 0; i < planter->plantGrid.tileCount; i++) {
+    int plantCount = planter->plantGrid.tileCount;
+    for (int i = 0; i < plantCount; i++) {
         planter->plants[i].exists = false;
-    }
-
-    switch (type) {
-    case PLANTER_TYPE_NORMAL:
-        planter->plantBasePosY = 12;
-        break;
-    case PLANTER_TYPE_1x2:
-        planter->plantBasePosY = 18;
-        break;
-    case PLANTER_TYPE_2x2:
-        planter->plantBasePosY = 18;
-        break;
-
-    case PLANTER_COUCH:
-        planter->plantBasePosY = 0;
-        break;
-
-    case PLANTER_TYPE_COUNT:
-        break;
     }
 }
 
@@ -162,7 +125,9 @@ int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 coords) {
     int plantX = coords.x - planter->coords.x;
     int plantY = coords.y - planter->coords.y;
 
-    int plantIndex = grid_getTileIndexFromCoords(planter->size.x, planter->size.y, plantX, plantY);
+    const Vector2 *size = &planterDefinitions[planter->type].size;
+
+    int plantIndex = grid_getTileIndexFromCoords(size->x, size->x, plantX, plantY);
 
     return plantIndex;
 }
@@ -203,7 +168,7 @@ Vector2 planter_getPlantWorldPos(
         planter->plantGrid.tileWidth,
         planter->plantGrid.tileHeight);
 
-    isoRec.bottom.y -= (planter->plantBasePosY * transform->scale);
+    isoRec.bottom.y -= (planterDefinitions[planter->type].plantBasePosY * transform->scale);
 
     return isoRec.bottom;
 }
