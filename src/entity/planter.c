@@ -159,7 +159,7 @@ Vector2 planter_getPlantDrawOrigin(Planter *planter, int plantIndex) {
 
     IsoTransform localTransform = {
         planterOrigin,
-        utils_rotate(planter->rotation, SCENE_TRANSFORM.rotation),
+        SCENE_TRANSFORM.rotation,
         SCENE_TRANSFORM.scale,
     };
 
