@@ -85,7 +85,6 @@ static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     Vector2 coords = grid_getCoordsFromTileIndex(GARDEN_COLS, garden->tileSelected);
     Vector2 end = {coords.x + dimensions.x - 1, coords.y + dimensions.y - 1};
 
-    // zero coords
     for (int x = coords.x; x <= end.x; x++) {
         for (int y = coords.y; y <= end.y; y++) {
             // could be outside
@@ -149,8 +148,7 @@ static bool movePlanter(Garden *garden, int planterIndex, int destinationTileInd
         }
     }
 
-    Rotation r = utils_rotate(planter->rotation, SCENE_TRANSFORM.rotation);
-    Vector2 oldDimensions = planter_getFootPrint(planter->type, r);
+    Vector2 oldDimensions = planter_getFootPrint(planter->type, planter->rotation);
     Vector2 oldEnd = (Vector2){
         planter->coords.x + oldDimensions.x - 1,
         planter->coords.y + oldDimensions.y - 1,
@@ -197,7 +195,8 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
 
     Planter *planter = &garden->planters[planterIndex];
     if (planter->exists == true) {
-        Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+        Vector2 planterOrigin
+            = grid_getTileOrigin(&SCENE_TRANSFORM, planter->coords, TILE_WIDTH, TILE_HEIGHT);
 
         int plantIndex = planter_getPlantIndexFromWorldPos(planter, planterOrigin, worldMousePos);
 
@@ -209,8 +208,7 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
             // TODO: do something if clicked on planter with plants, but in a empty plant space?
             planter->exists = false;
 
-            Rotation r = utils_rotate(SCENE_TRANSFORM.rotation, planter->rotation);
-            Vector2 oldDimensions = planter_getFootPrint(planter->type, r);
+            Vector2 oldDimensions = planter_getFootPrint(planter->type, planter->rotation);
             Vector2 oldEnd = (Vector2){
                 oldDimensions.x + planter->coords.x,
                 oldDimensions.y + planter->coords.y,
@@ -249,7 +247,8 @@ static void addPlantToSelectedPlanter(Garden *garden, Vector2 worldMousePos, enu
         return;
     }
 
-    Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+    Vector2 planterOrigin
+        = grid_getTileOrigin(&SCENE_TRANSFORM, planter->coords, TILE_WIDTH, TILE_HEIGHT);
 
     int plantIndex = planter_getPlantIndexFromWorldPos(planter, planterOrigin, worldMousePos);
 

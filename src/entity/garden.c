@@ -207,10 +207,6 @@ void garden_init(Garden *garden, Vector2 *screenSize, float gameplayTime) {
     updateLightLevelOfTiles(garden);
 }
 
-Vector2 garden_getTileOrigin(Garden *garden, Vector2 coords) {
-    return grid_coordsToWorldPoint(&SCENE_TRANSFORM, coords.x, coords.y, TILE_WIDTH, TILE_HEIGHT);
-}
-
 bool garden_hasPlanterSelected(const Garden *garden) {
     int planterIndex = garden->tiles[garden->tileSelected].planterIndex;
 
@@ -269,7 +265,8 @@ Message garden_processInput(Garden *garden, InputManager *input) {
             Planter *planter = &garden->planters[planterIndex];
 
             if (planter->exists) {
-                Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+                Vector2 planterOrigin = grid_getTileOrigin(
+                    &SCENE_TRANSFORM, planter->coords, TILE_WIDTH, TILE_HEIGHT);
 
                 garden->planterTileHovered = planter_getPlantIndexFromWorldPos(
                     planter, planterOrigin, input->worldMousePos);
@@ -443,11 +440,9 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             entitiesToDrawCount++;
 
             int plantsCount = planter->plantGrid.tileCount;
-            Vector2 planterOrigin = getPlanterWorldPos(garden, planter->coords);
-
             for (int j = 0; j < plantsCount; j++) {
                 if (planter->plants[j].exists) {
-                    Vector2 plantOrigin = planter_getPlantDrawOrigin(planter, planterOrigin, j);
+                    Vector2 plantOrigin = planter_getPlantDrawOrigin(planter, j);
 
                     entitiesToDraw[entitiesToDrawCount] = (Drawable){
                         .type = DRAWABLE_PLANT,
@@ -517,9 +512,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                     continue;
                 }
 
-                Vector2 planterWorldPos = getPlanterWorldPos(garden, planter->coords);
-
-                Vector2 plantWorldPos = planter_getPlantDrawOrigin(planter, planterWorldPos, j);
+                Vector2 plantWorldPos = planter_getPlantDrawOrigin(planter, j);
 
                 DrawEllipse(plantWorldPos.x, plantWorldPos.y, 10, 5, (Color){255, 255, 255, 225});
             }
@@ -547,13 +540,11 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                 planter_draw(
                     &p, drawOrigin, SCENE_TRANSFORM.scale, SCENE_TRANSFORM.rotation, color);
 
-                Vector2 planterWorldPos = getPlanterWorldPos(garden, p.coords);
-
                 for (int i = 0; i < p.plantGrid.tileCount; i++) {
                     Plant *plant = &originalPlanter->plants[i];
 
                     if (plant->exists) {
-                        Vector2 plantOrigin = planter_getPlantDrawOrigin(&p, planterWorldPos, i);
+                        Vector2 plantOrigin = planter_getPlantDrawOrigin(&p, i);
 
                         plant_draw(plant, plantOrigin, SCENE_TRANSFORM.scale, color);
                     }
@@ -583,10 +574,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
             Vector2 drawOrigin;
 
             if (planterIndex != -1 && planter->exists && planter->plantGrid.tileCount > 0) {
-                Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
-
-                drawOrigin = planter_getPlantDrawOrigin(
-                    planter, planterOrigin, garden->planterTileHovered);
+                drawOrigin = planter_getPlantDrawOrigin(planter, garden->planterTileHovered);
 
             } else {
                 float plantBasePosY = TILE_HEIGHT * SCENE_TRANSFORM.scale / 2.0f;
@@ -686,8 +674,6 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
                 IsoRec planterTile = getTileIsoVertices(garden, planterTileIndex);
 
-                Vector2 planterWorldPos = getPlanterWorldPos(garden, planter->coords);
-
                 snprintf(buffer, 8, "%d", zIndex);
 
                 DrawText(buffer,
@@ -698,8 +684,7 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
                 for (int j = 0; j < planter->plantGrid.tileCount; j++) {
                     if (planter->plants[j].exists) {
-                        Vector2 plantWorldPos
-                            = planter_getPlantDrawOrigin(planter, planterWorldPos, j);
+                        Vector2 plantWorldPos = planter_getPlantDrawOrigin(planter, j);
 
                         int zIndex = getPlantZIndex(SCENE_TRANSFORM.rotation, planter, j);
 

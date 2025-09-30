@@ -252,11 +252,8 @@ void ui_draw(UI *ui,
 
         DrawTextEx(uiFont, buffer, (Vector2){100, 300}, fontSize, 0, WHITE);
 
-        Vector2 distanceToLeftVertice = grid_getDistanceFromFarthestTile(SCENE_TRANSFORM.rotation,
-            tileCoords.x,
-            tileCoords.y,
-            GARDEN_COLS,
-            GARDEN_ROWS);
+        Vector2 distanceToLeftVertice = grid_getDistanceFromFarthestTile(
+            SCENE_TRANSFORM.rotation, tileCoords.x, tileCoords.y, GARDEN_COLS, GARDEN_ROWS);
 
         snprintf(buffer,
             sizeof(buffer),
@@ -287,7 +284,8 @@ void ui_draw(UI *ui,
         uiTextBox_drawTextLine(&tb, "", BLACK); // spacing
 
         if (planterIndex != -1 && planter->exists) {
-            Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
+            Vector2 planterOrigin
+                = grid_getTileOrigin(&SCENE_TRANSFORM, planter->coords, TILE_WIDTH, TILE_HEIGHT);
 
             int plantIndex
                 = planter_getPlantIndexFromWorldPos(planter, planterOrigin, input->worldMousePos);

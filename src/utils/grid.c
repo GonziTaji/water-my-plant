@@ -1,4 +1,6 @@
 #include "grid.h"
+#include "../game/constants.h"
+#include "utils.h"
 #include <assert.h>
 
 bool grid_isValidCoords(int gridCols, int gridRows, float x, float y) {
@@ -61,6 +63,10 @@ Vector2 grid_worldPointToCoords(
     }
 
     return gridCoords;
+}
+
+Vector2 grid_getTileOrigin(IsoTransform *transform, Vector2 coords, int tileWidth, int tileHeight) {
+    return grid_coordsToWorldPoint(transform, coords.x, coords.y, tileWidth, tileHeight);
 }
 
 Vector2 grid_coordsToWorldPoint(

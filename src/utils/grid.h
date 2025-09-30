@@ -31,3 +31,5 @@ IsoRec grid_toIsoRec(
 Vector2 grid_getDistanceFromFarthestTile(Rotation rotation, int x, int y, int cols, int rows);
 
 int grid_getZIndex(Rotation rotation, int x, int y, int cols, int rows);
+
+Vector2 grid_getTileOrigin(IsoTransform *transform, Vector2 coords, int tileWidth, int tileHeight);

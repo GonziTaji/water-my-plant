@@ -53,7 +53,7 @@ Rectangle planter_getSpriteSourceRec(
 
 void planter_draw(Planter *planter, Vector2 origin, float scale, Rotation rotation, Color color);
 
-Vector2 planter_getPlantDrawOrigin(Planter *planter, Vector2 planterWorldPos, int plantIndex);
+Vector2 planter_getPlantDrawOrigin(Planter *planter, int plantIndex);
 
 int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 point);
 

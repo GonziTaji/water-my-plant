@@ -151,20 +151,17 @@ int planter_getPlantIndexFromWorldPos(Planter *planter, Vector2 planterWorldPos,
         planter->plantGrid.cols, planter->plantGrid.rows, plantCoords.x, plantCoords.y);
 }
 
-Vector2 planter_getPlantDrawOrigin(Planter *planter, Vector2 planterWorldPos, int plantIndex) {
-    Rotation fullRotation = utils_rotate(planter->rotation, SCENE_TRANSFORM.rotation);
+Vector2 planter_getPlantDrawOrigin(Planter *planter, int plantIndex) {
+    Vector2 planterOrigin
+        = grid_getTileOrigin(&SCENE_TRANSFORM, planter->coords, TILE_WIDTH, TILE_HEIGHT);
 
-    int cols = fullRotation == ROTATION_90 || fullRotation == ROTATION_270
-                 ? planter->plantGrid.rows
-                 : planter->plantGrid.cols;
+    Vector2 plantCoords = grid_getCoordsFromTileIndex(planter->plantGrid.cols, plantIndex);
 
     IsoTransform localTransform = {
-        planterWorldPos,
-        ROTATION_0,
+        planterOrigin,
+        utils_rotate(planter->rotation, SCENE_TRANSFORM.rotation),
         SCENE_TRANSFORM.scale,
     };
-
-    Vector2 plantCoords = grid_getCoordsFromTileIndex(cols, plantIndex);
 
     IsoRec isoRec = grid_toIsoRec(&localTransform,
         plantCoords,
