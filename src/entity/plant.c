@@ -11,13 +11,33 @@
 #define PLANT_STATE_COUNT 6
 #define PLANT_TICKS_PER_SECOND 1.0f
 
-typedef struct {
-    /// 0 - 5
-    int waterResiliece;
-    int nutrientResiliece;
-    PlantWaterLevel preferedWaterLevel;
-    PlantNutrientsLevel preferedNutrientsLevel;
-} PlantPreferences;
+const PlantDefinition plantDefinitions[PLANT_TYPE_COUNT] = {
+    [PLANT_TYPE_CRASSULA_OVATA] = {
+        .scientificName = "Crassula Ovata",
+        .name = "Jade plant",
+        .altName = "Lucky plant",
+        .spriteDimensions = { 32, 32 },
+        .optimalWaterLevel = PLANT_WATER_LEVEL_DRY,
+        .optimalNutrientsLevel = PLANT_NUTRIENT_LEVEL_3,
+        .overWateredResiliece = false,
+        .underWateredResiliece = true,
+        .overNutritionResiliece = false,
+        .underNutritionResiliece = false,
+    },
+    [PLANT_TYPE_SENECIO_ROWLEYANUS] = {
+        .scientificName = "Senecio Rowleyanus",
+        .name = "String of pearls",
+        .altName = "String of beads",
+        .spriteDimensions= { 32, 48 },
+        .underWateredResiliece = true,
+        .optimalWaterLevel = PLANT_WATER_LEVEL_MOIST,
+        .optimalNutrientsLevel = PLANT_NUTRIENT_LEVEL_3,
+        .overWateredResiliece = false,
+        .underWateredResiliece = false,
+        .overNutritionResiliece = false,
+        .underNutritionResiliece = false,
+    },
+};
 
 int minmax(int min, int max) {
     if (max < min) {
@@ -57,38 +77,6 @@ void plant_init(Plant *p, enum PlantType type) {
     p->health = 80;
     p->timeSinceLastTick = 0;
     p->ticksCount = 0;
-    p->overWateredResiliece = false;
-    p->underWateredResiliece = false;
-    p->overNutritionResiliece = false;
-    p->underNutritionResiliece = false;
-
-    switch (type) {
-    case PLANT_TYPE_CRASSULA_OVATA:
-        p->scientificName = "Crassula Ovata";
-        p->name = "Jade plant";
-        p->altName = "Lucky plant";
-
-        // Succulents prefer dry "stress"
-        p->underWateredResiliece = true;
-        p->optimalWaterLevel = PLANT_WATER_LEVEL_DRY;
-        p->optimalNutrientsLevel = PLANT_NUTRIENT_LEVEL_3;
-        break;
-
-    case PLANT_TYPE_SENECIO_ROWLEYANUS:
-        p->scientificName = "Senecio Rowleyanus";
-        p->name = "String of pearls";
-        p->altName = "String of beads";
-
-        // Succulents prefer dry "stress"
-        p->underWateredResiliece = true;
-        p->optimalWaterLevel = PLANT_WATER_LEVEL_MOIST;
-        p->optimalNutrientsLevel = PLANT_NUTRIENT_LEVEL_3;
-        break;
-
-    case PLANT_TYPE_COUNT:
-        assert(false);
-        break;
-    }
 }
 
 void plant_irrigate(Plant *p) {
@@ -148,16 +136,18 @@ void plant_update(Plant *plant, float deltaTime) {
 
     plant->health += healthChange * deltaTime;
 
+    const PlantDefinition *props = &plantDefinitions[plant->type];
+
     // Hydration change based on hydration medium
     const int mediumHydrationLevel = plant_getStatLevel(plant->mediumHydration);
-    const int mediumWaterLevelDistanceFromOptimal = plant->optimalWaterLevel - mediumHydrationLevel;
+    const int mediumWaterLevelDistanceFromOptimal = props->optimalWaterLevel - mediumHydrationLevel;
     float hydrationChange = 0;
 
     if (mediumWaterLevelDistanceFromOptimal == 0) {
         // in favorite medium level
 
         // if it likes saturated medium it can never be over watered
-        if (plant->optimalWaterLevel == 4) {
+        if (props->optimalWaterLevel == 4) {
             hydrationChange = 1;
 
             if (nutritionLevel > 2) {
@@ -215,41 +205,17 @@ void plant_update(Plant *plant, float deltaTime) {
     plant->mediumNutrition = utils_clampf(0, 100, plant->mediumNutrition);
 }
 
-static Vector2 getSpriteDimensions(enum PlantType type) {
-    const int unit = 32;
-    Vector2 dimensions = (Vector2){0, 0};
-
-    switch (type) {
-    case PLANT_TYPE_CRASSULA_OVATA:
-
-        dimensions.x = unit;
-        dimensions.y = unit;
-        break;
-
-    case PLANT_TYPE_SENECIO_ROWLEYANUS:
-        dimensions.x = unit;
-        dimensions.y = (int)(1.5 * unit);
-        break;
-
-    case PLANT_TYPE_COUNT:
-        assert(false);
-        break;
-    }
-
-    return dimensions;
-}
-
 Rectangle plant_getSpriteSourceRect(enum PlantType type, int health) {
-    Vector2 dimensions = getSpriteDimensions(type);
-    Vector2 origin = {0, 0};
+    Vector2 dimensions = plantDefinitions[type].spriteDimensions;
     // Position in the sprite atlas
+    Vector2 origin = {0, 0};
 
     for (int i = 0; i < type; i++) {
         if (i == type) {
             break;
         }
 
-        Vector2 d = getSpriteDimensions(i);
+        Vector2 d = plantDefinitions[i].spriteDimensions;
 
         origin.y += d.y;
     }

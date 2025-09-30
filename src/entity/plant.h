@@ -36,11 +36,21 @@ typedef enum {
 } PlantNutrientsLevel;
 
 typedef struct {
-    enum PlantType type;
-    bool exists;
     const char *scientificName;
     const char *name;
     const char *altName;
+    Vector2 spriteDimensions;
+    bool overWateredResiliece;
+    bool underWateredResiliece;
+    bool overNutritionResiliece;
+    bool underNutritionResiliece;
+    PlantWaterLevel optimalWaterLevel;
+    PlantNutrientsLevel optimalNutrientsLevel;
+} PlantDefinition;
+
+typedef struct {
+    enum PlantType type;
+    bool exists;
     float mediumHydration;
     float mediumNutrition;
     float hydration;
@@ -48,13 +58,9 @@ typedef struct {
     float health;
     float timeSinceLastTick;
     int ticksCount;
-    bool overWateredResiliece;
-    bool underWateredResiliece;
-    bool overNutritionResiliece;
-    bool underNutritionResiliece;
-    PlantWaterLevel optimalWaterLevel;
-    PlantNutrientsLevel optimalNutrientsLevel;
 } Plant;
+
+extern const PlantDefinition plantDefinitions[PLANT_TYPE_COUNT];
 
 void plant_init(Plant *p, enum PlantType type);
 void plant_irrigate(Plant *p);

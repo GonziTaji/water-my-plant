@@ -7,7 +7,7 @@ typedef struct {
     Vector2 translation;
     Rotation rotation;
     float scale;
-} SceneTransform;
+} IsoTransform;
 
 typedef struct {
     Vector2 left;

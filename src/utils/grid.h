@@ -20,16 +20,13 @@ Vector2 grid_getCoordsFromTileIndex(int gridCols, int i);
 int grid_getTileIndexFromCoords(int gridCols, int gridRows, float x, float y);
 
 Vector2 grid_worldPointToCoords(
-    SceneTransform *transform, float x, float y, float tileWidth, float tileHeight);
+    IsoTransform *transform, float x, float y, float tileWidth, float tileHeight);
 
 Vector2 grid_coordsToWorldPoint(
-    const SceneTransform *transform, float x, float y, float tileWidth, float tileHeight);
+    const IsoTransform *transform, float x, float y, float tileWidth, float tileHeight);
 
-IsoRec grid_toIsoRec(const SceneTransform *transform,
-    Vector2 coords,
-    Vector2 size,
-    float tileWidth,
-    float tileHeight);
+IsoRec grid_toIsoRec(
+    const IsoTransform *transform, Vector2 coords, Vector2 size, float tileWidth, float tileHeight);
 
 Vector2 grid_getDistanceFromFarthestTile(Rotation rotation, int x, int y, int cols, int rows);
 

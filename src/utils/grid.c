@@ -15,7 +15,7 @@ Vector2 grid_getCoordsFromTileIndex(int gridCols, int i) {
     return (Vector2){i % gridCols, (int)(i / gridCols)};
 }
 
-/** Returns -1 if the coords are not a valid cell of the grid */
+/// Returns -1 if the coords are not a valid cell of the grid
 int grid_getTileIndexFromCoords(int gridCols, int gridRows, float x, float y) {
     // get this out and use it when it's really necesary? to avoid gridRows as function parameter
     if (!grid_isValidCoords(gridCols, gridRows, x, y)) {
@@ -26,7 +26,7 @@ int grid_getTileIndexFromCoords(int gridCols, int gridRows, float x, float y) {
 }
 
 Vector2 grid_worldPointToCoords(
-    SceneTransform *transform, float x, float y, float tileWidth, float tileHeight) {
+    IsoTransform *transform, float x, float y, float tileWidth, float tileHeight) {
 
     const float TW = tileWidth * transform->scale;
     const float TH = tileHeight * transform->scale;
@@ -64,7 +64,7 @@ Vector2 grid_worldPointToCoords(
 }
 
 Vector2 grid_coordsToWorldPoint(
-    const SceneTransform *transform, float x, float y, float tileWidth, float tileHeight) {
+    const IsoTransform *transform, float x, float y, float tileWidth, float tileHeight) {
 
     int sumX = 0;
     int sumY = 0;
@@ -98,7 +98,7 @@ Vector2 grid_coordsToWorldPoint(
     };
 }
 
-IsoRec grid_toIsoRec(const SceneTransform *transform,
+IsoRec grid_toIsoRec(const IsoTransform *transform,
     Vector2 coords,
     Vector2 size,
     float tileWidth,

@@ -242,7 +242,7 @@ void ui_draw(UI *ui,
     char buffer[64];
 
     if (tileIndex != -1) {
-        Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, tileIndex);
+        Vector2 tileCoords = grid_getCoordsFromTileIndex(GARDEN_COLS, tileIndex);
 
         snprintf(buffer,
             sizeof(buffer),
@@ -252,11 +252,11 @@ void ui_draw(UI *ui,
 
         DrawTextEx(uiFont, buffer, (Vector2){100, 300}, fontSize, 0, WHITE);
 
-        Vector2 distanceToLeftVertice = grid_getDistanceFromFarthestTile(garden->transform.rotation,
+        Vector2 distanceToLeftVertice = grid_getDistanceFromFarthestTile(SCENE_TRANSFORM.rotation,
             tileCoords.x,
             tileCoords.y,
-            garden->tileGrid.cols,
-            garden->tileGrid.rows);
+            GARDEN_COLS,
+            GARDEN_ROWS);
 
         snprintf(buffer,
             sizeof(buffer),
@@ -289,8 +289,8 @@ void ui_draw(UI *ui,
         if (planterIndex != -1 && planter->exists) {
             Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
-            int plantIndex = planter_getPlantIndexFromWorldPos(
-                planter, &garden->transform, planterOrigin, input->worldMousePos);
+            int plantIndex
+                = planter_getPlantIndexFromWorldPos(planter, planterOrigin, input->worldMousePos);
 
             const Plant *plant = &planter->plants[plantIndex];
 
@@ -302,8 +302,8 @@ void ui_draw(UI *ui,
                     const char *label;
                     const char *value;
                 } infoArr[] = {
-                    {"Scientific name", plant->scientificName},
-                    {"Name", plant->name},
+                    {"Scientific name", plantDefinitions[plant->type].scientificName},
+                    {"Name", plantDefinitions[plant->type].name},
                 };
 
                 int infoLinesCount = 2;

@@ -1,11 +1,12 @@
 #include "planter.h"
 #include "../core/asset_manager.h"
 #include "../game/constants.h"
+#include "../game/scenes/scene.h"
 #include "../utils/utils.h"
 #include <assert.h>
 #include <raylib.h>
 
-static const PlanterDefinition planterDefinitions[PLANTER_TYPE_COUNT] = {
+const PlanterDefinition planterDefinitions[PLANTER_TYPE_COUNT] = {
     [PLANTER_TYPE_NORMAL] = {
         .size = {1, 1},
         .spriteExtraHeight = 0,
@@ -132,13 +133,12 @@ int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 coords) {
     return plantIndex;
 }
 
-int planter_getPlantIndexFromWorldPos(
-    Planter *planter, SceneTransform *transform, Vector2 planterWorldPos, Vector2 point) {
+int planter_getPlantIndexFromWorldPos(Planter *planter, Vector2 planterWorldPos, Vector2 point) {
 
-    SceneTransform localTransform = {
+    IsoTransform localTransform = {
         planterWorldPos,
-        transform->rotation,
-        transform->scale,
+        SCENE_TRANSFORM.rotation,
+        SCENE_TRANSFORM.scale,
     };
 
     Vector2 plantCoords = grid_worldPointToCoords(&localTransform,
@@ -151,16 +151,20 @@ int planter_getPlantIndexFromWorldPos(
         planter->plantGrid.cols, planter->plantGrid.rows, plantCoords.x, plantCoords.y);
 }
 
-Vector2 planter_getPlantWorldPos(
-    Planter *planter, SceneTransform *transform, Vector2 planterWorldPos, int plantIndex) {
+Vector2 planter_getPlantDrawOrigin(Planter *planter, Vector2 planterWorldPos, int plantIndex) {
+    Rotation fullRotation = utils_rotate(planter->rotation, SCENE_TRANSFORM.rotation);
 
-    Vector2 plantCoords = grid_getCoordsFromTileIndex(planter->plantGrid.cols, plantIndex);
+    int cols = fullRotation == ROTATION_90 || fullRotation == ROTATION_270
+                 ? planter->plantGrid.rows
+                 : planter->plantGrid.cols;
 
-    SceneTransform localTransform = {
+    IsoTransform localTransform = {
         planterWorldPos,
-        transform->rotation,
-        transform->scale,
+        ROTATION_0,
+        SCENE_TRANSFORM.scale,
     };
+
+    Vector2 plantCoords = grid_getCoordsFromTileIndex(cols, plantIndex);
 
     IsoRec isoRec = grid_toIsoRec(&localTransform,
         plantCoords,
@@ -168,7 +172,7 @@ Vector2 planter_getPlantWorldPos(
         planter->plantGrid.tileWidth,
         planter->plantGrid.tileHeight);
 
-    isoRec.bottom.y -= (planterDefinitions[planter->type].plantBasePosY * transform->scale);
+    isoRec.bottom.y -= (planterDefinitions[planter->type].plantBasePosY * SCENE_TRANSFORM.scale);
 
     return isoRec.bottom;
 }

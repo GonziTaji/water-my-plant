@@ -28,7 +28,7 @@ typedef struct {
     int rows;
 } PlanterDefinition;
 
-static const PlanterDefinition planterDefinitions[PLANTER_TYPE_COUNT];
+extern const PlanterDefinition planterDefinitions[PLANTER_TYPE_COUNT];
 
 typedef struct Planter {
     PlanterType type;
@@ -44,19 +44,17 @@ Vector2 planter_getFootPrint(PlanterType planterType, Rotation rotation);
 void planter_empty(Planter *planter);
 
 void planter_init(
-        Planter *planter, PlanterType type, Vector2 coords, Rotation rotation, int tileWidth);
+    Planter *planter, PlanterType type, Vector2 coords, Rotation rotation, int tileWidth);
 
 void planter_addPlant(Planter *planter, int index, enum PlantType type);
 
 Rectangle planter_getSpriteSourceRec(
-        PlanterType type, Rotation planterRotation, Rotation viewRotation);
+    PlanterType type, Rotation planterRotation, Rotation viewRotation);
 
 void planter_draw(Planter *planter, Vector2 origin, float scale, Rotation rotation, Color color);
 
-Vector2 planter_getPlantWorldPos(
-        Planter *planter, SceneTransform *transform, Vector2 planterWorldPos, int plantIndex);
+Vector2 planter_getPlantDrawOrigin(Planter *planter, Vector2 planterWorldPos, int plantIndex);
 
 int planter_getPlantIndexFromGridCoords(Planter *planter, Vector2 point);
 
-int planter_getPlantIndexFromWorldPos(
-        Planter *planter, SceneTransform *transform, Vector2 planterWorldPos, Vector2 point);
+int planter_getPlantIndexFromWorldPos(Planter *planter, Vector2 planterWorldPos, Vector2 point);

@@ -19,52 +19,51 @@
 // i.e. tileSoil, feedSelectedPlant, changeTool
 //
 
-static void resetZoomView(Garden *garden) {
-    garden->transform.scale = GARDEN_SCALE_INITIAL;
-    garden_updateGardenOrigin(garden);
+static void resetZoomView(Garden *garden, Vector2 *screenSize) {
+    SCENE_TRANSFORM.scale = GARDEN_SCALE_INITIAL;
+    garden_updateGardenOrigin(garden, screenSize);
 }
 
-static void zoomView(Garden *garden, float amount) {
+static void zoomView(Garden *garden, Vector2 *screenSize, float amount) {
     float newScale
-        = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, garden->transform.scale + amount);
+        = utils_clampf(GARDEN_SCALE_MIN, GARDEN_SCALE_MAX, SCENE_TRANSFORM.scale + amount);
 
-    if (newScale != garden->transform.scale) {
-        garden->transform.scale = newScale;
-        garden_updateGardenOrigin(garden);
+    if (newScale != SCENE_TRANSFORM.scale) {
+        SCENE_TRANSFORM.scale = newScale;
+        garden_updateGardenOrigin(garden, screenSize);
     }
 }
 
-static void rotateView(Garden *garden) {
-    garden->transform.rotation = utils_rotate(garden->transform.rotation, 1);
-    garden_updateGardenOrigin(garden);
+static void rotateView(Garden *garden, Vector2 *screenSize) {
+    SCENE_TRANSFORM.rotation = utils_rotate(SCENE_TRANSFORM.rotation, 1);
+    garden_updateGardenOrigin(garden, screenSize);
 }
 
-static void moveView(Garden *garden, Vector2 delta) {
-    Vector2 *gardenTranslation = &garden->transform.translation;
+static void moveView(Garden *garden, Vector2 *screenSize, Vector2 delta) {
+    Vector2 *gardenTranslation = &SCENE_TRANSFORM.translation;
     gardenTranslation->x -= delta.x;
     gardenTranslation->y -= delta.y;
 
     // Limits to clamp
-    int gardenWidth = garden->tileGrid.cols * garden->tileGrid.tileWidth * garden->transform.scale;
-    int gardenHeight
-        = garden->tileGrid.rows * garden->tileGrid.tileHeight * garden->transform.scale;
+    int gardenWidth = GARDEN_COLS * TILE_WIDTH * SCENE_TRANSFORM.scale;
+    int gardenHeight = GARDEN_ROWS * TILE_HEIGHT * SCENE_TRANSFORM.scale;
 
-    int minVisible = 4 * TILE_WIDTH * garden->transform.scale;
+    int minVisible = 4 * TILE_WIDTH * SCENE_TRANSFORM.scale;
 
     int leftLimit = -gardenWidth + minVisible;
-    int rightLimit = garden->screenSize->x - minVisible;
+    int rightLimit = screenSize->x - minVisible;
 
     int topLimit = -gardenHeight + minVisible;
-    int bottomLimit = garden->screenSize->y - minVisible;
+    int bottomLimit = screenSize->y - minVisible;
 
     gardenTranslation->x = utils_clampf(leftLimit, rightLimit, gardenTranslation->x);
     gardenTranslation->y = utils_clampf(topLimit, bottomLimit, gardenTranslation->y);
 
-    if (garden->tileGrid.tileWidth < 0) {
-        assert(garden->tileGrid.tileWidth > 0);
+    if (TILE_WIDTH < 0) {
+        assert(TILE_WIDTH > 0);
     }
-    if (garden->tileGrid.tileHeight < 0) {
-        assert(garden->tileGrid.tileHeight > 0);
+    if (TILE_HEIGHT < 0) {
+        assert(TILE_HEIGHT > 0);
     }
 }
 
@@ -83,19 +82,18 @@ static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
     }
 
     Vector2 dimensions = planter_getFootPrint(planterType, garden->selectionRotation);
-    Vector2 coords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+    Vector2 coords = grid_getCoordsFromTileIndex(GARDEN_COLS, garden->tileSelected);
     Vector2 end = {coords.x + dimensions.x - 1, coords.y + dimensions.y - 1};
 
     // zero coords
     for (int x = coords.x; x <= end.x; x++) {
         for (int y = coords.y; y <= end.y; y++) {
             // could be outside
-            if (!grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
+            if (!grid_isValidCoords(GARDEN_COLS, GARDEN_ROWS, x, y)) {
                 return false;
             }
 
-            int index
-                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+            int index = grid_getTileIndexFromCoords(GARDEN_COLS, GARDEN_ROWS, x, y);
 
             if (garden->tiles[index].planterIndex != -1) {
                 return false;
@@ -112,12 +110,11 @@ static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 
     Planter *p = &garden->planters[planterIndex];
 
-    planter_init(p, planterType, coords, garden->selectionRotation, garden->tileGrid.tileWidth);
+    planter_init(p, planterType, coords, garden->selectionRotation, TILE_WIDTH);
 
     for (int x = p->coords.x; x <= end.x; x++) {
         for (int y = p->coords.y; y <= end.y; y++) {
-            int tileIndex
-                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+            int tileIndex = grid_getTileIndexFromCoords(GARDEN_COLS, GARDEN_ROWS, x, y);
 
             garden->tiles[tileIndex].planterIndex = planterIndex;
         }
@@ -127,41 +124,33 @@ static bool addPlanterToSelectedTile(Garden *garden, PlanterType planterType) {
 }
 
 static bool movePlanter(Garden *garden, int planterIndex, int destinationTileIndex) {
-    const Rotation rotationBefore = garden->transform.rotation;
+    const Rotation rotationBefore = SCENE_TRANSFORM.rotation;
 
     Planter *planter = &garden->planters[garden->planterPickedUpIndex];
 
     Vector2 dimensions = planter_getFootPrint(planter->type, garden->selectionRotation);
-    Vector2 coords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, destinationTileIndex);
+    Vector2 coords = grid_getCoordsFromTileIndex(GARDEN_COLS, destinationTileIndex);
     Vector2 end = {coords.x + dimensions.x - 1, coords.y + dimensions.y - 1};
 
-    // int newTilesIndexes[planter->plantGrid.tileCount];
-    // int newTilesIndexesCount = 0;
-
-    // zero coords
     for (int x = coords.x; x <= end.x; x++) {
         for (int y = coords.y; y <= end.y; y++) {
             // could be outside
-            if (!grid_isValidCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y)) {
+            if (!grid_isValidCoords(GARDEN_COLS, GARDEN_ROWS, x, y)) {
                 return false;
             }
 
-            int tileIndex
-                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+            int tileIndex = grid_getTileIndexFromCoords(GARDEN_COLS, GARDEN_ROWS, x, y);
 
             int tilePlanterIndex = garden->tiles[tileIndex].planterIndex;
 
             if (tilePlanterIndex != -1 && tilePlanterIndex != planterIndex) {
                 return false;
             }
-
-            // newTilesIndexes[newTilesIndexesCount] = tileIndex;
-            // newTilesIndexesCount++;
         }
     }
 
-    // Use the planter's original rotation to get the correct footprint
-    Vector2 oldDimensions = planter_getFootPrint(planter->type, planter->rotation);
+    Rotation r = utils_rotate(planter->rotation, SCENE_TRANSFORM.rotation);
+    Vector2 oldDimensions = planter_getFootPrint(planter->type, r);
     Vector2 oldEnd = (Vector2){
         planter->coords.x + oldDimensions.x - 1,
         planter->coords.y + oldDimensions.y - 1,
@@ -169,8 +158,7 @@ static bool movePlanter(Garden *garden, int planterIndex, int destinationTileInd
 
     for (int x = planter->coords.x; x <= oldEnd.x; x++) {
         for (int y = planter->coords.y; y <= oldEnd.y; y++) {
-            int tileIndex
-                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+            int tileIndex = grid_getTileIndexFromCoords(GARDEN_COLS, GARDEN_ROWS, x, y);
 
             garden->tiles[tileIndex].planterIndex = -1;
         }
@@ -182,14 +170,13 @@ static bool movePlanter(Garden *garden, int planterIndex, int destinationTileInd
 
     for (int x = planter->coords.x; x <= end.x; x++) {
         for (int y = planter->coords.y; y <= end.y; y++) {
-            int tileIndex
-                = grid_getTileIndexFromCoords(garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+            int tileIndex = grid_getTileIndexFromCoords(GARDEN_COLS, GARDEN_ROWS, x, y);
 
             garden->tiles[tileIndex].planterIndex = planterIndex;
         }
     }
 
-    const Rotation rotationAfter = garden->transform.rotation;
+    const Rotation rotationAfter = SCENE_TRANSFORM.rotation;
 
     assert(rotationBefore == rotationAfter);
 
@@ -212,8 +199,7 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
     if (planter->exists == true) {
         Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
-        int plantIndex = planter_getPlantIndexFromWorldPos(
-            planter, &garden->transform, planterOrigin, worldMousePos);
+        int plantIndex = planter_getPlantIndexFromWorldPos(planter, planterOrigin, worldMousePos);
 
         Plant *plant = &planter->plants[plantIndex];
 
@@ -223,7 +209,7 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
             // TODO: do something if clicked on planter with plants, but in a empty plant space?
             planter->exists = false;
 
-            Rotation r = utils_rotate(garden->transform.rotation, planter->rotation);
+            Rotation r = utils_rotate(SCENE_TRANSFORM.rotation, planter->rotation);
             Vector2 oldDimensions = planter_getFootPrint(planter->type, r);
             Vector2 oldEnd = (Vector2){
                 oldDimensions.x + planter->coords.x,
@@ -232,8 +218,7 @@ static void removeFromTile(Garden *garden, Vector2 worldMousePos) {
 
             for (int x = planter->coords.x; x < oldEnd.x; x++) {
                 for (int y = planter->coords.y; y < oldEnd.y; y++) {
-                    int tileIndex = grid_getTileIndexFromCoords(
-                        garden->tileGrid.cols, garden->tileGrid.rows, x, y);
+                    int tileIndex = grid_getTileIndexFromCoords(GARDEN_COLS, GARDEN_ROWS, x, y);
 
                     garden->tiles[tileIndex].planterIndex = -1;
                 }
@@ -266,8 +251,7 @@ static void addPlantToSelectedPlanter(Garden *garden, Vector2 worldMousePos, enu
 
     Vector2 planterOrigin = garden_getTileOrigin(garden, planter->coords);
 
-    int plantIndex = planter_getPlantIndexFromWorldPos(
-        planter, &garden->transform, planterOrigin, worldMousePos);
+    int plantIndex = planter_getPlantIndexFromWorldPos(planter, planterOrigin, worldMousePos);
 
     Plant *plant = &planter->plants[plantIndex];
 
@@ -299,7 +283,7 @@ static void feedSelectedPlant(Garden *garden) {
         return;
     }
 
-    Vector2 tileCoords = grid_getCoordsFromTileIndex(garden->tileGrid.cols, garden->tileSelected);
+    Vector2 tileCoords = grid_getCoordsFromTileIndex(GARDEN_COLS, garden->tileSelected);
 
     int plantIndex = planter_getPlantIndexFromGridCoords(planter, tileCoords);
     Plant *plant = &planter->plants[plantIndex];
@@ -442,23 +426,23 @@ bool messages_dispatchMessage(Message msg, Game *g) {
         break;
 
     case MESSAGE_CMD_VIEW_MOVE:
-        moveView(&g->garden, msg.args.vector);
+        moveView(&g->garden, &g->screenSize, msg.args.vector);
         break;
 
     case MESSAGE_CMD_VIEW_ROTATE:
-        rotateView(&g->garden);
+        rotateView(&g->garden, &g->screenSize);
         break;
 
     case MESSAGE_CMD_VIEW_ZOOM_UP:
-        zoomView(&g->garden, GARDEN_SCALE_STEP);
+        zoomView(&g->garden, &g->screenSize, GARDEN_SCALE_STEP);
         break;
 
     case MESSAGE_CMD_VIEW_ZOOM_DOWN:
-        zoomView(&g->garden, -GARDEN_SCALE_STEP);
+        zoomView(&g->garden, &g->screenSize, -GARDEN_SCALE_STEP);
         break;
 
     case MESSAGE_CMD_VIEW_ZOOM_RESET:
-        resetZoomView(&g->garden);
+        resetZoomView(&g->garden, &g->screenSize);
         break;
 
     case MESSAGE_CMD_TOOL_VARIANT_ROTATE:
