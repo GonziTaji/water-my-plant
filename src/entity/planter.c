@@ -147,15 +147,26 @@ int planter_getPlantIndexFromWorldPos(Planter *planter, Vector2 planterWorldPos,
         planter->plantGrid.tileWidth,
         planter->plantGrid.tileHeight);
 
+    TileGrid planterGrid = getGrid(planter->type, planter->rotation, TILE_WIDTH);
+
+    plantCoords
+        = grid_rotateCoords(plantCoords, planter->rotation, planterGrid.cols, planterGrid.rows);
+
     return grid_getTileIndexFromCoords(
-        planter->plantGrid.cols, planter->plantGrid.rows, plantCoords.x, plantCoords.y);
+        planterGrid.cols, planterGrid.rows, plantCoords.x, plantCoords.y);
 }
 
 Vector2 planter_getPlantDrawOrigin(Planter *planter, int plantIndex) {
     Vector2 planterOrigin
         = grid_getTileOrigin(&SCENE_TRANSFORM, planter->coords, TILE_WIDTH, TILE_HEIGHT);
 
-    Vector2 plantCoords = grid_getCoordsFromTileIndex(planter->plantGrid.cols, plantIndex);
+    TileGrid planterGrid = getGrid(planter->type, planter->rotation, TILE_WIDTH);
+    Vector2 plantCoords = grid_getCoordsFromTileIndex(planterGrid.cols, plantIndex);
+
+    int cols = planterGrid.cols;
+    int rows = planterGrid.rows;
+
+    Vector2 rotatedPlantCoords = grid_rotateCoords(plantCoords, planter->rotation, cols, rows);
 
     IsoTransform localTransform = {
         planterOrigin,
@@ -164,10 +175,10 @@ Vector2 planter_getPlantDrawOrigin(Planter *planter, int plantIndex) {
     };
 
     IsoRec isoRec = grid_toIsoRec(&localTransform,
-        plantCoords,
+        rotatedPlantCoords,
         (Vector2){1, 1},
-        planter->plantGrid.tileWidth,
-        planter->plantGrid.tileHeight);
+        planterGrid.tileWidth,
+        planterGrid.tileHeight);
 
     isoRec.bottom.y -= (planterDefinitions[planter->type].plantBasePosY * SCENE_TRANSFORM.scale);
 

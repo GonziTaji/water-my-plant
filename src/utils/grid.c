@@ -18,7 +18,7 @@ Vector2 grid_getCoordsFromTileIndex(int gridCols, int i) {
 }
 
 /// Returns -1 if the coords are not a valid cell of the grid
-int grid_getTileIndexFromCoords(int gridCols, int gridRows, float x, float y) {
+int grid_getTileIndexFromCoords(int gridCols, int gridRows, int x, int y) {
     // get this out and use it when it's really necesary? to avoid gridRows as function parameter
     if (!grid_isValidCoords(gridCols, gridRows, x, y)) {
         return -1;
@@ -61,6 +61,9 @@ Vector2 grid_worldPointToCoords(
         assert(false);
         break;
     }
+
+    gridCoords.x = (int)gridCoords.x;
+    gridCoords.y = (int)gridCoords.y;
 
     return gridCoords;
 }
@@ -181,4 +184,26 @@ int grid_getZIndex(Rotation rotation, int x, int y, int cols, int rows) {
     d += distance.x * localRows;
 
     return d;
+}
+
+Vector2 grid_rotateCoords(Vector2 coords, Rotation rotation, int cols, int rows) {
+    Vector2 rotatedCoords = coords;
+
+    for (int i = 0; i < rotation; i++) {
+        switch (i) {
+        case 0:
+            rotatedCoords.x = cols - 1 - rotatedCoords.x;
+            break;
+        case 1:
+            rotatedCoords.y = rows - 1 - rotatedCoords.y;
+            break;
+
+        case 2:
+            rotatedCoords.x = cols - 1 - rotatedCoords.x;
+            rotatedCoords.y = rows - 1 - rotatedCoords.y;
+            break;
+        }
+    }
+
+    return rotatedCoords;
 }

@@ -602,10 +602,11 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
 
     bool showZIndexOnTile = false;
     bool showZIndexOnEntity = false;
-    bool showPlanterIndexOnTile = true;
+    bool showPlanterIndexOnTile = false;
+    bool showPlantIndexOnPlanter = true;
     bool drawTileBounds = false;
     bool drawPlantBounds = false;
-    char buffer[8];
+    char buffer[16];
 
     if (drawPlantBounds) {
         for (int i = 0; i < GARDEN_TILE_COUNT; i++) {
@@ -708,6 +709,20 @@ void garden_draw(Garden *garden, enum GardeningTool toolSelected, int toolVarian
                     currentTile.bottom.y - ((currentTile.bottom.y - currentTile.top.y) / 2),
                     20,
                     WHITE);
+            }
+        }
+
+        if (showPlantIndexOnPlanter) {
+            int planterIndex = i;
+            Planter *planter = &garden->planters[planterIndex];
+
+            if (planter->exists) {
+
+                for (int plantIndex = 0; plantIndex < planter->plantGrid.tileCount; plantIndex++) {
+                    Vector2 plantDrawOrigin = planter_getPlantDrawOrigin(planter, plantIndex);
+                    snprintf(buffer, 11, "%d", plantIndex);
+                    DrawText(buffer, plantDrawOrigin.x, plantDrawOrigin.y, 20, WHITE);
+                }
             }
         }
     }
